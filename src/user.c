@@ -36,7 +36,7 @@
 #include "utils.h"
 #include "list.h"
 
-EagleUser *create_user(char *name, char *password, uint64_t perm)
+EagleUser *create_user(const char *name, const char *password, uint64_t perm)
 {
 	EagleUser *user = (EagleUser*)xmalloc(sizeof(*user));
 
@@ -53,7 +53,7 @@ void delete_user(EagleUser *user)
 	xfree(user);
 }
 
-EagleUser *find_user(List *list, char *name, char *password)
+EagleUser *find_user(List *list, const char *name, const char *password)
 {
 	EagleUser *user;
 	ListNode *node;
@@ -78,7 +78,7 @@ EagleUser *find_user(List *list, char *name, char *password)
 	return NULL;
 }
 
-void rename_user(EagleUser *user, char *name)
+void rename_user(EagleUser *user, const char *name)
 {
 	memcpy(user->name, name, 32);
 }

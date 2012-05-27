@@ -63,10 +63,10 @@ typedef struct EagleUser
 	uint64_t perm;
 } EagleUser;
 
-EagleUser *create_user(char *name, char *password, uint64_t perm);
+EagleUser *create_user(const char *name, const char *password, uint64_t perm);
 void delete_user(EagleUser *user);
-EagleUser *find_user(List *list, char *name, char *password);
-void rename_user(EagleUser *user, char *name);
+EagleUser *find_user(List *list, const char *name, const char *password);
+void rename_user(EagleUser *user, const char *name);
 void set_user_perm(EagleUser *user, uint64_t perm);
 uint64_t get_user_perm(EagleUser *user);
 void add_user_list(List *list, EagleUser *user);

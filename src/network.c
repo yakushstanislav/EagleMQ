@@ -118,7 +118,7 @@ static int net_create_socket(char *err, int domain)
 	return sock;
 }
 
-int net_tcp_server(char *err, char *addr, int port)
+int net_tcp_server(char *err, const char *addr, int port)
 {
 	int sock;
 	struct sockaddr_in sa;
@@ -146,7 +146,7 @@ int net_tcp_server(char *err, char *addr, int port)
 	return sock;
 }
 
-int net_unix_server(char *err, char *path, mode_t perm)
+int net_unix_server(char *err, const char *path, mode_t perm)
 {
 	int sock;
 	struct sockaddr_un sa;

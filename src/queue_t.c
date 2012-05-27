@@ -39,7 +39,7 @@
 
 void free_subscribed_client_handler(void *ptr);
 
-Queue_t *create_queue_t(char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags)
+Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags)
 {
 	Queue_t *queue_t = (Queue_t*)xmalloc(sizeof(*queue_t));
 
@@ -100,7 +100,7 @@ void pop_value_queue_t(Queue_t *queue_t)
 	decrement_references_count(object);
 }
 
-Queue_t *find_queue_t(List *list, char *name)
+Queue_t *find_queue_t(List *list, const char *name)
 {
 	Queue_t *queue_t;
 	ListNode *node;

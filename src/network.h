@@ -38,8 +38,8 @@
 
 int net_set_nonblock(char *err, int fd);
 int net_tcp_nodelay(char *err, int fd);
-int net_tcp_server(char *err, char *addr, int port);
-int net_unix_server(char *err, char *path, mode_t perm);
+int net_tcp_server(char *err, const char *addr, int port);
+int net_unix_server(char *err, const char *path, mode_t perm);
 int net_tcp_accept(char *err, int sock, char *ip, int *port);
 int net_unix_accept(char *err, int sock);
 

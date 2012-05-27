@@ -66,12 +66,12 @@ typedef struct Queue_t
 #define EG_QUEUE_SET_SUBSCRIBE_METHOD(q, m) ((q)->subscribe_client = (m))
 #define EG_QUEUE_SET_UNSUBSCRIBE_METHOD(q, m) ((q)->unsubscribe_client = (m))
 
-Queue_t *create_queue_t(char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags);
+Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags);
 void delete_queue_t(Queue_t *queue_t);
 int push_value_queue_t(Queue_t *queue_t, Object *value);
 Object *get_value_queue_t(Queue_t *queue_t);
 void pop_value_queue_t(Queue_t *queue_t);
-Queue_t *find_queue_t(List *list, char *name);
+Queue_t *find_queue_t(List *list, const char *name);
 uint32_t get_size_queue_t(Queue_t *queue_t);
 void purge_queue_t(Queue_t *queue_t);
 void declare_queue_client(Queue_t *queue_t, void *client);
