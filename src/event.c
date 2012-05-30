@@ -33,7 +33,12 @@
 
 #include "xmalloc.h"
 #include "event.h"
-#include "event_epoll.c"
+
+#ifdef _EVENT_SELECT_
+	#include "event_select.c"
+#else
+	#include "event_epoll.c"
+#endif
 
 static void get_time(long *seconds, long *milliseconds)
 {
