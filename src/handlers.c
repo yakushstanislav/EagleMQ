@@ -1068,7 +1068,7 @@ static void send_response(EventLoop *loop, int fd, void *data, int mask)
 
 	if (EG_LIST_LENGTH(client->responses) == 0) {
 		client->sentlen = 0;
-		delete_file_event(server->loop, client->fd, EG_EVENT_WRITEABLE);
+		delete_file_event(server->loop, client->fd, EG_EVENT_WRITABLE);
 	}
 }
 
@@ -1095,7 +1095,7 @@ int set_write_event(EagleClient *client)
 		return EG_STATUS_ERR;
 	}
 
-	if (create_file_event(server->loop, client->fd, EG_EVENT_WRITEABLE, send_response, client) == EG_EVENT_ERR &&
+	if (create_file_event(server->loop, client->fd, EG_EVENT_WRITABLE, send_response, client) == EG_EVENT_ERR &&
 			EG_LIST_LENGTH(client->responses) == 0) {
 		return EG_STATUS_ERR;
 	}
@@ -1150,7 +1150,7 @@ void free_client(EagleClient *client)
 	list_release(client->subscribed_queues);
 
 	delete_file_event(server->loop, client->fd, EG_EVENT_READABLE);
-	delete_file_event(server->loop, client->fd, EG_EVENT_WRITEABLE);
+	delete_file_event(server->loop, client->fd, EG_EVENT_WRITABLE);
 
 	close(client->fd);
 

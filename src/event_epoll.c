@@ -85,7 +85,7 @@ static int event_api_add(EventLoop *loop, int fd, int mask)
 		epoll_ev.events |= EPOLLIN;
 	}
 
-	if (mask & EG_EVENT_WRITEABLE) {
+	if (mask & EG_EVENT_WRITABLE) {
 		epoll_ev.events |= EPOLLOUT;
 	}
 
@@ -113,7 +113,7 @@ static void event_api_delete(EventLoop *loop, int fd, int mask)
 		epoll_ev.events |= EPOLLIN;
 	}
 
-	if (nmask & EG_EVENT_WRITEABLE) {
+	if (nmask & EG_EVENT_WRITABLE) {
 		epoll_ev.events |= EPOLLOUT;
 	}
 
@@ -150,7 +150,7 @@ static int event_api_poll(EventLoop *loop, struct timeval *tvp)
 			}
 
 			if (epoll_ev->events & EPOLLOUT) {
-				mask |= EG_EVENT_WRITEABLE;
+				mask |= EG_EVENT_WRITABLE;
 			}
 
 			loop->fired[i].fd = epoll_ev->data.fd;

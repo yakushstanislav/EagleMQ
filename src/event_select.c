@@ -67,7 +67,7 @@ static int event_api_add(EventLoop *loop, int fd, int mask)
 		FD_SET(fd, &data->rfds);
 	}
 
-	if (mask & EG_EVENT_WRITEABLE) {
+	if (mask & EG_EVENT_WRITABLE) {
 		FD_SET(fd, &data->wfds);
 	}
 
@@ -84,7 +84,7 @@ static void event_api_delete(EventLoop *loop, int fd, int mask)
 		FD_CLR(fd, &data->rfds);
 	}
 
-	if (mask & EG_EVENT_WRITEABLE) {
+	if (mask & EG_EVENT_WRITABLE) {
 		FD_CLR(fd, &data->wfds);
 	}
 }
@@ -117,8 +117,8 @@ static int event_api_poll(EventLoop *loop, struct timeval *tvp)
 				mask |= EG_EVENT_READABLE;
 			}
 
-			if (file_event->mask & EG_EVENT_WRITEABLE && FD_ISSET(i, &data->_wfds)) {
-				mask |= EG_EVENT_WRITEABLE;
+			if (file_event->mask & EG_EVENT_WRITABLE && FD_ISSET(i, &data->_wfds)) {
+				mask |= EG_EVENT_WRITABLE;
 			}
 
 			loop->fired[events].fd = i;

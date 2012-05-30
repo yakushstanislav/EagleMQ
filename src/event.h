@@ -33,7 +33,7 @@
 
 #define EG_EVENT_NONE 0
 #define EG_EVENT_READABLE 1
-#define EG_EVENT_WRITEABLE 2
+#define EG_EVENT_WRITABLE 2
 
 #define EG_EVENT_FILE 1
 #define EG_EVENT_TIME 2

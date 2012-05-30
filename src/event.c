@@ -192,7 +192,7 @@ int create_file_event(EventLoop *loop, int fd, int mask, file_handler *handler, 
 		file_event->read_handler = handler;
 	}
 
-	if (mask & EG_EVENT_WRITEABLE) {
+	if (mask & EG_EVENT_WRITABLE) {
 		file_event->write_handler = handler;
 	}
 
@@ -360,7 +360,7 @@ int process_events(EventLoop *loop, int flags)
 				file_event->read_handler(loop, fd, file_event->data, mask);
 			}
 
-			if (file_event->mask & mask & EG_EVENT_WRITEABLE) {
+			if (file_event->mask & mask & EG_EVENT_WRITABLE) {
 				if (!rfired || file_event->write_handler != file_event->read_handler) {
 					file_event->write_handler(loop, fd, file_event->data, mask);
 				}
@@ -393,7 +393,7 @@ int wait(int fd, int mask, long long milliseconds)
 		FD_SET(fd, &rfds);
 	}
 
-	if (mask & EG_EVENT_WRITEABLE) {
+	if (mask & EG_EVENT_WRITABLE) {
 		FD_SET(fd, &wfds);
 	}
 
@@ -404,7 +404,7 @@ int wait(int fd, int mask, long long milliseconds)
 		}
 
 		if (FD_ISSET(fd, &wfds)) {
-			retmask |= EG_EVENT_WRITEABLE;
+			retmask |= EG_EVENT_WRITABLE;
 		}
 
 		return retmask;
