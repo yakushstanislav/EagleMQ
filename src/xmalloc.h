@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012, Yakush Stanislav(st.yakush@yandex.ru)
+   Copyright (c) 2012, Stanislav Yakush(st.yakush@yandex.ru)
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
