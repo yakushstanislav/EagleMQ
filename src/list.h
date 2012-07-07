@@ -25,6 +25,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* Taken from Redis */
+
 #ifndef __LIST_LIB_H__
 #define __LIST_LIB_H__
 

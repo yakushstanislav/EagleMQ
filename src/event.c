@@ -25,6 +25,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* Taken from Redis */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

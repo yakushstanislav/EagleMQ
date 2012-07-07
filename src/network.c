@@ -25,6 +25,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* Taken from Redis */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
