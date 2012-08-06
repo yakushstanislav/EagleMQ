@@ -272,7 +272,7 @@ void usage(void)
 		"-name - administrator name(default: %s)\n"
 		"-password <password> - administrator password(default: %s)\n"
 		"--version or -v - output version and exit\n"
-		"--usage or --help - output this help and exit\n",
+		"-h or --help - output this help and exit\n",
 			EAGLE_VERSION, EG_DEFAULT_ADDR, EG_DEFAULT_PORT, EG_DEFAULT_LOG_PATH,
 			EG_DEFAULT_MAX_CLIENTS, EG_DEFAULT_TIMEOUT,
 			EG_DEFAULT_ADMIN_NAME, EG_DEFAULT_ADMIN_PASSWORD);
@@ -311,7 +311,7 @@ void parse_args(int argc, char *argv[])
 		} else if (!strcmp(argv[i], "--version") || !strcmp(argv[i], "-v")) {
 			info("EagleMQ %s", EAGLE_VERSION);
 			exit(0);
-		} else if (!strcmp(argv[i], "--usage") || !strcmp(argv[i], "--help")) {
+		} else if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
 			usage();
 			exit(0);
 		} else {
