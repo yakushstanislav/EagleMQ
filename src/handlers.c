@@ -164,7 +164,7 @@ static void stat_command_handler(EagleClient *client)
 
 	stat->body.version.major = EAGLE_VERSION_MAJOR;
 	stat->body.version.minor = EAGLE_VERSION_MINOR;
-	stat->body.version.path = EAGLE_VERSION_PATH;
+	stat->body.version.patch = EAGLE_VERSION_PATCH;
 
 	stat->body.uptime = time(NULL) - server->start_time;
 	stat->body.used_cpu_sys = (float)self_ru.ru_stime.tv_sec + (float)self_ru.ru_stime.tv_usec/1000000;
