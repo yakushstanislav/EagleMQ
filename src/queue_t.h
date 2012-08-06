@@ -35,7 +35,7 @@
 #include "list.h"
 #include "object.h"
 
-#define EG_QUEUE_AUTODELETE_BIT 0
+#define EG_QUEUE_AUTODELETE_FLAG 0
 
 #define EG_QUEUE_ASYNC_GET_FLAG 0
 #define EG_QUEUE_ASYNC_POP_FLAG 1
