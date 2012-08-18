@@ -268,10 +268,10 @@ void usage(void)
 		"-l <log> - path to log file(default: %s)\n"
 		"-m <max> - maximum connections on the server(default: %d)\n"
 		"-t <timeout> - timeout for not active connections(default: %d sec)\n"
-		"-pid - path to PID of server\n"
-		"-name - administrator name(default: %s)\n"
+		"-pid <path to the PID file> - path to the PID file of server\n"
+		"-name <name> - administrator name(default: %s)\n"
 		"-password <password> - administrator password(default: %s)\n"
-		"--version or -v - output version and exit\n"
+		"--v or --version - output version and exit\n"
 		"-h or --help - output this help and exit\n",
 			EAGLE_VERSION, EG_DEFAULT_ADDR, EG_DEFAULT_PORT, EG_DEFAULT_LOG_PATH,
 			EG_DEFAULT_MAX_CLIENTS, EG_DEFAULT_TIMEOUT,
@@ -308,7 +308,7 @@ void parse_args(int argc, char *argv[])
 		} else if (!strcmp(argv[i], "-password") && !last_arg) {
 			if (strlen(argv[i + 1]) > 32) fatal("Error password length");
 			password = argv[i + 1];
-		} else if (!strcmp(argv[i], "--version") || !strcmp(argv[i], "-v")) {
+		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version")) {
 			info("EagleMQ %s", EAGLE_VERSION);
 			exit(0);
 		} else if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
