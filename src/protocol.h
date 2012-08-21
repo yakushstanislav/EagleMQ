@@ -108,6 +108,8 @@ typedef enum ProtocolResponseStatus {
 	EG_PROTOCOL_ERROR_QUEUE_DELETE = 0x71
 } ProtocolResponseStatus;
 
+#pragma pack(push, 1)
+
 typedef struct ProtocolRequestHeader {
 	uint16_t magic;
 	uint8_t cmd;
@@ -251,7 +253,6 @@ typedef struct ProtocolResponseStat {
 			uint8_t major;
 			uint8_t minor;
 			uint8_t patch;
-			uint8_t reserved;
 		} version;
 		uint32_t uptime;
 		float used_cpu_sys;
@@ -277,5 +278,7 @@ typedef struct ProtocolResponseQueueSize {
 		uint32_t size;
 	} body;
 } ProtocolResponseQueueSize;
+
+#pragma pack(pop)
 
 #endif
