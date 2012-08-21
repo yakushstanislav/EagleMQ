@@ -131,7 +131,7 @@ static void ping_command_handler(EagleClient *client)
 		return;
 	}
 
-	add_status_response(client, req->cmd, EG_PROTOCOL_SUCCESS);
+	add_status_response(client, req->cmd, EG_PROTOCOL_SUCCESS_PING);
 }
 
 static void stat_command_handler(EagleClient *client)
@@ -159,7 +159,7 @@ static void stat_command_handler(EagleClient *client)
 
 	stat->header.magic = EG_PROTOCOL_RES;
 	stat->header.cmd = req->cmd;
-	stat->header.status = EG_PROTOCOL_SUCCESS;
+	stat->header.status = EG_PROTOCOL_SUCCESS_STAT;
 	stat->header.bodylen = sizeof(stat->body);
 
 	stat->body.version.major = EAGLE_VERSION_MAJOR;
