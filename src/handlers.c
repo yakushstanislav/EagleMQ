@@ -246,7 +246,7 @@ static void user_list_command_handler(EagleClient *client)
 	res.magic = EG_PROTOCOL_RES;
 	res.cmd = req->cmd;
 	res.status = EG_PROTOCOL_SUCCESS_USER_LIST;
-	res.bodylen = EG_LIST_LENGTH(server->users) * (32 + sizeof(uint64_t));
+	res.bodylen = EG_LIST_LENGTH(server->users) * (64 + sizeof(uint64_t));
 
 	list = (char*)xmalloc(sizeof(res) + res.bodylen);
 
@@ -259,8 +259,9 @@ static void user_list_command_handler(EagleClient *client)
 	{
 		user = EG_LIST_NODE_VALUE(node);
 		memcpy(list + i, user->name, 32);
-		memcpy(list + i + 32, &user->perm, sizeof(uint64_t));
-		i += 32 + sizeof(uint64_t);
+		memcpy(list + i + 32, user->password, 32);
+		memcpy(list + i + 64, &user->perm, sizeof(uint64_t));
+		i += 64 + sizeof(uint64_t);
 	}
 
 	add_response(client, list, sizeof(res) + res.bodylen);
