@@ -30,6 +30,24 @@
 #ifndef __LIST_LIB_H__
 #define __LIST_LIB_H__
 
+#define EG_START_HEAD 0
+#define EG_START_TAIL 1
+
+#define EG_LIST_LENGTH(l) ((l)->len)
+#define EG_LIST_FIRST(l) ((l)->head)
+#define EG_LIST_LAST(l) ((l)->tail)
+#define EG_LIST_PREV_NODE(n) ((n)->prev)
+#define EG_LIST_NEXT_NODE(n) ((n)->next)
+#define EG_LIST_NODE_VALUE(n) ((n)->value)
+
+#define EG_LIST_SET_DUP_METHOD(l, m) ((l)->dup = (m))
+#define EG_LIST_SET_FREE_METHOD(l, m) ((l)->free = (m))
+#define EG_LIST_SET_MATCH_METHOD(l, m) ((l)->match = (m))
+
+#define EG_LIST_GET_DUP_METHOD(l) ((l)->dup)
+#define EG_LIST_GET_FREE_METHOD(l) ((l)->free)
+#define EG_LIST_GET_MATCH_METHOD(l) ((l)->match)
+
 typedef struct ListNode {
 	struct ListNode *prev;
 	struct ListNode *next;
@@ -50,21 +68,6 @@ typedef struct List {
 	unsigned int len;
 } List;
 
-#define EG_LIST_LENGTH(l) ((l)->len)
-#define EG_LIST_FIRST(l) ((l)->head)
-#define EG_LIST_LAST(l) ((l)->tail)
-#define EG_LIST_PREV_NODE(n) ((n)->prev)
-#define EG_LIST_NEXT_NODE(n) ((n)->next)
-#define EG_LIST_NODE_VALUE(n) ((n)->value)
-
-#define EG_LIST_SET_DUP_METHOD(l, m) ((l)->dup = (m))
-#define EG_LIST_SET_FREE_METHOD(l, m) ((l)->free = (m))
-#define EG_LIST_SET_MATCH_METHOD(l, m) ((l)->match = (m))
-
-#define EG_LIST_GET_DUP_METHOD(l) ((l)->dup)
-#define EG_LIST_GET_FREE_METHOD(l) ((l)->free)
-#define EG_LIST_GET_MATCH_METHOD(l) ((l)->match)
-
 List *list_create(void);
 void list_release(List *list);
 List *list_add_value_head(List *list, void *value);
@@ -77,8 +80,5 @@ void list_release_iterator(ListIterator *iter);
 ListNode *list_next_node(ListIterator *iter);
 ListNode *list_search_node(List *list, void *value);
 void list_rewind(List *list, ListIterator *iter);
-
-#define EG_START_HEAD 0
-#define EG_START_TAIL 1
 
 #endif
