@@ -32,6 +32,11 @@
 
 #define MESSAGE_BUFFER_SIZE 256
 
+#define TO_LOWER(c) (unsigned char)(c | 0x20)
+#define IS_ALPHA(c) (TO_LOWER(c) >= 'a' && TO_LOWER(c) <= 'z')
+#define IS_NUM(c) ((c) >= '0' && (c) <= '9')
+#define IS_ALPHANUM(c) (IS_ALPHA(c) || IS_NUM(c))
+
 typedef enum { WARNING_LEVEL, INFO_LEVEL, FATAL_LEVEL } message_level;
 
 void enable_log(const char *logfile);
