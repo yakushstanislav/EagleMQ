@@ -29,6 +29,7 @@
 #define __UTILS_LIB_H__
 
 #include <stdarg.h>
+#include <stdint.h>
 
 #define MESSAGE_BUFFER_SIZE 256
 
@@ -36,6 +37,7 @@
 #define IS_ALPHA(c) (TO_LOWER(c) >= 'a' && TO_LOWER(c) <= 'z')
 #define IS_NUM(c) ((c) >= '0' && (c) <= '9')
 #define IS_ALPHANUM(c) (IS_ALPHA(c) || IS_NUM(c))
+#define IS_EXTRA(c) ((c) == '_' || (c) == '-' || (c) == '.')
 
 typedef enum { WARNING_LEVEL, INFO_LEVEL, FATAL_LEVEL } message_level;
 
@@ -44,5 +46,7 @@ void disable_log();
 void warning(const char *fmt,...);
 void info(const char *fmt,...);
 void fatal(const char *fmt,...);
+
+int check_buffer_string(char *buffer, size_t size);
 
 #endif

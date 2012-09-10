@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
@@ -109,4 +110,48 @@ void fatal(const char *fmt,...)
 	va_end(args);
 
 	exit(EG_STATUS_ERR);
+}
+
+int check_buffer_string(char *buffer, size_t size)
+{
+	char *ptr = buffer, *end_ptr = buffer + size;
+	int length = 0;
+	int extra = 0;
+
+	while (ptr < end_ptr) {
+		if (*++ptr == '\0') {
+			length = ptr - buffer;
+			break;
+		}
+	}
+
+	if (!length) {
+		return 0;
+	}
+
+	if (!IS_ALPHA(*buffer) && *buffer != '_' && *buffer != '.') {
+		return 0;
+	}
+
+	if (*buffer == '_' || *buffer == '.') {
+		extra = 1;
+	}
+
+	for (ptr = buffer + 1; ptr < (buffer + length - 1); ptr++)
+	{
+		if (IS_EXTRA(*ptr) && extra) {
+			return 0;
+		}
+
+		if (!IS_ALPHANUM(*ptr) && !IS_EXTRA(*ptr)) {
+			return 0;
+		}
+
+		extra = 0;
+		if (IS_EXTRA(*ptr)) {
+			extra = 1;
+		}
+	}
+
+	return length;
 }
