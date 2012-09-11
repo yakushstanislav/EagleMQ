@@ -169,7 +169,7 @@ size_t xmalloc_memory_rss(void)
 	p = buf;
 	count = 23;
 	while (p && count--) {
-		p = strchr(p,' ');
+		p = strchr(p, ' ');
 		if (p) p++;
 	}
 
