@@ -1079,13 +1079,16 @@ void client_timeout(void)
 	ListNode *node;
 	ListIterator iterator;
 
-	list_rewind(server->clients, &iterator);
-	while ((node = list_next_node(&iterator)) != NULL)
+	if (server->timeout)
 	{
-		client = EG_LIST_NODE_VALUE(node);
+		list_rewind(server->clients, &iterator);
+		while ((node = list_next_node(&iterator)) != NULL)
+		{
+			client = EG_LIST_NODE_VALUE(node);
 
-		if ((server->now_time - client->last_action) > server->timeout) {
-			free_client(client);
+			if ((server->now_time - client->last_action) > server->timeout) {
+				free_client(client);
+			}
 		}
 	}
 }
