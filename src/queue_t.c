@@ -110,7 +110,7 @@ Queue_t *find_queue_t(List *list, const char *name)
 	while ((node = list_next_node(&iterator)) != NULL)
 	{
 		queue_t = EG_LIST_NODE_VALUE(node);
-		if (!strncmp(queue_t->name, name, 64)) {
+		if (!strcmp(queue_t->name, name)) {
 			return queue_t;
 		}
 	}

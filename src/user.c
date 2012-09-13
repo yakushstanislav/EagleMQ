@@ -40,8 +40,8 @@ EagleUser *create_user(const char *name, const char *password, uint64_t perm)
 {
 	EagleUser *user = (EagleUser*)xmalloc(sizeof(*user));
 
-	memcpy(user->name, name, 32);
-	memcpy(user->password, password, 32);
+	memcpy(user->name, name, strlen(name));
+	memcpy(user->password, password, strlen(password));
 
 	user->perm = perm;
 
@@ -65,11 +65,11 @@ EagleUser *find_user(List *list, const char *name, const char *password)
 		user = EG_LIST_NODE_VALUE(node);
 
 		if (password != NULL) {
-			if (!strncmp(user->name, name, 32) && !strncmp(user->password, password, 32)) {
+			if (!strcmp(user->name, name) && !strcmp(user->password, password)) {
 				return user;
 			}
 		} else {
-			if (!strncmp(user->name, name, 32)) {
+			if (!strcmp(user->name, name)) {
 				return user;
 			}
 		}
@@ -80,7 +80,7 @@ EagleUser *find_user(List *list, const char *name, const char *password)
 
 void rename_user(EagleUser *user, const char *name)
 {
-	memcpy(user->name, name, 32);
+	memcpy(user->name, name, strlen(name));
 }
 
 void set_user_perm(EagleUser *user, uint64_t perm)
