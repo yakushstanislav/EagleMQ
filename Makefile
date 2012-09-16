@@ -6,3 +6,5 @@ run:
 
 clean:
 	cd src && $(MAKE) $@
+
+.PHONY: all run clean

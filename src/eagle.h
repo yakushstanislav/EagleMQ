@@ -63,10 +63,10 @@ typedef struct EagleClient
 	uint64_t perm;
 	char *request;
 	size_t length;
-	unsigned int pos;
+	size_t pos;
 	int offset;
 	char *buffer;
-	unsigned int bodylen;
+	size_t bodylen;
 	size_t nread;
 	List *responses;
 	List *declared_queues;
