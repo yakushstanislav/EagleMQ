@@ -62,16 +62,16 @@ typedef struct EagleClient
 	int fd;
 	uint64_t perm;
 	char *request;
-	int length;
-	int pos;
+	size_t length;
+	unsigned int pos;
 	int offset;
 	char *buffer;
 	unsigned int bodylen;
-	ssize_t nread;
+	size_t nread;
 	List *responses;
 	List *declared_queues;
 	List *subscribed_queues;
-	int sentlen;
+	size_t sentlen;
 	time_t last_action;
 } EagleClient;
 
@@ -84,7 +84,7 @@ typedef struct EagleServer
 	int port;
 	char *unix_socket;
 	mode_t unix_perm;
-	int max_clients;
+	size_t max_clients;
 	int timeout;
 	char error[NET_ERR_LEN];
 	List *clients;

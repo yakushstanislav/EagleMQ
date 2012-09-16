@@ -131,8 +131,8 @@ typedef struct ProtocolResponseHeader {
 typedef struct ProtocolRequestAuth {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[32];
-		int8_t password[32];
+		char name[32];
+		char password[32];
 	} body;
 } ProtocolRequestAuth;
 
@@ -143,8 +143,8 @@ typedef ProtocolRequestHeader ProtocolRequestDisconnect;
 typedef struct ProtocolRequestUserCreate {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[32];
-		int8_t password[32];
+		char name[32];
+		char password[32];
 		uint64_t perm;
 	} body;
 } ProtocolRequestUserCreate;
@@ -154,15 +154,15 @@ typedef ProtocolRequestHeader ProtocolRequestUserList;
 typedef struct ProtocolRequestUserRename {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t from[32];
-		int8_t to[32];
+		char from[32];
+		char to[32];
 	} body;
 } ProtocolRequestUserRename;
 
 typedef struct ProtocolRequestUserSetPerm {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[32];
+		char name[32];
 		uint64_t perm;
 	} body;
 } ProtocolRequestUserSetPerm;
@@ -170,14 +170,14 @@ typedef struct ProtocolRequestUserSetPerm {
 typedef struct ProtocolRequestUserDelete {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[32];
+		char name[32];
 	} body;
 } ProtocolRequestUserDelete;
 
 typedef struct ProtocolRequestQueueCreate {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[64];
+		char name[64];
 		uint32_t max_msg;
 		uint32_t max_msg_size;
 		uint32_t flags;
@@ -187,14 +187,14 @@ typedef struct ProtocolRequestQueueCreate {
 typedef struct ProtocolRequestQueueDeclare {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[64];
+		char name[64];
 	} body;
 } ProtocolRequestQueueDeclare;
 
 typedef struct ProtocolRequestQueueExist {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[64];
+		char name[64];
 	} body;
 } ProtocolRequestQueueExist;
 
@@ -203,28 +203,28 @@ typedef ProtocolRequestHeader ProtocolRequestQueueList;
 typedef struct ProtocolRequestQueueSize {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[64];
+		char name[64];
 	} body;
 } ProtocolRequestQueueSize;
 
 typedef struct ProtocolRequestQueueGet {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[64];
+		char name[64];
 	} body;
 } ProtocolRequestQueueGet;
 
 typedef struct ProtocolRequestQueuePop {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[64];
+		char name[64];
 	} body;
 } ProtocolRequestQueuePop;
 
 typedef struct ProtocolRequestQueueSubscribe {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[64];
+		char name[64];
 		uint32_t flags;
 	} body;
 } ProtocolRequestQueueSubscribe;
@@ -232,21 +232,21 @@ typedef struct ProtocolRequestQueueSubscribe {
 typedef struct ProtocolRequestQueueUnsubscribe {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[64];
+		char name[64];
 	} body;
 } ProtocolRequestQueueUnsubscribe;
 
 typedef struct ProtocolRequestQueuePurge {
 	ProtocolRequestHeader header;
 	struct {
-		int8_t name[64];
+		char name[64];
 	} body;
 } ProtocolRequestQueuePurge;
 
 typedef struct ProtocolRequestQueueDelete {
 	ProtocolRequestHeader header;
 	struct {
-		uint8_t name[64];
+		char name[64];
 	} body;
 } ProtocolRequestQueueDelete;
 

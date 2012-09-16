@@ -27,6 +27,10 @@
 
 /* Taken from Redis */
 
+#include "fmacros.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -42,6 +46,7 @@
 #include <stdarg.h>
 
 #include "network.h"
+#include "utils.h"
 
 static void net_set_error(char *err, const char *fmt,...)
 {

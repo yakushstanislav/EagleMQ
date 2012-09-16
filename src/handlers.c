@@ -28,9 +28,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <errno.h>
+#include <time.h>
 
 #include "eagle.h"
 #include "handlers.h"
@@ -45,6 +47,7 @@
 #include "xmalloc.h"
 #include "utils.h"
 
+static int set_write_event(EagleClient *client);
 static void add_response(EagleClient *client, void *data, int size);
 static void add_status_response(EagleClient *client, int cmd, int status);
 static void accept_common_handler(int fd);
@@ -813,7 +816,7 @@ static void add_status_response(EagleClient *client, int cmd, int status)
 	add_response(client, res, sizeof(*res));
 }
 
-static void inline switch_command(EagleClient *client, int cmd)
+static inline void switch_command(EagleClient *client, int cmd)
 {
 	switch (cmd)
 	{
@@ -928,7 +931,7 @@ process:
 			return;
 		}
 
-		if (req->bodylen > EG_MAX_BUF_SIZE || req->bodylen < 0) {
+		if (req->bodylen > EG_MAX_BUF_SIZE) {
 			add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
 			return;
 		}
@@ -940,19 +943,19 @@ process:
 
 		int delta = client->nread - sizeof(*req);
 
-		if (delta == req->bodylen)
+		if (delta == (int)req->bodylen)
 		{
 			client->pos = client->nread;
 			memcpy(client->request, client->buffer + client->offset, client->nread);
 		}
-		else if (delta < req->bodylen)
+		else if (delta < (int)req->bodylen)
 		{
 			client->bodylen = req->bodylen - (client->nread - sizeof(*req));
 			client->pos = client->nread;
 			memcpy(client->request, client->buffer + client->offset, client->nread);
 			return;
 		}
-		else if (delta > req->bodylen)
+		else if (delta > (int)req->bodylen)
 		{
 			client->pos = req->bodylen + sizeof(*req);
 			memcpy(client->request, client->buffer + client->offset, client->pos);
@@ -1028,6 +1031,7 @@ static void send_response(EventLoop *loop, int fd, void *data, int mask)
 	Object *object;
 	int nwritten = 0, totwritten = 0;
 
+	EG_NOTUSED(loop);
 	EG_NOTUSED(mask);
 
 	while (EG_LIST_LENGTH(client->responses))
@@ -1039,7 +1043,7 @@ static void send_response(EventLoop *loop, int fd, void *data, int mask)
 			continue;
 		}
 
-		nwritten = write(fd, object->data + client->sentlen, OBJECT_SIZE(object) - client->sentlen);
+		nwritten = write(fd, ((char*)object->data) + client->sentlen, OBJECT_SIZE(object) - client->sentlen);
 		if (nwritten <= 0) {
 			break;
 		}
@@ -1093,7 +1097,7 @@ void client_timeout(void)
 	}
 }
 
-int set_write_event(EagleClient *client)
+static int set_write_event(EagleClient *client)
 {
 	if (client->fd <= 0) {
 		return EG_STATUS_ERR;

@@ -33,8 +33,8 @@
 typedef struct Object
 {
 	void *data;
-	int size;
-	int refcount;
+	unsigned int size;
+	unsigned int refcount;
 } Object;
 
 #define OBJECT_SIZE(x) ((x)->size)

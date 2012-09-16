@@ -1,47 +1,23 @@
-all: EagleMQ
+EAGLEMQ_BIN=eaglemq
+EAGLEMQ_CFLAGS=-std=c99 -pedantic -Wall -W -O3
+EAGLEMQ_LDFLAGS=-lpthread
+EAGLEMQ_OBJ=eagle.o event.o network.o xmalloc.o utils.o object.o handlers.o list.o queue.o user.o queue_t.o
 
-CFLAGS?=-std=c99 -pedantic -Wall -W -O3
-CCLINK?=-lpthread
-OBJ=eagle.o event.o network.o xmalloc.o utils.o object.o handlers.o list.o queue.o user.o queue_t.o
+all: $(EAGLEMQ_BIN)
 
-EagleMQ: $(OBJ)
-	gcc $(OBJ) -o eaglemq $(CFLAGS) $(CCLINK)
+$(EAGLEMQ_BIN): $(EAGLEMQ_OBJ)
+	gcc -o $@ $^ $(EAGLEMQ_LDFLAGS)
 
-eagle.o: eagle.c
-	gcc -c eagle.c
+%.o: %.c
+	gcc -c $< $(EAGLEMQ_CFLAGS)
 
-event.o: event.c
-	gcc -c event.c
-
-network.o: network.c
-	gcc -c network.c
-
-xmalloc.o: xmalloc.c
-	gcc -c xmalloc.c
-
-utils.o: utils.c
-	gcc -c utils.c
-
-object.o: object.c
-	gcc -c object.c
-
-handlers.o: handlers.c
-	gcc -c handlers.c
-
-list.o: list.c
-	gcc -c list.c
-
-queue.o: queue.c
-	gcc -c queue.c
-
-user.o: user.c
-	gcc -c user.c
-
-queue_t.o: queue_t.c
-	gcc -c queue_t.c
+dep:
+	gcc -MM *.c > Makefile.dep
 
 run:
-	./eaglemq
+	./$(EAGLEMQ_BIN)
 
 clean:
-	rm -rf *o eaglemq
+	rm -rf *o $(EAGLEMQ_BIN)
+
+.PHONY: all dep run clean
