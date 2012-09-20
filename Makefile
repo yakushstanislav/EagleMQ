@@ -4,6 +4,12 @@ all:
 run:
 	cd src && $(MAKE) $@
 
+install:
+	cd src && $(MAKE) $@
+
+uninstall:
+	cd src && $(MAKE) $@
+
 clean:
 	cd src && $(MAKE) $@
 
