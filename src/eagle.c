@@ -46,6 +46,7 @@
 #include <float.h>
 
 #include "eagle.h"
+#include "logo.h"
 #include "version.h"
 #include "xmalloc.h"
 #include "handlers.h"
@@ -147,6 +148,9 @@ void sigterm_handler(int sig)
 void setup_signals(void)
 {
 	struct sigaction sig;
+
+	signal(SIGHUP, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
 
 	sigemptyset(&sig.sa_mask);
 	sig.sa_flags = SA_NODEFER | SA_ONSTACK | SA_RESETHAND;
@@ -258,6 +262,11 @@ void init_server_config(void)
 	EG_LIST_SET_FREE_METHOD(server->queues, free_queue_list_handler);
 }
 
+void show_logo(void)
+{
+	printf(ascii_logo, EAGLE_VERSION, server->addr, server->port);
+}
+
 void usage(void)
 {
 	printf(
@@ -324,14 +333,13 @@ void parse_args(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGPIPE, SIG_IGN);
-
-	xmalloc_state_lock_on();
 	setup_signals();
+	xmalloc_state_lock_on();
 
 	init_server_config();
 	parse_args(argc, argv);
+
+	show_logo();
 
 	init_server();
 	init_admin();
