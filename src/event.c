@@ -62,7 +62,7 @@ static void add_milliseconds_to_now(long long milliseconds, long *sec, long *ms)
 	when_ms = cur_ms + milliseconds % 1000;
 
 	if (when_ms >= 1000) {
-		when_sec ++;
+		when_sec++;
 		when_ms -= 1000;
 	}
 
@@ -72,7 +72,7 @@ static void add_milliseconds_to_now(long long milliseconds, long *sec, long *ms)
 
 static TimeEvent *search_nearest_timer(EventLoop *loop)
 {
-	TimeEvent *time_event = loop->time_ev;
+	TimeEvent *time_event = loop->time_event;
 	TimeEvent *nearest = NULL;
 
 	while (time_event)
@@ -91,14 +91,11 @@ static TimeEvent *search_nearest_timer(EventLoop *loop)
 static int process_time_events(EventLoop *loop)
 {
 	int processed = 0;
-	TimeEvent *time_event;
-	long long max_id;
+	TimeEvent *time_event = loop->time_event;
+	long long max_id = loop->time_event_id - 1;
 	long sec, ms;
 	long long id;
 	int retval;
-
-	time_event = loop->time_ev;
-	max_id = loop->time_event_id - 1;
 
 	while (time_event)
 	{
@@ -121,7 +118,7 @@ static int process_time_events(EventLoop *loop)
 				delete_time_event(loop, id);
 			}
 
-			time_event = loop->time_ev;
+			time_event = loop->time_event;
 		} else {
 			time_event = time_event->next;
 		}
@@ -143,7 +140,7 @@ EventLoop *create_event_loop(int size)
 	loop->maxfd = -1;
 	loop->size = size;
 	loop->time_event_id = 0;
-	loop->time_ev = NULL;
+	loop->time_event = NULL;
 	loop->stop = 0;
 	loop->before_sleep_handler = NULL;
 
@@ -249,12 +246,11 @@ int get_file_events(EventLoop *loop, int fd)
 	return file_event->mask;
 }
 
-long long create_time_event(EventLoop *loop, long long milliseconds, time_handler *time_handler, finalizer_handler *finalizer_handler, void *data)
+long long create_time_event(EventLoop *loop, long long milliseconds, time_handler *time_handler,
+	finalizer_handler *finalizer_handler, void *data)
 {
+	TimeEvent *time_event = (TimeEvent*)xmalloc(sizeof(*time_event));
 	long long id = loop->time_event_id++;
-	TimeEvent *time_event;
-
-	time_event = (TimeEvent*)xmalloc(sizeof(*time_event));
 
 	time_event->id = id;
 
@@ -263,25 +259,23 @@ long long create_time_event(EventLoop *loop, long long milliseconds, time_handle
 	time_event->time_handler = time_handler;
 	time_event->finalizer_handler = finalizer_handler;
 	time_event->data = data;
-	time_event->next = loop->time_ev;
+	time_event->next = loop->time_event;
 
-	loop->time_ev = time_event;
+	loop->time_event = time_event;
 
 	return id;
 }
 
 int delete_time_event(EventLoop *loop, long long id)
 {
-	TimeEvent *time_event, *prev = NULL;
-
-	time_event = loop->time_ev;
+	TimeEvent *time_event = loop->time_event, *prev = NULL;
 
 	while (time_event)
 	{
 		if (time_event->id == id)
 		{
 			if (prev == NULL) {
-				loop->time_ev = time_event->next;
+				loop->time_event = time_event->next;
 			} else {
 				prev->next = time_event->next;
 			}

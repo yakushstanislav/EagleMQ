@@ -81,7 +81,7 @@ typedef struct EventLoop
 	long long time_event_id;
 	FileEvent *events;
 	FiredEvent *fired;
-	TimeEvent *time_ev;
+	TimeEvent *time_event;
 	int stop;
 	void *api_data;
 	before_sleep_handler *before_sleep_handler;
@@ -93,7 +93,8 @@ void stop_event_loop(EventLoop *loop);
 int create_file_event(EventLoop *loop, int fd, int mask, file_handler *handler, void *data);
 void delete_file_event(EventLoop *loop, int fd, int mask);
 int get_file_events(EventLoop *loop, int fd);
-long long create_time_event(EventLoop *loop, long long milliseconds, time_handler *time_handler, finalizer_handler *finalizer_handler, void *data);
+long long create_time_event(EventLoop *loop, long long milliseconds, time_handler *time_handler,
+	finalizer_handler *finalizer_handler, void *data);
 int delete_time_event(EventLoop *loop, long long id);
 int process_events(EventLoop *loop, int flags);
 void start_main_loop(EventLoop *loop);

@@ -27,10 +27,6 @@
 
 /* Taken from Redis */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <sys/epoll.h>
 
 typedef struct ApiData
@@ -41,14 +37,11 @@ typedef struct ApiData
 
 static int event_api_init(EventLoop *loop)
 {
-	ApiData *data;
-
-	data = (ApiData*)xmalloc(sizeof(*data));
+	ApiData *data = (ApiData*)xmalloc(sizeof(*data));
 
 	data->events = (struct epoll_event*)xmalloc(sizeof(struct epoll_event) * loop->size);
 
 	data->epfd = epoll_create(1024);
-
 	if (data->epfd == -1) {
 		xfree(data->events);
 		xfree(data);
@@ -66,21 +59,16 @@ static void event_api_free(EventLoop *loop)
 
 	close(data->epfd);
 	xfree(data->events);
-	xfree(loop->api_data);
+	xfree(data);
 }
 
 static int event_api_add(EventLoop *loop, int fd, int mask)
 {
-	ApiData *data;
+	ApiData *data = (ApiData*)loop->api_data;
 	struct epoll_event epoll_ev;
-	int op;
-
-	data = (ApiData*)loop->api_data;
-
-	op = loop->events[fd].mask == EG_EVENT_NONE ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
+	int op = loop->events[fd].mask == EG_EVENT_NONE ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
 
 	epoll_ev.events = 0;
-
 	mask |= loop->events[fd].mask;
 
 	if (mask & EG_EVENT_READABLE) {
@@ -103,11 +91,9 @@ static int event_api_add(EventLoop *loop, int fd, int mask)
 
 static void event_api_delete(EventLoop *loop, int fd, int mask)
 {
-	ApiData *data;
+	ApiData *data = (ApiData*)loop->api_data;
 	struct epoll_event epoll_ev;
 	int nmask = loop->events[fd].mask & (~mask);
-
-	data = (ApiData*)loop->api_data;
 
 	epoll_ev.events = 0;
 
@@ -131,13 +117,12 @@ static void event_api_delete(EventLoop *loop, int fd, int mask)
 
 static int event_api_poll(EventLoop *loop, struct timeval *tvp)
 {
-	ApiData *data;
+	ApiData *data = (ApiData*)loop->api_data;
 	struct epoll_event *epoll_ev;
 	int retval, i, mask, events = 0;
 
-	data = (ApiData*)loop->api_data;
-
-	retval = epoll_wait(data->epfd, data->events, loop->size, tvp ? (tvp->tv_sec * 1000 + tvp->tv_usec / 1000) : -1);
+	retval = epoll_wait(data->epfd, data->events, loop->size,
+		tvp ? (tvp->tv_sec * 1000 + tvp->tv_usec / 1000) : -1);
 
 	if (retval > 0)
 	{
@@ -152,6 +137,14 @@ static int event_api_poll(EventLoop *loop, struct timeval *tvp)
 			}
 
 			if (epoll_ev->events & EPOLLOUT) {
+				mask |= EG_EVENT_WRITABLE;
+			}
+
+			if (epoll_ev->events & EPOLLERR) {
+				mask |= EG_EVENT_WRITABLE;
+			}
+
+			if (epoll_ev->events & EPOLLHUP) {
 				mask |= EG_EVENT_WRITABLE;
 			}
 
