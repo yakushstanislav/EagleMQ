@@ -264,7 +264,11 @@ void init_server_config(void)
 
 void show_logo(void)
 {
-	printf(ascii_logo, EAGLE_VERSION, server->addr, server->port);
+	printf(ascii_logo,
+		EAGLE_VERSION,
+		server->addr,
+		server->port,
+		get_event_api_name());
 }
 
 void usage(void)

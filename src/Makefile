@@ -7,6 +7,10 @@ CFLAGS=-std=c99 -pedantic -Wall -O2
 INSTALL_DIR=/usr/local/bin
 INSTALL_CMD=cp -pf
 
+ifeq ($(USE_SELECT),yes)
+	CFLAGS+=-D_EVENT_SELECT_
+endif
+
 all: $(EAGLEMQ_BIN)
 
 $(EAGLEMQ_BIN): $(EAGLEMQ_OBJ)
