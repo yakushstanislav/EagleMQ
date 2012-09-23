@@ -52,7 +52,10 @@
 #define EG_DEFAULT_LOG_PATH "eaglemq.log"
 
 #define EG_BUF_SIZE 32768
-#define EG_MAX_BUF_SIZE 2147483648
+
+#define EG_MAX_BUF_SIZE 2147483647
+#define EG_MAX_MSG_COUNT 4294967295
+#define EG_MAX_MSG_SIZE 2147483647
 
 #define BIT_SET(a, b) ((a) |= (1<<(b)))
 #define BIT_CHECK(a, b) ((a) & (1<<(b)))

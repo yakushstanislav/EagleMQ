@@ -387,13 +387,13 @@ static void queue_create_command_handler(EagleClient *client)
 		return;
 	}
 
-	if (req->body.max_msg_size > EG_MAX_BUF_SIZE) {
+	if (req->body.max_msg_size > EG_MAX_MSG_SIZE) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_CREATE);
 		return;
 	}
 
 	queue_t = create_queue_t(req->body.name, req->body.max_msg,
-		((req->body.max_msg_size == 0) ? EG_MAX_BUF_SIZE : req->body.max_msg_size), req->body.flags);
+		((req->body.max_msg_size == 0) ? EG_MAX_MSG_SIZE : req->body.max_msg_size), req->body.flags);
 
 	EG_QUEUE_SET_DECLARE_METHOD(queue_t, _declare_queue_client);
 	EG_QUEUE_SET_UNDECLARE_METHOD(queue_t, _undeclare_queue_client);
