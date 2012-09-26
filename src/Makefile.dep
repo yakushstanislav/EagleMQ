@@ -1,4 +1,4 @@
-eagle.o: eagle.c fmacros.h eagle.h event.h network.h list.h user.h \
+eagle.o: eagle.c fmacros.h eagle.h event.h network.h list.h user.h logo.h \
  version.h xmalloc.h handlers.h utils.h queue_t.h queue.h object.h
 event.o: event.c xmalloc.h event.h event_epoll.c
 event_epoll.o: event_epoll.c

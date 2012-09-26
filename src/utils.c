@@ -112,7 +112,33 @@ void fatal(const char *fmt,...)
 	exit(EG_STATUS_ERR);
 }
 
-int check_buffer_string(char *buffer, size_t size)
+int check_input_buffer1(char *buffer, size_t size)
+{
+	char *ptr = buffer, *end_ptr = buffer + size;
+	int length = 0;
+
+	while (ptr < end_ptr) {
+		if (*++ptr =='\0') {
+			length = ptr - buffer;
+			break;
+		}
+	}
+
+	if (!length) {
+		return 0;
+	}
+
+	for (ptr = buffer; ptr < (buffer + length); ptr++)
+	{
+		if (!IS_ALPHANUM(*ptr)) {
+			return 0;
+		}
+	}
+
+	return length;
+}
+
+int check_input_buffer2(char *buffer, size_t size)
 {
 	char *ptr = buffer, *end_ptr = buffer + size;
 	int length = 0;

@@ -47,6 +47,7 @@ void warning(const char *fmt,...);
 void info(const char *fmt,...);
 void fatal(const char *fmt,...);
 
-int check_buffer_string(char *buffer, size_t size);
+int check_input_buffer1(char *buffer, size_t size);
+int check_input_buffer2(char *buffer, size_t size);
 
 #endif
