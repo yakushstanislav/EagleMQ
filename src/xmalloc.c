@@ -127,7 +127,7 @@ void *xrealloc(void *ptr, size_t size)
 
 char *xstrdup(const char *str)
 {
-	size_t len = strlen(str) + 1;
+	size_t len = strlenz(str);
 	char *ptr = xmalloc(len);
 
 	memcpy(ptr, str, len);

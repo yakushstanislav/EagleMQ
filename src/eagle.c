@@ -318,10 +318,10 @@ void parse_args(int argc, char *argv[])
 		} else if (!strcmp(argv[i], "-pid") && !last_arg) {
 			server->pidfile = argv[i + 1];
 		} else if (!strcmp(argv[i], "-name") && !last_arg) {
-			if (strlen(argv[i + 1]) > 32) fatal("Error name length");
+			if (strlen(argv[i + 1]) >= 32) fatal("Error name length");
 			name = argv[i + 1];
 		} else if (!strcmp(argv[i], "-password") && !last_arg) {
-			if (strlen(argv[i + 1]) > 32) fatal("Error password length");
+			if (strlen(argv[i + 1]) >= 32) fatal("Error password length");
 			password = argv[i + 1];
 		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version")) {
 			info("EagleMQ %s", EAGLE_VERSION);

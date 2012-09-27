@@ -36,6 +36,7 @@
 #include "xmalloc.h"
 #include "queue.h"
 #include "list.h"
+#include "utils.h"
 
 void free_subscribed_client_handler(void *ptr);
 
@@ -43,7 +44,7 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 {
 	Queue_t *queue_t = (Queue_t*)xmalloc(sizeof(*queue_t));
 
-	memcpy(queue_t->name, name, 64);
+	memcpy(queue_t->name, name, strlenz(name));
 
 	queue_t->max_msg = max_msg;
 	queue_t->max_msg_size = max_msg_size;

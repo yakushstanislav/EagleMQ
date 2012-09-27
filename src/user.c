@@ -33,15 +33,15 @@
 #include "eagle.h"
 #include "user.h"
 #include "xmalloc.h"
-#include "utils.h"
 #include "list.h"
+#include "utils.h"
 
 EagleUser *create_user(const char *name, const char *password, uint64_t perm)
 {
 	EagleUser *user = (EagleUser*)xmalloc(sizeof(*user));
 
-	memcpy(user->name, name, strlen(name));
-	memcpy(user->password, password, strlen(password));
+	memcpy(user->name, name, strlenz(name));
+	memcpy(user->password, password, strlenz(password));
 
 	user->perm = perm;
 
@@ -80,7 +80,7 @@ EagleUser *find_user(List *list, const char *name, const char *password)
 
 void rename_user(EagleUser *user, const char *name)
 {
-	memcpy(user->name, name, strlen(name));
+	memcpy(user->name, name, strlenz(name));
 }
 
 void set_user_perm(EagleUser *user, uint64_t perm)

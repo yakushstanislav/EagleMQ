@@ -39,6 +39,8 @@
 #define IS_ALPHANUM(c) (IS_ALPHA(c) || IS_NUM(c))
 #define IS_EXTRA(c) ((c) == '_' || (c) == '-' || (c) == '.')
 
+#define strlenz(s) (strlen(s) + 1)
+
 typedef enum { WARNING_LEVEL, INFO_LEVEL, FATAL_LEVEL } message_level;
 
 void enable_log(const char *logfile);

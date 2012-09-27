@@ -70,7 +70,7 @@ static int net_listen(char *err, int sock, struct sockaddr *sa, socklen_t len)
 		return EG_NET_ERR;
 	}
 
-	if (listen(sock, 511) == -1) { /* the magic 511 constant is from nginx and redis */
+	if (listen(sock, 511) == -1) { /* the magic 511 constant is from nginx and Redis */
 		net_set_error(err, "listen: %s", strerror(errno));
 		close(sock);
 		return EG_NET_ERR;
