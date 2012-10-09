@@ -210,7 +210,7 @@ void init_server(void)
 		fatal("Error create file event");
 	}
 
-	create_time_event(server->loop, 1, server_updater, NULL, NULL);
+	server->ufd = create_time_event(server->loop, 1, server_updater, NULL, NULL);
 }
 
 void destroy_server()
@@ -241,6 +241,7 @@ void init_server_config(void)
 
 	server->fd = 0;
 	server->sfd = 0;
+	server->ufd = 0;
 	server->addr = EG_DEFAULT_ADDR;
 	server->port = EG_DEFAULT_PORT;
 	server->unix_socket = EG_DEFAULT_UNIX_SOCKET;

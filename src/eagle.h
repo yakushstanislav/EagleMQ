@@ -83,6 +83,7 @@ typedef struct EagleServer
 	EventLoop *loop;
 	int fd;
 	int sfd;
+	long long ufd;
 	char *addr;
 	int port;
 	char *unix_socket;
