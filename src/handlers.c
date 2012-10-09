@@ -507,6 +507,7 @@ static void queue_list_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 	ListNode *node;
 	ListIterator iterator;
+	uint32_t queue_size;
 	char *list;
 	int i;
 
@@ -524,7 +525,7 @@ static void queue_list_command_handler(EagleClient *client)
 	res.magic = EG_PROTOCOL_RES;
 	res.cmd = req->cmd;
 	res.status = EG_PROTOCOL_SUCCESS_QUEUE_LIST;
-	res.bodylen = EG_LIST_LENGTH(server->queues) * (64 + (sizeof(uint32_t) * 3));
+	res.bodylen = EG_LIST_LENGTH(server->queues) * (64 + (sizeof(uint32_t) * 4));
 
 	list = (char*)xmalloc(sizeof(res) + res.bodylen);
 
@@ -540,7 +541,9 @@ static void queue_list_command_handler(EagleClient *client)
 		memcpy(list + i + 64, &queue_t->max_msg, sizeof(uint32_t));
 		memcpy(list + i + 68, &queue_t->max_msg_size, sizeof(uint32_t));
 		memcpy(list + i + 72, &queue_t->flags, sizeof(uint32_t));
-		i += 64 + (sizeof(uint32_t) * 3);
+		queue_size = get_size_queue_t(queue_t);
+		memcpy(list + i + 76, &queue_size, sizeof(uint32_t));
+		i += 64 + (sizeof(uint32_t) * 4);
 	}
 
 	add_response(client, list, sizeof(res) + res.bodylen);
