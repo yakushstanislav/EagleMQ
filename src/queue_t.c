@@ -50,6 +50,17 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 	queue_t->max_msg_size = max_msg_size;
 	queue_t->flags = flags;
 
+	queue_t->auto_delete = 0;
+	queue_t->force_push = 0;
+
+	if (BIT_CHECK(queue_t->flags, EG_QUEUE_AUTODELETE_FLAG)) {
+		queue_t->auto_delete = 1;
+	}
+
+	if (BIT_CHECK(queue_t->flags, EG_QUEUE_FORCE_PUSH_FLAG)) {
+		queue_t->force_push = 1;
+	}
+
 	queue_t->declared_clients = list_create();
 	queue_t->subscribed_clients = list_create();
 	queue_t->queue = queue_create();

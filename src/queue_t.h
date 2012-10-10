@@ -36,6 +36,7 @@
 #include "object.h"
 
 #define EG_QUEUE_AUTODELETE_FLAG 0
+#define EG_QUEUE_FORCE_PUSH_FLAG 1
 
 #define EG_QUEUE_ASYNC_GET_FLAG 0
 #define EG_QUEUE_ASYNC_POP_FLAG 1
@@ -51,6 +52,8 @@ typedef struct Queue_t
 	uint32_t max_msg;
 	uint32_t max_msg_size;
 	uint32_t flags;
+	int auto_delete;
+	int force_push;
 	List *declared_clients;
 	List *subscribed_clients;
 	Queue *queue;
