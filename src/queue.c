@@ -77,10 +77,10 @@ Queue *queue_push_value(Queue *queue, void *value)
 		queue->head = queue->tail = node;
 		node->prev = node->next = NULL;
 	} else {
-		node->prev = queue->tail;
-		node->next = NULL;
-		queue->tail->next = node;
-		queue->tail = node;
+		node->prev = NULL;
+		node->next = queue->head;
+		queue->head->prev = node;
+		queue->head = node;
 	}
 
 	queue->len++;
