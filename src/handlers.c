@@ -509,7 +509,7 @@ static void queue_list_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 	ListNode *node;
 	ListIterator iterator;
-	uint32_t queue_size;
+	uint32_t queue_size, declared_clients, subscribed_clients;
 	char *list;
 	int i;
 
@@ -527,7 +527,7 @@ static void queue_list_command_handler(EagleClient *client)
 	res.magic = EG_PROTOCOL_RES;
 	res.cmd = req->cmd;
 	res.status = EG_PROTOCOL_SUCCESS_QUEUE_LIST;
-	res.bodylen = EG_LIST_LENGTH(server->queues) * (64 + (sizeof(uint32_t) * 4));
+	res.bodylen = EG_LIST_LENGTH(server->queues) * (64 + (sizeof(uint32_t) * 6));
 
 	list = (char*)xmalloc(sizeof(res) + res.bodylen);
 
@@ -539,13 +539,25 @@ static void queue_list_command_handler(EagleClient *client)
 	while ((node = list_next_node(&iterator)) != NULL)
 	{
 		queue_t = EG_LIST_NODE_VALUE(node);
-		memcpy(list + i, queue_t->name, 64);
-		memcpy(list + i + 64, &queue_t->max_msg, sizeof(uint32_t));
-		memcpy(list + i + 68, &queue_t->max_msg_size, sizeof(uint32_t));
-		memcpy(list + i + 72, &queue_t->flags, sizeof(uint32_t));
+
 		queue_size = get_size_queue_t(queue_t);
-		memcpy(list + i + 76, &queue_size, sizeof(uint32_t));
-		i += 64 + (sizeof(uint32_t) * 4);
+		declared_clients = get_declared_clients(queue_t);
+		subscribed_clients = get_subscribed_clients(queue_t);
+
+		memcpy(list + i, queue_t->name, 64);
+		i += 64;
+		memcpy(list + i, &queue_t->max_msg, sizeof(uint32_t));
+		i += sizeof(uint32_t);
+		memcpy(list + i, &queue_t->max_msg_size, sizeof(uint32_t));
+		i += sizeof(uint32_t);
+		memcpy(list + i, &queue_t->flags, sizeof(uint32_t));
+		i += sizeof(uint32_t);
+		memcpy(list + i, &queue_size, sizeof(uint32_t));
+		i += sizeof(uint32_t);
+		memcpy(list + i, &declared_clients, sizeof(uint32_t));
+		i += sizeof(uint32_t);
+		memcpy(list + i, &subscribed_clients, sizeof(uint32_t));
+		i += sizeof(uint32_t);
 	}
 
 	add_response(client, list, sizeof(res) + res.bodylen);
