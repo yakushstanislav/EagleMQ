@@ -130,12 +130,12 @@ Queue_t *find_queue_t(List *list, const char *name)
 	return NULL;
 }
 
-uint32_t get_declared_clients(Queue_t *queue_t)
+uint32_t get_declared_clients_queue_t(Queue_t *queue_t)
 {
 	return EG_LIST_LENGTH(queue_t->declared_clients);
 }
 
-uint32_t get_subscribed_clients(Queue_t *queue_t)
+uint32_t get_subscribed_clients_queue_t(Queue_t *queue_t)
 {
 	return EG_LIST_LENGTH(queue_t->subscribed_clients);
 }

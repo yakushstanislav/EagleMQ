@@ -541,8 +541,8 @@ static void queue_list_command_handler(EagleClient *client)
 		queue_t = EG_LIST_NODE_VALUE(node);
 
 		queue_size = get_size_queue_t(queue_t);
-		declared_clients = get_declared_clients(queue_t);
-		subscribed_clients = get_subscribed_clients(queue_t);
+		declared_clients = get_declared_clients_queue_t(queue_t);
+		subscribed_clients = get_subscribed_clients_queue_t(queue_t);
 
 		memcpy(list + i, queue_t->name, 64);
 		i += 64;
