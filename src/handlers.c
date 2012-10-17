@@ -180,8 +180,6 @@ static void stat_command_handler(EagleClient *client)
 	stat->body.used_memory = xmalloc_used_memory();
 	stat->body.used_memory_rss = xmalloc_memory_rss();
 	stat->body.fragmentation_ratio = xmalloc_fragmentation_ratio();
-	stat->body.rx = server->rx;
-	stat->body.tx = server->tx;
 	stat->body.clients = EG_LIST_LENGTH(server->clients);
 	stat->body.users = EG_LIST_LENGTH(server->users);
 	stat->body.queues = EG_LIST_LENGTH(server->queues);
@@ -1114,7 +1112,6 @@ void read_request(EventLoop *loop, int fd, void *data, int mask)
 	if (nread) {
 		client->nread = nread;
 		client->last_action = time(NULL);
-		server->tx += nread;
 	} else {
 		return;
 	}
@@ -1147,7 +1144,6 @@ static void send_response(EventLoop *loop, int fd, void *data, int mask)
 
 		client->sentlen += nwritten;
 		totwritten += nwritten;
-		server->tx += nwritten;
 
 		if (client->sentlen == OBJECT_SIZE(object)) {
 			list_delete_node(client->responses, EG_LIST_FIRST(client->responses));

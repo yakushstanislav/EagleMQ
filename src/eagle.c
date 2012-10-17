@@ -256,8 +256,6 @@ void init_server_config(void)
 	server->pidfile = EG_DEFAULT_PID_PATH;
 	server->logfile = EG_DEFAULT_LOG_PATH;
 	server->shutdown = 0;
-	server->rx = 0;
-	server->tx = 0;
 
 	EG_LIST_SET_FREE_METHOD(server->users, free_user_list_handler);
 	EG_LIST_SET_FREE_METHOD(server->queues, free_queue_list_handler);

@@ -100,8 +100,6 @@ typedef struct EagleServer
 	char *pidfile;
 	char *logfile;
 	int shutdown;
-	unsigned int rx;
-	unsigned int tx;
 } EagleServer;
 
 extern EagleServer *server;
