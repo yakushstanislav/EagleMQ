@@ -54,20 +54,10 @@ typedef struct Queue_t
 	uint32_t flags;
 	int auto_delete;
 	int force_push;
+	Queue *queue;
 	List *declared_clients;
 	List *subscribed_clients;
-	Queue *queue;
-	void (*declare_client)(void *queue_ptr, void *client_ptr);
-	int (*undeclare_client)(void *queue_ptr, void *client_ptr);
-	void (*subscribe_client)(void *queue_ptr, void *client_ptr, uint32_t flags);
-	int (*unsubscribe_client)(void *queue_ptr, void *client_ptr);
 } Queue_t;
-
-#define EG_QUEUE_SET_DECLARE_METHOD(q, m) ((q)->declare_client = (m))
-#define EG_QUEUE_SET_UNDECLARE_METHOD(q, m) ((q)->undeclare_client = (m))
-
-#define EG_QUEUE_SET_SUBSCRIBE_METHOD(q, m) ((q)->subscribe_client = (m))
-#define EG_QUEUE_SET_UNSUBSCRIBE_METHOD(q, m) ((q)->unsubscribe_client = (m))
 
 Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags);
 void delete_queue_t(Queue_t *queue_t);
@@ -79,10 +69,10 @@ uint32_t get_declared_clients_queue_t(Queue_t *queue_t);
 uint32_t get_subscribed_clients_queue_t(Queue_t *queue_t);
 uint32_t get_size_queue_t(Queue_t *queue_t);
 void purge_queue_t(Queue_t *queue_t);
-void declare_queue_client(Queue_t *queue_t, void *client);
-int undeclare_queue_client(Queue_t *queue_t, void *client);
-void subscribe_queue_client(Queue_t *queue_t, void *client, uint32_t flags);
-int unsubscribe_queue_client(Queue_t *queue_t, void *client);
+void declare_queue_client(Queue_t *queue_t, void *client_ptr);
+void undeclare_queue_client(Queue_t *queue_t, void *client_ptr);
+void subscribe_queue_client(Queue_t *queue_t, void *client_ptr, uint32_t flags);
+void unsubscribe_queue_client(Queue_t *queue_t, void *client_ptr);
 void eject_queue_clients(Queue_t *queue_t);
 void add_queue_list(List *list, Queue_t *queue_t);
 int delete_queue_list(List *list, Queue_t *queue_t);

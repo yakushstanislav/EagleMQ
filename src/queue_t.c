@@ -61,14 +61,9 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 		queue_t->force_push = 1;
 	}
 
+	queue_t->queue = queue_create();
 	queue_t->declared_clients = list_create();
 	queue_t->subscribed_clients = list_create();
-	queue_t->queue = queue_create();
-
-	queue_t->declare_client = NULL;
-	queue_t->undeclare_client = NULL;
-	queue_t->subscribe_client = NULL;
-	queue_t->unsubscribe_client = NULL;
 
 	EG_QUEUE_SET_FREE_METHOD(queue_t->queue, free_object_list_handler);
 	EG_QUEUE_SET_FREE_METHOD(queue_t->subscribed_clients, free_subscribed_client_handler);
@@ -150,41 +145,50 @@ void purge_queue_t(Queue_t *queue_t)
 	queue_purge(queue_t->queue);
 }
 
-void declare_queue_client(Queue_t *queue_t, void *client)
+void declare_queue_client(Queue_t *queue_t, void *client_ptr)
 {
+	EagleClient *client = (EagleClient*)client_ptr;
+
+	add_queue_list(client->declared_queues, queue_t);
 	list_add_value_tail(queue_t->declared_clients, client);
 }
 
-int undeclare_queue_client(Queue_t *queue_t, void *client)
+void undeclare_queue_client(Queue_t *queue_t, void *client_ptr)
 {
-	return list_delete_value(queue_t->declared_clients, client);
+	EagleClient *client = (EagleClient*)client_ptr;
+
+	delete_queue_list(client->declared_queues, queue_t);
+	list_delete_value(queue_t->declared_clients, client);
 }
 
-void subscribe_queue_client(Queue_t *queue_t, void *client, uint32_t flags)
+void subscribe_queue_client(Queue_t *queue_t, void *client_ptr, uint32_t flags)
 {
+	EagleClient *client = (EagleClient*)client_ptr;
 	QueueClient *queue_client = (QueueClient*)xmalloc(sizeof(*queue_client));
 
 	queue_client->client = client;
 	queue_client->flags = flags;
 
+	add_queue_list(client->subscribed_queues, queue_t);
 	list_add_value_tail(queue_t->subscribed_clients, queue_client);
 }
 
-int unsubscribe_queue_client(Queue_t *queue_t, void *client)
+void unsubscribe_queue_client(Queue_t *queue_t, void *client_ptr)
 {
 	ListNode *node;
 	ListIterator iterator;
 	QueueClient *queue_client;
+	EagleClient *client = (EagleClient*)client_ptr;
+
+	delete_queue_list(client->subscribed_queues, queue_t);
 
 	list_rewind(queue_t->subscribed_clients, &iterator);
 	while ((node = list_next_node(&iterator)) != NULL) {
 		queue_client = EG_LIST_NODE_VALUE(node);
 		if (queue_client->client == client) {
-			return list_delete_value(queue_t->subscribed_clients, queue_client);
+			list_delete_value(queue_t->subscribed_clients, queue_client);
 		}
 	}
-
-	return EG_STATUS_ERR;
 }
 
 void eject_queue_clients(Queue_t *queue_t)
@@ -192,18 +196,14 @@ void eject_queue_clients(Queue_t *queue_t)
 	ListNode *node;
 	ListIterator iterator;
 
-	if (queue_t->undeclare_client) {
-		list_rewind(queue_t->declared_clients, &iterator);
-		while ((node = list_next_node(&iterator)) != NULL) {
-			queue_t->undeclare_client(queue_t, EG_LIST_NODE_VALUE(node));
-		}
+	list_rewind(queue_t->declared_clients, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL) {
+		undeclare_queue_client(queue_t, EG_LIST_NODE_VALUE(node));
 	}
 
-	if (queue_t->unsubscribe_client) {
-		list_rewind(queue_t->subscribed_clients, &iterator);
-		while ((node = list_next_node(&iterator)) != NULL) {
-			queue_t->unsubscribe_client(queue_t, EG_LIST_NODE_VALUE(node));
-		}
+	list_rewind(queue_t->subscribed_clients, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL) {
+		unsubscribe_queue_client(queue_t, EG_LIST_NODE_VALUE(node));
 	}
 }
 
