@@ -428,8 +428,6 @@ static void queue_create_command_handler(EagleClient *client)
 	EG_QUEUE_SET_SUBSCRIBE_METHOD(queue_t, _subscribe_queue_client);
 	EG_QUEUE_SET_UNSUBSCRIBE_METHOD(queue_t, _unsubscribe_queue_client);
 
-	queue_t->declare_client(queue_t, client);
-
 	add_queue_list(server->queues, queue_t);
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_CREATE);
