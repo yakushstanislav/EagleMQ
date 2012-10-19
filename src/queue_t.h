@@ -73,6 +73,7 @@ void declare_queue_client(Queue_t *queue_t, void *client_ptr);
 void undeclare_queue_client(Queue_t *queue_t, void *client_ptr);
 void subscribe_queue_client(Queue_t *queue_t, void *client_ptr, uint32_t flags);
 void unsubscribe_queue_client(Queue_t *queue_t, void *client_ptr);
+int process_queue_t(Queue_t *queue_t);
 void eject_queue_clients(Queue_t *queue_t);
 void add_queue_list(List *list, Queue_t *queue_t);
 int delete_queue_list(List *list, Queue_t *queue_t);

@@ -191,6 +191,20 @@ void unsubscribe_queue_client(Queue_t *queue_t, void *client_ptr)
 	}
 }
 
+int process_queue_t(Queue_t *queue_t)
+{
+	if (queue_t->auto_delete) {
+		if (EG_LIST_LENGTH(queue_t->declared_clients) == 0 &&
+			EG_LIST_LENGTH(queue_t->subscribed_clients) == 0) {
+			if (delete_queue_list(server->queues, queue_t) == EG_STATUS_ERR) {
+				return EG_STATUS_ERR;
+			}
+		}
+	}
+
+	return EG_STATUS_OK;
+}
+
 void eject_queue_clients(Queue_t *queue_t)
 {
 	ListNode *node;

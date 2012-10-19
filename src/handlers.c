@@ -52,7 +52,7 @@ static void add_response(EagleClient *client, void *data, int size);
 static void add_status_response(EagleClient *client, int cmd, int status);
 static void accept_common_handler(int fd);
 
-static void _eject_queue_clients(EagleClient *client)
+static void eject_queue_client(EagleClient *client)
 {
 	Queue_t *queue_t;
 	ListNode *node;
@@ -63,6 +63,7 @@ static void _eject_queue_clients(EagleClient *client)
 		queue_t = EG_LIST_NODE_VALUE(node);
 		undeclare_queue_client(queue_t, client);
 		unsubscribe_queue_client(queue_t, client);
+		process_queue_t(queue_t);
 	}
 }
 
@@ -1199,7 +1200,7 @@ void free_client(EagleClient *client)
 	xfree(client->request);
 	xfree(client->buffer);
 
-	_eject_queue_clients(client);
+	eject_queue_client(client);
 
 	list_release(client->responses);
 	list_release(client->declared_queues);
