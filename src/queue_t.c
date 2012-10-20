@@ -85,9 +85,16 @@ void delete_queue_t(Queue_t *queue_t)
 
 int push_value_queue_t(Queue_t *queue_t, Object *value)
 {
-	if (EG_QUEUE_LENGTH(queue_t->queue) >= queue_t->max_msg ||
-		OBJECT_SIZE(value) > queue_t->max_msg_size) {
+	if (OBJECT_SIZE(value) > queue_t->max_msg_size) {
 		return EG_STATUS_ERR;
+	}
+
+	if (EG_QUEUE_LENGTH(queue_t->queue) >= queue_t->max_msg) {
+		if (queue_t->force_push) {
+			pop_value_queue_t(queue_t);
+		} else {
+			return EG_STATUS_ERR;
+		}
 	}
 
 	queue_push_value(queue_t->queue, value);
