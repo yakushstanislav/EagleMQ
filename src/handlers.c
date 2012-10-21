@@ -67,6 +67,14 @@ static void eject_queue_client(EagleClient *client)
 	}
 }
 
+static void set_response_header(ProtocolResponseHeader *header, uint8_t cmd, uint8_t status, uint32_t bodylen)
+{
+	header->magic = EG_PROTOCOL_RES;
+	header->cmd = cmd;
+	header->status = status;
+	header->bodylen = bodylen;
+}
+
 static void auth_command_handler(EagleClient *client)
 {
 	ProtocolRequestAuth *req = (ProtocolRequestAuth*)client->request;
@@ -128,10 +136,7 @@ static void stat_command_handler(EagleClient *client)
 
 	memset(stat, 0, sizeof(*stat));
 
-	stat->header.magic = EG_PROTOCOL_RES;
-	stat->header.cmd = req->cmd;
-	stat->header.status = EG_PROTOCOL_SUCCESS_STAT;
-	stat->header.bodylen = sizeof(stat->body);
+	set_response_header(&stat->header, req->cmd, EG_PROTOCOL_SUCCESS_STAT, sizeof(stat->body));
 
 	stat->body.version.major = EAGLE_VERSION_MAJOR;
 	stat->body.version.minor = EAGLE_VERSION_MINOR;
@@ -217,10 +222,8 @@ static void user_list_command_handler(EagleClient *client)
 		return;
 	}
 
-	res.magic = EG_PROTOCOL_RES;
-	res.cmd = req->cmd;
-	res.status = EG_PROTOCOL_SUCCESS_USER_LIST;
-	res.bodylen = EG_LIST_LENGTH(server->users) * (64 + sizeof(uint64_t));
+	set_response_header(&res, req->cmd, EG_PROTOCOL_SUCCESS_USER_LIST,
+		EG_LIST_LENGTH(server->users) * (64 + sizeof(uint64_t)));
 
 	list = (char*)xmalloc(sizeof(res) + res.bodylen);
 
@@ -478,10 +481,8 @@ static void queue_list_command_handler(EagleClient *client)
 		return;
 	}
 
-	res.magic = EG_PROTOCOL_RES;
-	res.cmd = req->cmd;
-	res.status = EG_PROTOCOL_SUCCESS_QUEUE_LIST;
-	res.bodylen = EG_LIST_LENGTH(server->queues) * (64 + (sizeof(uint32_t) * 6));
+	set_response_header(&res, req->cmd, EG_PROTOCOL_SUCCESS_QUEUE_LIST,
+		EG_LIST_LENGTH(server->queues) * (64 + (sizeof(uint32_t) * 6)));
 
 	list = (char*)xmalloc(sizeof(res) + res.bodylen);
 
@@ -547,10 +548,7 @@ static void queue_size_command_handler(EagleClient *client)
 
 	res = (ProtocolResponseQueueSize*)xmalloc(sizeof(*res));
 
-	res->header.magic = EG_PROTOCOL_RES;
-	res->header.cmd = req->header.cmd;
-	res->header.status = EG_PROTOCOL_SUCCESS_QUEUE_SIZE;
-	res->header.bodylen = sizeof(res->body);
+	set_response_header(&res->header, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_SIZE, sizeof(res->body));
 
 	res->body.size = get_size_queue_t(queue_t);
 
@@ -638,10 +636,7 @@ static void queue_get_command_handler(EagleClient *client)
 		return;
 	}
 
-	res.magic = EG_PROTOCOL_RES;
-	res.cmd = req->header.cmd;
-	res.status = EG_PROTOCOL_SUCCESS_QUEUE_GET;
-	res.bodylen = OBJECT_SIZE(object);
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_GET, OBJECT_SIZE(object));
 
 	buffer = (char*)xmalloc(sizeof(res) + OBJECT_SIZE(object));
 
@@ -687,10 +682,7 @@ static void queue_pop_command_handler(EagleClient *client)
 		return;
 	}
 
-	res.magic = EG_PROTOCOL_RES;
-	res.cmd = req->header.cmd;
-	res.status = EG_PROTOCOL_SUCCESS_QUEUE_POP;
-	res.bodylen = OBJECT_SIZE(object);
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_POP, OBJECT_SIZE(object));
 
 	buffer = (char*)xmalloc(sizeof(res) + OBJECT_SIZE(object));
 
