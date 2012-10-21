@@ -32,7 +32,8 @@
 
 typedef enum ProtocolBinaryMagic {
 	EG_PROTOCOL_REQ = 0x70,
-	EG_PROTOCOL_RES = 0x80
+	EG_PROTOCOL_RES = 0x80,
+	EG_PROTOCOL_EVENT = 0x90
 } ProtocolBinaryMagic;
 
 typedef enum ProtocolCommand {
@@ -127,6 +128,13 @@ typedef struct ProtocolResponseHeader {
 	uint8_t status;
 	uint32_t bodylen;
 } ProtocolResponseHeader;
+
+typedef struct ProtocolEventHeader {
+	uint16_t magic;
+	uint8_t cmd;
+	uint8_t type;
+	uint32_t bodylen;
+} ProtocolEventHeader;
 
 typedef struct ProtocolRequestAuth {
 	ProtocolRequestHeader header;
@@ -280,6 +288,13 @@ typedef struct ProtocolResponseQueueSize {
 		uint32_t size;
 	} body;
 } ProtocolResponseQueueSize;
+
+typedef struct ProtocolEventQueueMessage {
+	ProtocolEventHeader header;
+	struct {
+		char name[64];
+	} body;
+} ProtocolEventQueueMessage;
 
 #pragma pack(pop)
 
