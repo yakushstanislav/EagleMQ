@@ -91,15 +91,18 @@ static int process_subscribed_clients(Queue_t *queue_t, Object *msg)
 	QueueClient *queue_client;
 	int processed = 0;
 
-	list_rewind(queue_t->subscribed_clients, &iterator);
-	while ((node = list_next_node(&iterator)) != NULL)
+	if (EG_QUEUE_LENGTH(queue_t->subscribed_clients))
 	{
-		queue_client = EG_LIST_NODE_VALUE(node);
-		if (BIT_CHECK(queue_client->flags, EG_QUEUE_CLIENT_NOTIFY_FLAG)) {
-			queue_subscribed_client_event_notify(queue_client->client, queue_t);
-		} else {
-			queue_subscribed_client_event_message(queue_client->client, queue_t, msg);
-			processed++;
+		list_rewind(queue_t->subscribed_clients, &iterator);
+		while ((node = list_next_node(&iterator)) != NULL)
+		{
+			queue_client = EG_LIST_NODE_VALUE(node);
+			if (BIT_CHECK(queue_client->flags, EG_QUEUE_CLIENT_NOTIFY_FLAG)) {
+				queue_subscribed_client_event_notify(queue_client->client, queue_t);
+			} else {
+				queue_subscribed_client_event_message(queue_client->client, queue_t, msg);
+				processed++;
+			}
 		}
 	}
 
@@ -112,10 +115,8 @@ int push_message_queue_t(Queue_t *queue_t, Object *msg)
 		return EG_STATUS_ERR;
 	}
 
-	if (EG_QUEUE_LENGTH(queue_t->subscribed_clients)) {
-		if (process_subscribed_clients(queue_t, msg)) {
-			return EG_STATUS_OK;
-		}
+	if (process_subscribed_clients(queue_t, msg)) {
+		return EG_STATUS_OK;
 	}
 
 	if (EG_QUEUE_LENGTH(queue_t->queue) >= queue_t->max_msg) {
@@ -181,25 +182,20 @@ void purge_queue_t(Queue_t *queue_t)
 	queue_purge(queue_t->queue);
 }
 
-void declare_client_queue_t(Queue_t *queue_t, void *client_ptr)
+void declare_client_queue_t(Queue_t *queue_t, EagleClient *client)
 {
-	EagleClient *client = (EagleClient*)client_ptr;
-
 	add_queue_list(client->declared_queues, queue_t);
 	list_add_value_tail(queue_t->declared_clients, client);
 }
 
-void undeclare_client_queue_t(Queue_t *queue_t, void *client_ptr)
+void undeclare_client_queue_t(Queue_t *queue_t, EagleClient *client)
 {
-	EagleClient *client = (EagleClient*)client_ptr;
-
 	delete_queue_list(client->declared_queues, queue_t);
 	list_delete_value(queue_t->declared_clients, client);
 }
 
-void subscribe_client_queue_t(Queue_t *queue_t, void *client_ptr, uint32_t flags)
+void subscribe_client_queue_t(Queue_t *queue_t, EagleClient *client, uint32_t flags)
 {
-	EagleClient *client = (EagleClient*)client_ptr;
 	QueueClient *queue_client = (QueueClient*)xmalloc(sizeof(*queue_client));
 
 	queue_client->client = client;
@@ -209,12 +205,11 @@ void subscribe_client_queue_t(Queue_t *queue_t, void *client_ptr, uint32_t flags
 	list_add_value_tail(queue_t->subscribed_clients, queue_client);
 }
 
-void unsubscribe_client_queue_t(Queue_t *queue_t, void *client_ptr)
+void unsubscribe_client_queue_t(Queue_t *queue_t, EagleClient *client)
 {
 	ListNode *node;
 	ListIterator iterator;
 	QueueClient *queue_client;
-	EagleClient *client = (EagleClient*)client_ptr;
 
 	delete_queue_list(client->subscribed_queues, queue_t);
 
