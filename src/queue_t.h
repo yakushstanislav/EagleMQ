@@ -38,8 +38,7 @@
 #define EG_QUEUE_AUTODELETE_FLAG 0
 #define EG_QUEUE_FORCE_PUSH_FLAG 1
 
-#define EG_QUEUE_ASYNC_GET_FLAG 0
-#define EG_QUEUE_ASYNC_POP_FLAG 1
+#define EG_QUEUE_CLIENT_NOTIFY_FLAG 0
 
 typedef struct QueueAsyncClient {
 	EagleClient *client;
@@ -61,7 +60,7 @@ typedef struct Queue_t
 
 Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags);
 void delete_queue_t(Queue_t *queue_t);
-int push_value_queue_t(Queue_t *queue_t, Object *value);
+int push_value_queue_t(Queue_t *queue_t, Object *msg);
 Object *get_value_queue_t(Queue_t *queue_t);
 void pop_value_queue_t(Queue_t *queue_t);
 Queue_t *find_queue_t(List *list, const char *name);

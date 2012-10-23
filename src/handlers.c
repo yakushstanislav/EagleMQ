@@ -75,6 +75,14 @@ static void set_response_header(ProtocolResponseHeader *header, uint8_t cmd, uin
 	header->bodylen = bodylen;
 }
 
+static void set_event_header(ProtocolEventHeader *header, uint8_t cmd, uint8_t type, uint32_t bodylen)
+{
+	header->magic = EG_PROTOCOL_EVENT;
+	header->cmd = cmd;
+	header->type = type;
+	header->bodylen = bodylen;
+}
+
 static void auth_command_handler(EagleClient *client)
 {
 	ProtocolRequestAuth *req = (ProtocolRequestAuth*)client->request;
@@ -835,6 +843,37 @@ static void queue_delete_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_DELETE);
 }
 
+void queue_subscribed_client_event_notify(EagleClient *client, Queue_t *queue_t)
+{
+	ProtocolEventHeader header;
+	char *buffer;
+
+	set_event_header(&header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_NOTIFY, 64);
+
+	buffer = (char*)xmalloc(sizeof(header) + 64);
+
+	memcpy(buffer, &header, sizeof(header));
+	memcpy(buffer + sizeof(header), queue_t->name, 64);
+
+	add_response(client, buffer, sizeof(header) + 64);
+}
+
+void queue_subscribed_client_event_message(EagleClient *client, Queue_t *queue_t, Object *msg)
+{
+	ProtocolEventHeader header;
+	char *buffer;
+
+	set_event_header(&header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 64 + OBJECT_SIZE(msg));
+
+	buffer = (char*)xmalloc(sizeof(header) + 64 + OBJECT_SIZE(msg));
+
+	memcpy(buffer, &header, sizeof(header));
+	memcpy(buffer + sizeof(header), queue_t->name, 64);
+	memcpy(buffer + sizeof(header) + 64, OBJECT_DATA(msg), OBJECT_SIZE(msg));
+
+	add_response(client, buffer, sizeof(header) + 64 + OBJECT_SIZE(msg));
+}
+
 static void add_response(EagleClient *client, void *data, int size)
 {
 	Object *object = create_object(data, size);
@@ -1085,7 +1124,7 @@ static void send_response(EventLoop *loop, int fd, void *data, int mask)
 			continue;
 		}
 
-		nwritten = write(fd, ((char*)object->data) + client->sentlen, OBJECT_SIZE(object) - client->sentlen);
+		nwritten = write(fd, ((char*)OBJECT_DATA(object)) + client->sentlen, OBJECT_SIZE(object) - client->sentlen);
 		if (nwritten <= 0) {
 			break;
 		}

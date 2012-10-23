@@ -113,6 +113,11 @@ typedef enum ProtocolResponseStatus {
 	EG_PROTOCOL_ERROR_QUEUE_DELETE = 0x71
 } ProtocolResponseStatus;
 
+typedef enum ProtocolEventType {
+	EG_PROTOCOL_EVENT_NOTIFY = 0x1,
+	EG_PROTOCOL_EVENT_MESSAGE = 0x2
+} ProtocolEventType;
+
 #pragma pack(push, 1)
 
 typedef struct ProtocolRequestHeader {

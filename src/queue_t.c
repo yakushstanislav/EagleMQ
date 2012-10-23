@@ -33,9 +33,10 @@
 #include "eagle.h"
 #include "queue_t.h"
 #include "object.h"
-#include "xmalloc.h"
+#include "handlers.h"
 #include "queue.h"
 #include "list.h"
+#include "xmalloc.h"
 #include "utils.h"
 
 void free_subscribed_client_handler(void *ptr);
@@ -83,10 +84,38 @@ void delete_queue_t(Queue_t *queue_t)
 	xfree(queue_t);
 }
 
-int push_value_queue_t(Queue_t *queue_t, Object *value)
+static int process_subscribed_clients(Queue_t *queue_t, Object *msg)
 {
-	if (OBJECT_SIZE(value) > queue_t->max_msg_size) {
+	ListNode *node;
+	ListIterator iterator;
+	QueueClient *queue_client;
+	int processed = 0;
+
+	list_rewind(queue_t->subscribed_clients, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		queue_client = EG_LIST_NODE_VALUE(node);
+		if (BIT_CHECK(queue_client->flags, EG_QUEUE_CLIENT_NOTIFY_FLAG)) {
+			queue_subscribed_client_event_notify(queue_client->client, queue_t);
+		} else {
+			queue_subscribed_client_event_message(queue_client->client, queue_t, msg);
+			processed++;
+		}
+	}
+
+	return processed;
+}
+
+int push_value_queue_t(Queue_t *queue_t, Object *msg)
+{
+	if (OBJECT_SIZE(msg) > queue_t->max_msg_size) {
 		return EG_STATUS_ERR;
+	}
+
+	if (EG_QUEUE_LENGTH(queue_t->subscribed_clients)) {
+		if (process_subscribed_clients(queue_t, msg)) {
+			return EG_STATUS_OK;
+		}
 	}
 
 	if (EG_QUEUE_LENGTH(queue_t->queue) >= queue_t->max_msg) {
@@ -97,7 +126,7 @@ int push_value_queue_t(Queue_t *queue_t, Object *value)
 		}
 	}
 
-	queue_push_value(queue_t->queue, value);
+	queue_push_value(queue_t->queue, msg);
 
 	return EG_STATUS_OK;
 }

@@ -38,6 +38,7 @@ typedef struct Object
 } Object;
 
 #define OBJECT_SIZE(x) ((x)->size)
+#define OBJECT_DATA(x) ((x)->data)
 
 Object *create_object(void *ptr, int size);
 Object *create_dup_object(void *ptr, int size);
