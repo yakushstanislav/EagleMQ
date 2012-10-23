@@ -25,8 +25,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __HANDLERS_LIB_H__
-#define __HANDLERS_LIB_H__
+#ifndef __HANDLERS_H__
+#define __HANDLERS_H__
 
 #include "eagle.h"
 #include "event.h"

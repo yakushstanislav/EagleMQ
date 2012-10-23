@@ -471,9 +471,9 @@ static void queue_list_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueList *req = (ProtocolRequestQueueList*)client->request;
 	ProtocolResponseHeader res;
-	Queue_t *queue_t;
 	ListNode *node;
 	ListIterator iterator;
+	Queue_t *queue_t;
 	uint32_t queue_size, declared_clients, subscribed_clients;
 	char *list;
 	int i;
@@ -567,8 +567,8 @@ static void queue_push_command_handler(EagleClient *client)
 {
 	ProtocolRequestHeader *req = (ProtocolRequestHeader*)client->request;
 	Queue_t *queue_t;
-	Object *value;
-	char *queue, *msg;
+	Object *msg;
+	char *queue, *msg_data;
 	int msg_size;
 
 	if (client->pos < (sizeof(*req) + 65)) {
@@ -595,12 +595,12 @@ static void queue_push_command_handler(EagleClient *client)
 		return;
 	}
 
-	msg = client->request + (sizeof(*req) + 64);
+	msg_data = client->request + (sizeof(*req) + 64);
 	msg_size = client->pos - (sizeof(*req) + 64);
 
-	value = create_dup_object(msg, msg_size);
+	msg = create_dup_object(msg_data, msg_size);
 
-	if (push_value_queue_t(queue_t, value) == EG_STATUS_ERR) {
+	if (push_message_queue_t(queue_t, msg) == EG_STATUS_ERR) {
 		add_status_response(client, req->cmd, EG_PROTOCOL_ERROR_QUEUE_PUSH);
 		return;
 	}
@@ -613,7 +613,7 @@ static void queue_get_command_handler(EagleClient *client)
 	ProtocolRequestQueueGet *req = (ProtocolRequestQueueGet*)client->request;
 	ProtocolResponseHeader res;
 	Queue_t *queue_t;
-	Object *object;
+	Object *msg;
 	char *buffer;
 
 	if (client->pos < sizeof(*req)) {
@@ -638,18 +638,18 @@ static void queue_get_command_handler(EagleClient *client)
 		return;
 	}
 
-	object = get_value_queue_t(queue_t);
-	if (!object) {
+	msg = get_message_queue_t(queue_t);
+	if (!msg) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_GET);
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_GET, OBJECT_SIZE(object));
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_GET, OBJECT_SIZE(msg));
 
-	buffer = (char*)xmalloc(sizeof(res) + OBJECT_SIZE(object));
+	buffer = (char*)xmalloc(sizeof(res) + OBJECT_SIZE(msg));
 
 	memcpy(buffer, &res, sizeof(res));
-	memcpy(buffer + sizeof(res), object->data, OBJECT_SIZE(object));
+	memcpy(buffer + sizeof(res), OBJECT_DATA(msg), OBJECT_SIZE(msg));
 
 	add_response(client, buffer, sizeof(res) + res.bodylen);
 }
@@ -659,7 +659,7 @@ static void queue_pop_command_handler(EagleClient *client)
 	ProtocolRequestQueuePop *req = (ProtocolRequestQueuePop*)client->request;
 	ProtocolResponseHeader res;
 	Queue_t *queue_t;
-	Object *object;
+	Object *msg;
 	char *buffer;
 
 	if (client->pos < sizeof(*req)) {
@@ -684,20 +684,20 @@ static void queue_pop_command_handler(EagleClient *client)
 		return;
 	}
 
-	object = get_value_queue_t(queue_t);
-	if (!object) {
+	msg = get_message_queue_t(queue_t);
+	if (!msg) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_POP);
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_POP, OBJECT_SIZE(object));
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_POP, OBJECT_SIZE(msg));
 
-	buffer = (char*)xmalloc(sizeof(res) + OBJECT_SIZE(object));
+	buffer = (char*)xmalloc(sizeof(res) + OBJECT_SIZE(msg));
 
 	memcpy(buffer, &res, sizeof(res));
-	memcpy(buffer + sizeof(res), object->data, OBJECT_SIZE(object));
+	memcpy(buffer + sizeof(res), OBJECT_DATA(msg), OBJECT_SIZE(msg));
 
-	pop_value_queue_t(queue_t);
+	pop_message_queue_t(queue_t);
 
 	add_response(client, buffer, sizeof(res) + res.bodylen);
 }
@@ -890,10 +890,7 @@ static void add_status_response(EagleClient *client, int cmd, int status)
 {
 	ProtocolResponseHeader *res = (ProtocolResponseHeader*)xmalloc(sizeof(*res));
 
-	res->magic = EG_PROTOCOL_RES;
-	res->cmd = cmd;
-	res->status = status;
-	res->bodylen = 0;
+	set_response_header(res, cmd, status, 0);
 
 	add_response(client, res, sizeof(*res));
 }
@@ -1169,7 +1166,6 @@ void client_timeout(void)
 		while ((node = list_next_node(&iterator)) != NULL)
 		{
 			client = EG_LIST_NODE_VALUE(node);
-
 			if ((server->now_time - client->last_action) > server->timeout) {
 				free_client(client);
 			}

@@ -29,8 +29,7 @@
 
 #include <sys/epoll.h>
 
-typedef struct ApiData
-{
+typedef struct ApiData {
 	int epfd;
 	struct epoll_event *events;
 } ApiData;

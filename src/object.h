@@ -25,13 +25,12 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __OBJECT_LIB_H__
-#define __OBJECT_LIB_H__
+#ifndef __OBJECT_H__
+#define __OBJECT_H__
 
 #include "eagle.h"
 
-typedef struct Object
-{
+typedef struct Object {
 	void *data;
 	unsigned int size;
 	unsigned int refcount;

@@ -34,8 +34,7 @@
 #include <sys/types.h>
 #include <sys/epoll.h>
 
-typedef struct ApiData
-{
+typedef struct ApiData {
 	fd_set rfds, wfds;
 	fd_set _rfds, _wfds;
 } ApiData;

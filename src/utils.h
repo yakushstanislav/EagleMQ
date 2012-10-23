@@ -25,8 +25,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __UTILS_LIB_H__
-#define __UTILS_LIB_H__
+#ifndef __UTILS_H__
+#define __UTILS_H__
 
 #include <stdarg.h>
 #include <stdint.h>

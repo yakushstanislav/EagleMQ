@@ -25,8 +25,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __EAGLE_LIB_H__
-#define __EAGLE_LIB_H__
+#ifndef __EAGLE_H__
+#define __EAGLE_H__
 
 #include <stdint.h>
 
@@ -60,8 +60,7 @@
 #define BIT_SET(a, b) ((a) |= (1<<(b)))
 #define BIT_CHECK(a, b) ((a) & (1<<(b)))
 
-typedef struct EagleClient
-{
+typedef struct EagleClient {
 	int fd;
 	uint64_t perm;
 	char *request;
@@ -78,8 +77,7 @@ typedef struct EagleClient
 	time_t last_action;
 } EagleClient;
 
-typedef struct EagleServer
-{
+typedef struct EagleServer {
 	EventLoop *loop;
 	int fd;
 	int sfd;

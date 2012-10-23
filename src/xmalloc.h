@@ -25,8 +25,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __XMALLOC_LIB_H__
-#define __XMALLOC_LIB_H__
+#ifndef __XMALLOC_H__
+#define __XMALLOC_H__
 
 #include <stdlib.h>
 

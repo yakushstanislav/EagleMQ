@@ -106,7 +106,7 @@ static int process_subscribed_clients(Queue_t *queue_t, Object *msg)
 	return processed;
 }
 
-int push_value_queue_t(Queue_t *queue_t, Object *msg)
+int push_message_queue_t(Queue_t *queue_t, Object *msg)
 {
 	if (OBJECT_SIZE(msg) > queue_t->max_msg_size) {
 		return EG_STATUS_ERR;
@@ -120,7 +120,7 @@ int push_value_queue_t(Queue_t *queue_t, Object *msg)
 
 	if (EG_QUEUE_LENGTH(queue_t->queue) >= queue_t->max_msg) {
 		if (queue_t->force_push) {
-			pop_value_queue_t(queue_t);
+			pop_message_queue_t(queue_t);
 		} else {
 			return EG_STATUS_ERR;
 		}
@@ -131,12 +131,12 @@ int push_value_queue_t(Queue_t *queue_t, Object *msg)
 	return EG_STATUS_OK;
 }
 
-Object *get_value_queue_t(Queue_t *queue_t)
+Object *get_message_queue_t(Queue_t *queue_t)
 {
 	return queue_get_value(queue_t->queue);
 }
 
-void pop_value_queue_t(Queue_t *queue_t)
+void pop_message_queue_t(Queue_t *queue_t)
 {
 	Object *object = queue_pop_value(queue_t->queue);
 

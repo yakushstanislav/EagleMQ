@@ -25,8 +25,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __QUEUE_T_LIB_H__
-#define __QUEUE_T_LIB_H__
+#ifndef __QUEUE_H__
+#define __QUEUE_H__
 
 #include <stdint.h>
 
@@ -45,8 +45,7 @@ typedef struct QueueAsyncClient {
 	uint32_t flags;
 } QueueClient;
 
-typedef struct Queue_t
-{
+typedef struct Queue_t {
 	char name[64];
 	uint32_t max_msg;
 	uint32_t max_msg_size;
@@ -60,9 +59,9 @@ typedef struct Queue_t
 
 Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags);
 void delete_queue_t(Queue_t *queue_t);
-int push_value_queue_t(Queue_t *queue_t, Object *msg);
-Object *get_value_queue_t(Queue_t *queue_t);
-void pop_value_queue_t(Queue_t *queue_t);
+int push_message_queue_t(Queue_t *queue_t, Object *msg);
+Object *get_message_queue_t(Queue_t *queue_t);
+void pop_message_queue_t(Queue_t *queue_t);
 Queue_t *find_queue_t(List *list, const char *name);
 uint32_t get_declared_clients_queue_t(Queue_t *queue_t);
 uint32_t get_subscribed_clients_queue_t(Queue_t *queue_t);

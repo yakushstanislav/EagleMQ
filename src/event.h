@@ -27,8 +27,8 @@
 
 /* Taken from Redis */
 
-#ifndef __EVENT_LIB_H__
-#define __EVENT_LIB_H__
+#ifndef __EVENT_H__
+#define __EVENT_H__
 
 #define EG_EVENT_OK 0
 #define EG_EVENT_ERR -1
@@ -49,16 +49,14 @@ typedef int time_handler(struct EventLoop *loop, long long id, void *data);
 typedef void finalizer_handler(struct EventLoop *loop, void *data);
 typedef void before_sleep_handler(struct EventLoop *loop);
 
-typedef struct FileEvent
-{
+typedef struct FileEvent {
 	int mask;
 	file_handler *read_handler;
 	file_handler *write_handler;
 	void *data;
 } FileEvent;
 
-typedef struct TimeEvent
-{
+typedef struct TimeEvent {
 	long long id;
 	long sec;
 	long ms;
@@ -68,14 +66,12 @@ typedef struct TimeEvent
 	struct TimeEvent *next;
 } TimeEvent;
 
-typedef struct FiredEvent
-{
+typedef struct FiredEvent {
 	int fd;
 	int mask;
 } FiredEvent;
 
-typedef struct EventLoop
-{
+typedef struct EventLoop {
 	int maxfd;
 	int size;
 	long long time_event_id;

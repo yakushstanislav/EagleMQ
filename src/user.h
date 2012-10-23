@@ -25,8 +25,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __USER_LIB_H__
-#define __USER_LIB_H__
+#ifndef __USER_H__
+#define __USER_H__
 
 #include <stdint.h>
 
@@ -56,8 +56,7 @@
 #define EG_USER_QUEUE_PURGE_PERM 20
 #define EG_USER_QUEUE_DELETE_PERM 21
 
-typedef struct EagleUser
-{
+typedef struct EagleUser {
 	char name[32];
 	char password[32];
 	uint64_t perm;
