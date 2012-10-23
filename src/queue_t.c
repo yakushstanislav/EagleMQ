@@ -73,7 +73,7 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 
 void delete_queue_t(Queue_t *queue_t)
 {
-	eject_queue_clients(queue_t);
+	eject_clients_queue_t(queue_t);
 
 	list_release(queue_t->declared_clients);
 	list_release(queue_t->subscribed_clients);
@@ -152,7 +152,7 @@ void purge_queue_t(Queue_t *queue_t)
 	queue_purge(queue_t->queue);
 }
 
-void declare_queue_client(Queue_t *queue_t, void *client_ptr)
+void declare_client_queue_t(Queue_t *queue_t, void *client_ptr)
 {
 	EagleClient *client = (EagleClient*)client_ptr;
 
@@ -160,7 +160,7 @@ void declare_queue_client(Queue_t *queue_t, void *client_ptr)
 	list_add_value_tail(queue_t->declared_clients, client);
 }
 
-void undeclare_queue_client(Queue_t *queue_t, void *client_ptr)
+void undeclare_client_queue_t(Queue_t *queue_t, void *client_ptr)
 {
 	EagleClient *client = (EagleClient*)client_ptr;
 
@@ -168,7 +168,7 @@ void undeclare_queue_client(Queue_t *queue_t, void *client_ptr)
 	list_delete_value(queue_t->declared_clients, client);
 }
 
-void subscribe_queue_client(Queue_t *queue_t, void *client_ptr, uint32_t flags)
+void subscribe_client_queue_t(Queue_t *queue_t, void *client_ptr, uint32_t flags)
 {
 	EagleClient *client = (EagleClient*)client_ptr;
 	QueueClient *queue_client = (QueueClient*)xmalloc(sizeof(*queue_client));
@@ -180,7 +180,7 @@ void subscribe_queue_client(Queue_t *queue_t, void *client_ptr, uint32_t flags)
 	list_add_value_tail(queue_t->subscribed_clients, queue_client);
 }
 
-void unsubscribe_queue_client(Queue_t *queue_t, void *client_ptr)
+void unsubscribe_client_queue_t(Queue_t *queue_t, void *client_ptr)
 {
 	ListNode *node;
 	ListIterator iterator;
@@ -211,19 +211,19 @@ int process_queue_t(Queue_t *queue_t)
 	return EG_STATUS_OK;
 }
 
-void eject_queue_clients(Queue_t *queue_t)
+void eject_clients_queue_t(Queue_t *queue_t)
 {
 	ListNode *node;
 	ListIterator iterator;
 
 	list_rewind(queue_t->declared_clients, &iterator);
 	while ((node = list_next_node(&iterator)) != NULL) {
-		undeclare_queue_client(queue_t, EG_LIST_NODE_VALUE(node));
+		undeclare_client_queue_t(queue_t, EG_LIST_NODE_VALUE(node));
 	}
 
 	list_rewind(queue_t->subscribed_clients, &iterator);
 	while ((node = list_next_node(&iterator)) != NULL) {
-		unsubscribe_queue_client(queue_t, EG_LIST_NODE_VALUE(node));
+		unsubscribe_client_queue_t(queue_t, EG_LIST_NODE_VALUE(node));
 	}
 }
 

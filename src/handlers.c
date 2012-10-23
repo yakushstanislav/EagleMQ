@@ -61,8 +61,8 @@ static void eject_queue_client(EagleClient *client)
 	list_rewind(client->declared_queues, &iterator);
 	while ((node = list_next_node(&iterator)) != NULL) {
 		queue_t = EG_LIST_NODE_VALUE(node);
-		undeclare_queue_client(queue_t, client);
-		unsubscribe_queue_client(queue_t, client);
+		undeclare_client_queue_t(queue_t, client);
+		unsubscribe_client_queue_t(queue_t, client);
 		process_queue_t(queue_t);
 	}
 }
@@ -426,7 +426,7 @@ static void queue_declare_command_handler(EagleClient *client)
 		return;
 	}
 
-	declare_queue_client(queue_t, client);
+	declare_client_queue_t(queue_t, client);
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_DECLARE);
 }
@@ -726,7 +726,7 @@ static void queue_subscribe_command_handler(EagleClient *client)
 		return;
 	}
 
-	subscribe_queue_client(queue_t, client, req->body.flags);
+	subscribe_client_queue_t(queue_t, client, req->body.flags);
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_SUBSCRIBE);
 }
@@ -763,7 +763,7 @@ static void queue_unsubscribe_command_handler(EagleClient *client)
 		return;
 	}
 
-	unsubscribe_queue_client(queue_t, client);
+	unsubscribe_client_queue_t(queue_t, client);
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_UNSUBSCRIBE);
 }
