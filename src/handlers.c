@@ -845,17 +845,13 @@ static void queue_delete_command_handler(EagleClient *client)
 
 void queue_subscribed_client_event_notify(EagleClient *client, Queue_t *queue_t)
 {
-	ProtocolEventHeader header;
-	char *buffer;
+	ProtocolEventQueueSubscribeNotify *event = (ProtocolEventQueueSubscribeNotify*)xmalloc(sizeof(*event));
 
-	set_event_header(&header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_NOTIFY, 64);
+	set_event_header(&event->header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_NOTIFY, sizeof(event->body));
 
-	buffer = (char*)xmalloc(sizeof(header) + 64);
+	memcpy(event->body.name, queue_t->name, 64);
 
-	memcpy(buffer, &header, sizeof(header));
-	memcpy(buffer + sizeof(header), queue_t->name, 64);
-
-	add_response(client, buffer, sizeof(header) + 64);
+	add_response(client, event, sizeof(*event));
 }
 
 void queue_subscribed_client_event_message(EagleClient *client, Queue_t *queue_t, Object *msg)
