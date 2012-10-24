@@ -139,9 +139,9 @@ Object *get_message_queue_t(Queue_t *queue_t)
 
 void pop_message_queue_t(Queue_t *queue_t)
 {
-	Object *object = queue_pop_value(queue_t->queue);
+	Object *msg = queue_pop_value(queue_t->queue);
 
-	decrement_references_count(object);
+	decrement_references_count(msg);
 }
 
 Queue_t *find_queue_t(List *list, const char *name)
