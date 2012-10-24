@@ -116,6 +116,7 @@ int push_message_queue_t(Queue_t *queue_t, Object *msg)
 	}
 
 	if (process_subscribed_clients(queue_t, msg)) {
+		decrement_references_count(msg);
 		return EG_STATUS_OK;
 	}
 
