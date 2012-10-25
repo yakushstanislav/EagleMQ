@@ -49,6 +49,7 @@ Object *create_dup_object(void *ptr, int size)
 
 	object->data = xmalloc(size);
 	object->size = size;
+	object->refcount = 1;
 
 	memcpy(object->data, ptr, size);
 

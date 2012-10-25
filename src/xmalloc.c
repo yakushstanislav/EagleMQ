@@ -87,7 +87,7 @@ void *xcalloc(size_t size)
 		fatal("Error allocate memory");
 	}
 
-	xmalloc_update_stat_alloc(size);
+	xmalloc_update_stat_alloc(malloc_usable_size(ptr));
 
 	return ptr;
 }

@@ -140,9 +140,7 @@ static void stat_command_handler(EagleClient *client)
 	getrusage(RUSAGE_SELF, &self_ru);
 	getrusage(RUSAGE_CHILDREN, &c_ru);
 
-	stat = (ProtocolResponseStat*)xmalloc(sizeof(*stat));
-
-	memset(stat, 0, sizeof(*stat));
+	stat = (ProtocolResponseStat*)xcalloc(sizeof(*stat));
 
 	set_response_header(&stat->header, req->cmd, EG_PROTOCOL_SUCCESS_STAT, sizeof(stat->body));
 
@@ -233,9 +231,8 @@ static void user_list_command_handler(EagleClient *client)
 	set_response_header(&res, req->cmd, EG_PROTOCOL_SUCCESS_USER_LIST,
 		EG_LIST_LENGTH(server->users) * (64 + sizeof(uint64_t)));
 
-	list = (char*)xmalloc(sizeof(res) + res.bodylen);
+	list = (char*)xcalloc(sizeof(res) + res.bodylen);
 
-	memset(list, 0, sizeof(res) + res.bodylen);
 	memcpy(list, &res, sizeof(res));
 
 	i = sizeof(res);
@@ -243,8 +240,8 @@ static void user_list_command_handler(EagleClient *client)
 	while ((node = list_next_node(&iterator)) != NULL)
 	{
 		user = EG_LIST_NODE_VALUE(node);
-		memcpy(list + i, user->name, 32);
-		memcpy(list + i + 32, user->password, 32);
+		memcpy(list + i, user->name, strlenz(user->name));
+		memcpy(list + i + 32, user->password, strlenz(user->password));
 		memcpy(list + i + 64, &user->perm, sizeof(uint64_t));
 		i += 64 + sizeof(uint64_t);
 	}
@@ -492,9 +489,8 @@ static void queue_list_command_handler(EagleClient *client)
 	set_response_header(&res, req->cmd, EG_PROTOCOL_SUCCESS_QUEUE_LIST,
 		EG_LIST_LENGTH(server->queues) * (64 + (sizeof(uint32_t) * 6)));
 
-	list = (char*)xmalloc(sizeof(res) + res.bodylen);
+	list = (char*)xcalloc(sizeof(res) + res.bodylen);
 
-	memset(list, 0, sizeof(res) + res.bodylen);
 	memcpy(list, &res, sizeof(res));
 
 	i = sizeof(res);
@@ -507,7 +503,7 @@ static void queue_list_command_handler(EagleClient *client)
 		declared_clients = get_declared_clients_queue_t(queue_t);
 		subscribed_clients = get_subscribed_clients_queue_t(queue_t);
 
-		memcpy(list + i, queue_t->name, 64);
+		memcpy(list + i, queue_t->name, strlenz(queue_t->name));
 		i += 64;
 		memcpy(list + i, &queue_t->max_msg, sizeof(uint32_t));
 		i += sizeof(uint32_t);
@@ -845,11 +841,11 @@ static void queue_delete_command_handler(EagleClient *client)
 
 void queue_subscribed_client_event_notify(EagleClient *client, Queue_t *queue_t)
 {
-	ProtocolEventQueueSubscribeNotify *event = (ProtocolEventQueueSubscribeNotify*)xmalloc(sizeof(*event));
+	ProtocolEventQueueSubscribeNotify *event = (ProtocolEventQueueSubscribeNotify*)xcalloc(sizeof(*event));
 
 	set_event_header(&event->header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_NOTIFY, sizeof(event->body));
 
-	memcpy(event->body.name, queue_t->name, 64);
+	memcpy(event->body.name, queue_t->name, strlenz(queue_t->name));
 
 	add_response(client, event, sizeof(*event));
 }
@@ -861,10 +857,10 @@ void queue_subscribed_client_event_message(EagleClient *client, Queue_t *queue_t
 
 	set_event_header(&header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 64 + OBJECT_SIZE(msg));
 
-	buffer = (char*)xmalloc(sizeof(header) + 64 + OBJECT_SIZE(msg));
+	buffer = (char*)xcalloc(sizeof(header) + 64 + OBJECT_SIZE(msg));
 
 	memcpy(buffer, &header, sizeof(header));
-	memcpy(buffer + sizeof(header), queue_t->name, 64);
+	memcpy(buffer + sizeof(header), queue_t->name, strlenz(queue_t->name));
 	memcpy(buffer + sizeof(header) + 64, OBJECT_DATA(msg), OBJECT_SIZE(msg));
 
 	add_response(client, buffer, sizeof(header) + 64 + OBJECT_SIZE(msg));
