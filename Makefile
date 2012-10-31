@@ -13,8 +13,11 @@ uninstall:
 clean:
 	cd src && $(MAKE) $@
 
+distclean:
+	cd src && $(MAKE) $@
+
 changelog:
 	@echo "Changelog created!"
 	@git log --no-merges --format="%cd %s (%an)" --date=short > Changelog
 
-.PHONY: all run clean
+.PHONY: all run install uninstall clean distclean changelog

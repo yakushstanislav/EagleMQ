@@ -38,29 +38,59 @@
 #include "xmalloc.h"
 #include "utils.h"
 
-#define xmalloc_update_stat_alloc(size)\
-	if (xmalloc_state_lock)\
-	{\
-		pthread_mutex_lock(&memory_stat_mutex);\
-		used_memory += size;\
-		pthread_mutex_unlock(&memory_stat_mutex);\
-	}\
-	else\
-	{\
-		used_memory += size;\
-	}
+#ifdef HAVE_MALLOC_SIZE
+#define PREFIX_SIZE (0)
+#else
+#if defined(__sun) || defined(__sparc) || defined(__sparc__)
+#define PREFIX_SIZE (sizeof(long long))
+#else
+#define PREFIX_SIZE (sizeof(size_t))
+#endif
+#endif
 
-#define xmalloc_update_stat_free(size)\
-	if (xmalloc_state_lock)\
-	{\
-		pthread_mutex_lock(&memory_stat_mutex);\
-		used_memory -= size;\
-		pthread_mutex_unlock(&memory_stat_mutex);\
-	}\
-	else\
-	{\
-		used_memory -= size;\
-	}
+#if defined(_USE_JEMALLOC_)
+#define malloc(size) je_malloc(size)
+#define calloc(count,size) je_calloc(count,size)
+#define realloc(ptr,size) je_realloc(ptr,size)
+#define free(ptr) je_free(ptr)
+#endif
+
+#ifdef HAVE_ATOMIC
+#define xmalloc_update_stat_add(__n) __sync_add_and_fetch(&used_memory, (__n))
+#define xmalloc_update_stat_sub(__n) __sync_sub_and_fetch(&used_memory, (__n))
+#else
+#define xmalloc_update_stat_add(__n) do { \
+	pthread_mutex_lock(&memory_stat_mutex); \
+	used_memory += (__n); \
+	pthread_mutex_unlock(&memory_stat_mutex); \
+} while(0)
+
+#define xmalloc_update_stat_sub(__n) do { \
+	pthread_mutex_lock(&memory_stat_mutex); \
+	used_memory -= (__n); \
+	pthread_mutex_unlock(&memory_stat_mutex); \
+} while(0)
+#endif
+
+#define xmalloc_update_stat_alloc(__n,__size) do { \
+	size_t _n = (__n); \
+	if (_n & (sizeof(long) - 1)) _n += sizeof(long) - (_n & (sizeof(long) - 1)); \
+	if (xmalloc_state_lock) { \
+		xmalloc_update_stat_add(_n); \
+	} else { \
+		used_memory += _n; \
+	} \
+} while(0)
+
+#define xmalloc_update_stat_free(__n) do { \
+	size_t _n = (__n); \
+	if (_n & (sizeof(long) - 1)) _n += sizeof(long) - (_n & (sizeof(long) - 1)); \
+	if (xmalloc_state_lock) { \
+		xmalloc_update_stat_sub(_n); \
+	} else { \
+		used_memory -= _n; \
+	} \
+} while(0)
 
 static size_t used_memory = 0;
 static int xmalloc_state_lock = 0;
@@ -68,61 +98,79 @@ pthread_mutex_t memory_stat_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void *xmalloc(size_t size)
 {
-	void *ptr = malloc(size);
+	void *ptr = malloc(size + PREFIX_SIZE);
 
 	if (!ptr) {
 		fatal("Error allocate memory");
 	}
 
-	xmalloc_update_stat_alloc(malloc_usable_size(ptr));
-
+#ifdef HAVE_MALLOC_SIZE
+	xmalloc_update_stat_alloc(xmalloc_size(ptr), size);
 	return ptr;
+#else
+	*((size_t*)ptr) = size;
+	xmalloc_update_stat_alloc(size + PREFIX_SIZE, size);
+	return (char*)ptr + PREFIX_SIZE;
+#endif
 }
 
 void *xcalloc(size_t size)
 {
-	void *ptr = calloc(1, size);
+	void *ptr = calloc(1, size + PREFIX_SIZE);
 
 	if (!ptr) {
 		fatal("Error allocate memory");
 	}
 
-	xmalloc_update_stat_alloc(malloc_usable_size(ptr));
-
+#ifdef HAVE_MALLOC_SIZE
+	xmalloc_update_stat_alloc(xmalloc_size(ptr), size);
 	return ptr;
-}
-
-void xfree(void *ptr)
-{
-	if (!ptr) {
-		return;
-	}
-
-	xmalloc_update_stat_free(malloc_usable_size(ptr));
-
-	free(ptr);
+#else
+	*((size_t*)ptr) = size;
+	xmalloc_update_stat_alloc(size + PREFIX_SIZE, size);
+	return (char*)ptr + PREFIX_SIZE;
+#endif
 }
 
 void *xrealloc(void *ptr, size_t size)
 {
-	size_t old;
+#ifndef HAVE_MALLOC_SIZE
+	void *realptr;
+#endif
+	size_t oldsize;
 	void *newptr;
 
 	if (!ptr) {
 		return xmalloc(size);
 	}
 
-	old = malloc_usable_size(ptr);
+#ifdef HAVE_MALLOC_SIZE
+	oldsize = xmalloc_size(ptr);
 	newptr = realloc(ptr, size);
 
 	if (!newptr) {
 		fatal("Error allocate memory");
 	}
 
-	xmalloc_update_stat_free(old);
-	xmalloc_update_stat_alloc(malloc_usable_size(newptr));
+	xmalloc_update_stat_free(oldsize);
+	xmalloc_update_stat_alloc(xmalloc_size(newptr), size);
 
 	return newptr;
+#else
+	realptr = (char*)ptr - PREFIX_SIZE;
+	oldsize = *((size_t*)realptr);
+	newptr = realloc(realptr, size + PREFIX_SIZE);
+
+	if (!newptr) {
+		fatal("Error allocate memory");
+	}
+
+	*((size_t*)newptr) = size;
+	xmalloc_update_stat_free(oldsize);
+	xmalloc_update_stat_alloc(size, size);
+
+	return (char*)newptr + PREFIX_SIZE;
+#endif
 }
 
 char *xstrdup(const char *str)
@@ -135,9 +183,59 @@ char *xstrdup(const char *str)
 	return ptr;
 }
 
+void xfree(void *ptr)
+{
+#ifndef HAVE_MALLOC_SIZE
+	void *realptr;
+	size_t oldsize;
+#endif
+
+	if (!ptr) {
+		return;
+	}
+
+#ifdef HAVE_MALLOC_SIZE
+	xmalloc_update_stat_free(xmalloc_size(ptr));
+	free(ptr);
+#else
+	realptr = (char*)ptr - PREFIX_SIZE;
+	oldsize = *((size_t*)realptr);
+	xmalloc_update_stat_free(oldsize + PREFIX_SIZE);
+	free(realptr);
+#endif
+}
+
+#ifndef HAVE_MALLOC_SIZE
+size_t xmalloc_size(void *ptr)
+{
+	void *realptr = (char*)ptr - PREFIX_SIZE;
+	size_t size = *((size_t*)realptr);
+
+	if (size & (sizeof(long) - 1)) {
+		size += sizeof(long) - (size & (sizeof(long) - 1));
+	}
+
+	return size + PREFIX_SIZE;
+}
+#endif
+
 size_t xmalloc_used_memory(void)
 {
-	return used_memory;
+	size_t um;
+
+	if (xmalloc_state_lock) {
+#ifdef HAVE_ATOMIC
+		um = __sync_add_and_fetch(&used_memory, 0);
+#else
+		pthread_mutex_lock(&memory_stat_mutex);
+		um = used_memory;
+		pthread_mutex_unlock(&memory_stat_mutex);
+#endif
+	} else {
+		um = used_memory;
+	}
+
+	return um;
 }
 
 void xmalloc_state_lock_on(void)
