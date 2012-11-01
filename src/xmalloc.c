@@ -48,7 +48,12 @@
 #endif
 #endif
 
-#if defined(_USE_JEMALLOC_)
+#if defined(_USE_TCMALLOC_)
+#define malloc(size) tc_malloc(size)
+#define calloc(count,size) tc_calloc(count,size)
+#define realloc(ptr,size) tc_realloc(ptr,size)
+#define free(ptr) tc_free(ptr)
+#elif defined(_USE_JEMALLOC_)
 #define malloc(size) je_malloc(size)
 #define calloc(count,size) je_calloc(count,size)
 #define realloc(ptr,size) je_realloc(ptr,size)

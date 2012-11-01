@@ -30,6 +30,16 @@
 
 #include <stdlib.h>
 
+#if defined(_USE_TCMALLOC_)
+#include <google/tcmalloc.h>
+#if (TC_VERSION_MAJOR == 1 && TC_VERSION_MINOR >= 6) || (TC_VERSION_MAJOR > 1)
+#define HAVE_MALLOC_SIZE 1
+#define xmalloc_size(p) tc_malloc_size(p)
+#else
+#error "Newer version of tcmalloc required"
+#endif
+#endif
+
 #if defined(_USE_JEMALLOC_)
 #include <jemalloc/jemalloc.h>
 #if (JEMALLOC_VERSION_MAJOR == 2 && JEMALLOC_VERSION_MINOR >= 1) || (JEMALLOC_VERSION_MAJOR > 2)
