@@ -77,7 +77,7 @@
 } while(0)
 #endif
 
-#define xmalloc_update_stat_alloc(__n,__size) do { \
+#define xmalloc_update_stat_alloc(__n) do { \
 	size_t _n = (__n); \
 	if (_n & (sizeof(long) - 1)) _n += sizeof(long) - (_n & (sizeof(long) - 1)); \
 	if (xmalloc_state_lock) { \
@@ -110,11 +110,11 @@ void *xmalloc(size_t size)
 	}
 
 #ifdef HAVE_MALLOC_SIZE
-	xmalloc_update_stat_alloc(xmalloc_size(ptr), size);
+	xmalloc_update_stat_alloc(xmalloc_size(ptr));
 	return ptr;
 #else
 	*((size_t*)ptr) = size;
-	xmalloc_update_stat_alloc(size + PREFIX_SIZE, size);
+	xmalloc_update_stat_alloc(size + PREFIX_SIZE);
 	return (char*)ptr + PREFIX_SIZE;
 #endif
 }
@@ -128,11 +128,11 @@ void *xcalloc(size_t size)
 	}
 
 #ifdef HAVE_MALLOC_SIZE
-	xmalloc_update_stat_alloc(xmalloc_size(ptr), size);
+	xmalloc_update_stat_alloc(xmalloc_size(ptr));
 	return ptr;
 #else
 	*((size_t*)ptr) = size;
-	xmalloc_update_stat_alloc(size + PREFIX_SIZE, size);
+	xmalloc_update_stat_alloc(size + PREFIX_SIZE);
 	return (char*)ptr + PREFIX_SIZE;
 #endif
 }
@@ -158,7 +158,7 @@ void *xrealloc(void *ptr, size_t size)
 	}
 
 	xmalloc_update_stat_free(oldsize);
-	xmalloc_update_stat_alloc(xmalloc_size(newptr), size);
+	xmalloc_update_stat_alloc(xmalloc_size(newptr));
 
 	return newptr;
 #else
@@ -172,7 +172,7 @@ void *xrealloc(void *ptr, size_t size)
 
 	*((size_t*)newptr) = size;
 	xmalloc_update_stat_free(oldsize);
-	xmalloc_update_stat_alloc(size, size);
+	xmalloc_update_stat_alloc(size);
 
 	return (char*)newptr + PREFIX_SIZE;
 #endif
