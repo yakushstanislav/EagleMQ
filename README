@@ -21,3 +21,31 @@ To install EagleMQ use:
     % make install
 
 EagleMQ will be installed in /usr/local/bin.
+
+Running EagleMQ
+---------------
+To run EagleMQ with the default configuration type:
+
+    % cd src
+    % ./eaglemq
+
+You can also specify options on the command line. Example:
+
+    % ./eaglemq -d -u /tmp/eaglemq -l /tmp/eaglemq.log
+
+Memory allocator
+----------------
+EagleMQ supports 3 memory allocator: libc malloc, tcmalloc, jemalloc.
+The default memory allocator libc malloc.
+
+To compile against libc malloc, use:
+
+    % make MALLOC=libc
+
+To compile against tcmalloc, use:
+
+    % make MALLOC=jemalloc
+
+To compile against jemalloc, use:
+
+    % make MALLOC=tcmalloc
