@@ -330,7 +330,7 @@ Queue name *name* can not have a length greater than 64.
 
 .queue\_get(name)
 ---------------------------
-Command *.queue\_get* gets the old message that was sent to the queue with the name *name*.
+Command *.queue\_get* gets the most old message that was sent to the queue with the name *name*.
 
 This command does not change the queue.
 
@@ -353,13 +353,13 @@ Flags *flags* are a bit sequence.
 Flags *flags* may take two values - QUEUE\_SUBSCRIBE\_MSG or QUEUE\_SUBSCRIBE\_NOTIFY.
 
 If perform subscription with flag QUEUE\_SUBSCRIBE\_MSG,
-then after every *.queue\_push* server automatically sent a message to client that was sent to the queue.
+then after every *.queue\_push* command server automatically sent a message to client that was sent to the queue.
 Message is sent to all clients which have subscribed to queue with this flag.
 If there is at least one subscriber to queue a flag QUEUE\_SUBSCRIBE\_MSG,
 then the message will not be sent to the queue because will be sent directly to the client.
 
 If perform subscription with flag QUEUE\_SUBSCRIBE\_NOTIFY,
-then after every *.queue\_push* client sends a notification that
+then after every *.queue\_push* command server sends a notification to client that
 this queue receive a new message.
 Notification is sent to all clients who have subscribed to queue with this flag.
 
@@ -381,7 +381,7 @@ Queue name *name* can not have a length greater than 64.
 --------------------------------
 Command *.queue\_delete* removes the queue with name *name*.
 
-When you run all the messages in the queue are deleted.
+When you run this command all messages in the queue are deleted.
 All clients who have subscribed to the queue deletes from the list of subscribers.
 
 Queue name *name* can not have a length greater than 64.
