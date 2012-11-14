@@ -1,3 +1,23 @@
 EagleMQ
+-------
+EagleMQ is an open source, high-performance and lightweight queue manager.
 
-Fast interactive message queue manager
+Documentation
+-------------
+The latest documentation can be found here: http://github.com/yakushstanislav/EagleMQ/tree/unstable/docs
+
+Building
+--------
+Currently EagleMQ can be compiled and used only on Linux.
+
+The command to build EagleMQ:
+
+    % make
+
+Installing EagleMQ
+------------------
+To install EagleMQ use:
+
+    % make install
+
+EagleMQ will be installed in /usr/local/bin.
