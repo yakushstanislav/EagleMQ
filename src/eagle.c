@@ -328,8 +328,6 @@ void parse_args(int argc, char *argv[])
 		} else if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
 			usage();
 			exit(0);
-		} else {
-			break;
 		}
 	}
 }
