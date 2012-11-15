@@ -277,7 +277,7 @@ void usage(void)
 		"Usage: eaglemq [options]\n"
 		"-h <hostname> - server hostname(default: %s)\n"
 		"-p <port> - server port(default: %d)\n"
-		"-u <unix socket> - create unix socket\n"
+		"-u <unix socket> - server socket\n"
 		"-d <daemon> - run server as daemon\n"
 		"-l <log> - path to log file(default: %s)\n"
 		"-m <max> - maximum connections on the server(default: %d)\n"
