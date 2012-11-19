@@ -564,7 +564,7 @@ static void queue_push_command_handler(EagleClient *client)
 	ProtocolRequestHeader *req = (ProtocolRequestHeader*)client->request;
 	Queue_t *queue_t;
 	Object *msg;
-	char *queue, *msg_data;
+	char *queue_name, *msg_data;
 	int msg_size;
 
 	if (client->pos < (sizeof(*req) + 65)) {
@@ -578,14 +578,14 @@ static void queue_push_command_handler(EagleClient *client)
 		return;
 	}
 
-	queue = client->request + sizeof(*req);
+	queue_name = client->request + sizeof(*req);
 
-	if (!check_input_buffer2(queue, 64)) {
+	if (!check_input_buffer2(queue_name, 64)) {
 		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
 		return;
 	}
 
-	queue_t = find_queue_t(client->declared_queues, queue);
+	queue_t = find_queue_t(client->declared_queues, queue_name);
 	if (!queue_t) {
 		add_status_response(client, req->cmd, EG_PROTOCOL_ERROR_QUEUE_PUSH);
 		return;
