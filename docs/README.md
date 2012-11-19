@@ -56,6 +56,8 @@ EagleMQ is a multiuser system and allows for an unlimited number of users.
 Users are used to constrain the authenticated client in order to secure the data.
 For example you can create a user who will have the right only to create and delete queues.
 Using the users is a good practice in the development of multi-component systems where each component performs a specific task on the server.
+The default user name and password - eagle.
+
 
 Commands for working with users
 ====================================
