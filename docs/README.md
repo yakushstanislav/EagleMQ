@@ -134,7 +134,7 @@ Table 1. Description of user permissions
             <i>.queue_unsubscribe</i><br/>
             <i>.queue_purge</i><br/>
             <i>.queue_delete</i>
-</td>
+		</td>
         <td>The ability to perform all the commands associated with queues</td>
     </tr>
     <tr>
