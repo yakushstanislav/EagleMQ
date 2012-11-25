@@ -2,7 +2,7 @@ EAGLEMQ_BIN=eaglemq
 EAGLEMQ_LDFLAGS=-pthread
 EAGLEMQ_OBJ=eagle.o event.o network.o xmalloc.o utils.o object.o handlers.o list.o queue.o user.o queue_t.o
 
-CFLAGS=-std=c99 -pedantic -Wall -O2
+CFLAGS=-std=c99 -pedantic -Wall -O2 -g
 
 INSTALL_DIR=/usr/local/bin
 INSTALL_CMD=cp -pf
