@@ -32,6 +32,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <poll.h>
+#include <string.h>
 
 #include "xmalloc.h"
 #include "event.h"
@@ -374,34 +376,31 @@ int process_events(EventLoop *loop, int flags)
 
 int wait(int fd, int mask, long long milliseconds)
 {
-	struct timeval tv;
-	fd_set rfds, wfds, efds;
+	struct pollfd pfd;
 	int retmask = 0, retval;
 
-	tv.tv_sec = milliseconds / 1000;
-	tv.tv_usec = (milliseconds % 1000) * 1000;
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.fd = fd;
 
-	FD_ZERO(&rfds);
-	FD_ZERO(&wfds);
-	FD_ZERO(&efds);
+	if (mask & EG_EVENT_READABLE)
+		pfd.events |= POLLIN;
 
-	if (mask & EG_EVENT_READABLE) {
-		FD_SET(fd, &rfds);
-	}
+	if (mask & EG_EVENT_WRITABLE)
+		pfd.events |= POLLOUT;
 
-	if (mask & EG_EVENT_WRITABLE) {
-		FD_SET(fd, &wfds);
-	}
-
-	if ((retval = select(fd + 1, &rfds, &wfds, &efds, &tv)) > 0)
+	if ((retval = poll(&pfd, 1, milliseconds)) == 1)
 	{
-		if (FD_ISSET(fd, &rfds)) {
+		if (pfd.revents & POLLIN)
 			retmask |= EG_EVENT_READABLE;
-		}
 
-		if (FD_ISSET(fd, &wfds)) {
+		if (pfd.revents & POLLOUT)
 			retmask |= EG_EVENT_WRITABLE;
-		}
+
+		if (pfd.revents & POLLERR)
+			retmask |= EG_EVENT_WRITABLE;
+
+		if (pfd.revents & POLLHUP)
+			retmask |= EG_EVENT_WRITABLE;
 
 		return retmask;
 	} else {
