@@ -8,6 +8,7 @@ Basic commands
 * .auth
 * .ping
 * .stat
+* .flush
 * .disconnect
 
 Description of basic commands
