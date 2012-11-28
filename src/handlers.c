@@ -52,21 +52,6 @@ static void add_response(EagleClient *client, void *data, int size);
 static void add_status_response(EagleClient *client, int cmd, int status);
 static void accept_common_handler(int fd);
 
-static void eject_queue_client(EagleClient *client)
-{
-	Queue_t *queue_t;
-	ListNode *node;
-	ListIterator iterator;
-
-	list_rewind(client->declared_queues, &iterator);
-	while ((node = list_next_node(&iterator)) != NULL) {
-		queue_t = EG_LIST_NODE_VALUE(node);
-		undeclare_client_queue_t(queue_t, client);
-		unsubscribe_client_queue_t(queue_t, client);
-		process_queue_t(queue_t);
-	}
-}
-
 static void set_response_header(ProtocolResponseHeader *header, uint8_t cmd, uint8_t status, uint32_t bodylen)
 {
 	header->magic = EG_PROTOCOL_RES;
@@ -81,6 +66,65 @@ static void set_event_header(ProtocolEventHeader *header, uint8_t cmd, uint8_t t
 	header->cmd = cmd;
 	header->type = type;
 	header->bodylen = bodylen;
+}
+
+static void eject_queue_client(EagleClient *client)
+{
+	ListIterator iterator;
+	ListNode *node;
+	Queue_t *queue_t;
+
+	list_rewind(client->declared_queues, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		queue_t = EG_LIST_NODE_VALUE(node);
+
+		undeclare_client_queue_t(queue_t, client);
+		unsubscribe_client_queue_t(queue_t, client);
+		process_queue_t(queue_t);
+	}
+}
+
+static int delete_users(void)
+{
+	ListIterator iterator;
+	ListNode *node;
+	EagleUser *user;
+
+	list_rewind(server->users, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		user = EG_LIST_NODE_VALUE(node);
+
+		if (BIT_CHECK(user->perm, EG_USER_NOT_CHANGE_PERM)) {
+			continue;
+		}
+
+		if (delete_user_list(server->users, user) == EG_STATUS_ERR) {
+			return EG_STATUS_ERR;
+		}
+	}
+
+	return EG_STATUS_OK;
+}
+
+static int delete_queues(void)
+{
+	ListIterator iterator;
+	ListNode *node;
+	Queue_t *queue_t;
+
+	list_rewind(server->queues, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		queue_t = EG_LIST_NODE_VALUE(node);
+
+		if (delete_queue_list(server->queues, queue_t) == EG_STATUS_ERR) {
+			return EG_STATUS_ERR;
+		}
+	}
+
+	return EG_STATUS_OK;
 }
 
 static void auth_command_handler(EagleClient *client)
@@ -165,6 +209,39 @@ static void stat_command_handler(EagleClient *client)
 	add_response(client, stat, sizeof(*stat));
 }
 
+static void flush_command_handler(EagleClient *client)
+{
+	ProtocolRequestFlush *req = (ProtocolRequestFlush*)client->request;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	if (BIT_CHECK(req->body.flags, EG_FLUSH_USER_FLAG))
+	{
+		if (delete_users() == EG_STATUS_ERR) {
+			add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_FLUSH);
+			return;
+		}
+	}
+
+	if (BIT_CHECK(req->body.flags, EG_FLUSH_QUEUE_FLAG))
+	{
+		if (delete_queues() == EG_STATUS_ERR) {
+			add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_FLUSH);
+			return;
+		}
+	}
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_FLUSH);
+}
+
 static void disconnect_command_handler(EagleClient *client)
 {
 	ProtocolRequestDisconnect *req = (ProtocolRequestDisconnect*)client->request;
@@ -213,8 +290,8 @@ static void user_list_command_handler(EagleClient *client)
 	ProtocolRequestUserList *req = (ProtocolRequestUserList*)client->request;
 	ProtocolResponseHeader res;
 	EagleUser *user;
-	ListNode *node;
 	ListIterator iterator;
+	ListNode *node;
 	char *list;
 	int i;
 
@@ -468,8 +545,8 @@ static void queue_list_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueList *req = (ProtocolRequestQueueList*)client->request;
 	ProtocolResponseHeader res;
-	ListNode *node;
 	ListIterator iterator;
+	ListNode *node;
 	Queue_t *queue_t;
 	uint32_t queue_size, declared_clients, subscribed_clients;
 	char *list;
@@ -903,9 +980,13 @@ static inline void switch_command(EagleClient *client, int cmd)
 			stat_command_handler(client);
 			break;
 
+		case EG_PROTOCOL_CMD_FLUSH:
+			flush_command_handler(client);
+			break;
+
 		case EG_PROTOCOL_CMD_DISCONNECT:
 			disconnect_command_handler(client);
-			return;
+			break;
 
 		case EG_PROTOCOL_CMD_USER_CREATE:
 			user_create_command_handler(client);
@@ -1149,8 +1230,8 @@ static void send_response(EventLoop *loop, int fd, void *data, int mask)
 void client_timeout(void)
 {
 	EagleClient *client;
-	ListNode *node;
 	ListIterator iterator;
+	ListNode *node;
 
 	if (server->timeout)
 	{

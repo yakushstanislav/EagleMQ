@@ -44,6 +44,19 @@ The server provides the following statistics:
 * Users - the number of users
 * Queues - number of queues
 
+.flush(flags)
+----------------
+Command *.flush* is used to force deletion the data from the server.
+
+Flags *flags* are a bit sequence.
+Flags *flags* may take two values - FLUSH\_USER or FLUSH\_QUEUE.
+
+Flag FLUSH\_USER indicates that deletes all users (except the main administrator).
+
+Flag FLUSH\_QUEUE indicates that deletes all queues.
+
+Recommended to use this command only when you need to delete all the data from the server.
+
 .disconnect
 -----------------
 Command *.disconnect* disconnects the client from the server.

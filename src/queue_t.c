@@ -120,7 +120,8 @@ int push_message_queue_t(Queue_t *queue_t, Object *msg)
 		return EG_STATUS_OK;
 	}
 
-	if (EG_QUEUE_LENGTH(queue_t->queue) >= queue_t->max_msg) {
+	if (EG_QUEUE_LENGTH(queue_t->queue) >= queue_t->max_msg)
+	{
 		if (queue_t->force_push) {
 			pop_message_queue_t(queue_t);
 		} else {
