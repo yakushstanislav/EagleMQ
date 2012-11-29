@@ -85,7 +85,7 @@ static void eject_queue_client(EagleClient *client)
 	}
 }
 
-static int delete_users(void)
+static void delete_users(void)
 {
 	ListIterator iterator;
 	ListNode *node;
@@ -100,31 +100,20 @@ static int delete_users(void)
 			continue;
 		}
 
-		if (delete_user_list(server->users, user) == EG_STATUS_ERR) {
-			return EG_STATUS_ERR;
-		}
+		list_delete_node(server->users, node);
 	}
-
-	return EG_STATUS_OK;
 }
 
-static int delete_queues(void)
+static void delete_queues(void)
 {
 	ListIterator iterator;
 	ListNode *node;
-	Queue_t *queue_t;
 
 	list_rewind(server->queues, &iterator);
 	while ((node = list_next_node(&iterator)) != NULL)
 	{
-		queue_t = EG_LIST_NODE_VALUE(node);
-
-		if (delete_queue_list(server->queues, queue_t) == EG_STATUS_ERR) {
-			return EG_STATUS_ERR;
-		}
+		list_delete_node(server->queues, node);
 	}
-
-	return EG_STATUS_OK;
 }
 
 static void auth_command_handler(EagleClient *client)
@@ -223,20 +212,12 @@ static void flush_command_handler(EagleClient *client)
 		return;
 	}
 
-	if (BIT_CHECK(req->body.flags, EG_FLUSH_USER_FLAG))
-	{
-		if (delete_users() == EG_STATUS_ERR) {
-			add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_FLUSH);
-			return;
-		}
+	if (BIT_CHECK(req->body.flags, EG_FLUSH_USER_FLAG)) {
+		delete_users();
 	}
 
-	if (BIT_CHECK(req->body.flags, EG_FLUSH_QUEUE_FLAG))
-	{
-		if (delete_queues() == EG_STATUS_ERR) {
-			add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_FLUSH);
-			return;
-		}
+	if (BIT_CHECK(req->body.flags, EG_FLUSH_QUEUE_FLAG)) {
+		delete_queues();
 	}
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_FLUSH);
