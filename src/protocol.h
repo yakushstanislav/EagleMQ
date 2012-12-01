@@ -308,12 +308,12 @@ typedef struct ProtocolResponseQueueSize {
 	} body;
 } ProtocolResponseQueueSize;
 
-typedef struct ProtocolEventQueueSubscribeNotify {
+typedef struct ProtocolEventQueueNotify {
 	ProtocolEventHeader header;
 	struct {
 		char name[64];
 	} body;
-} ProtocolEventQueueSubscribeNotify;
+} ProtocolEventQueueNotify;
 
 #pragma pack(pop)
 

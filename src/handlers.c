@@ -897,9 +897,9 @@ static void queue_delete_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_DELETE);
 }
 
-void queue_subscribed_client_event_notify(EagleClient *client, Queue_t *queue_t)
+void queue_client_event_notify(EagleClient *client, Queue_t *queue_t)
 {
-	ProtocolEventQueueSubscribeNotify *event = (ProtocolEventQueueSubscribeNotify*)xcalloc(sizeof(*event));
+	ProtocolEventQueueNotify *event = (ProtocolEventQueueNotify*)xcalloc(sizeof(*event));
 
 	set_event_header(&event->header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_NOTIFY, sizeof(event->body));
 
@@ -908,7 +908,7 @@ void queue_subscribed_client_event_notify(EagleClient *client, Queue_t *queue_t)
 	add_response(client, event, sizeof(*event));
 }
 
-void queue_subscribed_client_event_message(EagleClient *client, Queue_t *queue_t, Object *msg)
+void queue_client_event_message(EagleClient *client, Queue_t *queue_t, Object *msg)
 {
 	ProtocolEventHeader header;
 	char *buffer;

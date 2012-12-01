@@ -33,8 +33,8 @@
 #include "object.h"
 #include "queue_t.h"
 
-void queue_subscribed_client_event_notify(EagleClient *client, Queue_t *queue_t);
-void queue_subscribed_client_event_message(EagleClient *client, Queue_t *queue_t, Object *msg);
+void queue_client_event_notify(EagleClient *client, Queue_t *queue_t);
+void queue_client_event_message(EagleClient *client, Queue_t *queue_t, Object *msg);
 void process_request(EagleClient *client);
 void read_request(EventLoop *loop, int fd, void *data, int mask);
 void client_timeout(void);
