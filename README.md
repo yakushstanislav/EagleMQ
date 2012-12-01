@@ -36,6 +36,7 @@ You can also specify options on the command line. Example:
 Memory allocator
 ----------------
 EagleMQ supports 3 memory allocator: libc malloc, tcmalloc, jemalloc.
+
 The default memory allocator libc malloc.
 
 To compile against libc malloc, use:
