@@ -253,6 +253,22 @@ ListNode *list_search_node(List *list, void *value)
 	return NULL;
 }
 
+void list_rotate(List *list)
+{
+	ListNode *tail = list->tail;
+
+	if (EG_LIST_LENGTH(list) <= 1)
+		return;
+
+	list->tail = tail->prev;
+	list->tail->next = NULL;
+
+	list->head->prev = tail;
+	tail->prev = NULL;
+	tail->next = list->head;
+	list->head = tail;
+}
+
 void list_rewind(List *list, ListIterator *iter)
 {
 	iter->next = list->head;

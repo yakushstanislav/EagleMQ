@@ -286,12 +286,15 @@ If the message size *max\_msg\_size* is 0, then it will be set to 2147483647.
 The maximum message size *max\_msg\_size* in bytes.
 
 Flags *flags* are a bit sequence.
-Queue supports two flags - QUEUE\_AUTODELETE and QUEUE\_FORCE\_PUSH.
+Queue supports three flags - QUEUE\_AUTODELETE, QUEUE\_FORCE\_PUSH and QUEUE\_ROUND\_ROBIN.
 
 QUEUE\_AUTODELETE indicates that the queue is deleted automatically if the clients do not use it and it has no subscribers.
 
 QUEUE\_FORCE\_PUSH indicates that if the number of messages in the queue will be equal *max_msg*,
 the oldest message can be removed to save the newer one.
+
+QUEUE\_ROUND\_ROBIN indicates that each message will be sent only one subscriber.
+For message distribution used algorithm round-robin.
 
 Queue name *name* can not have a length greater than 64.
 

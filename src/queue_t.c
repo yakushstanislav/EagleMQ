@@ -51,6 +51,7 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 
 	queue_t->auto_delete = 0;
 	queue_t->force_push = 0;
+	queue_t->round_robin = 0;
 
 	if (BIT_CHECK(queue_t->flags, EG_QUEUE_AUTODELETE_FLAG)) {
 		queue_t->auto_delete = 1;
@@ -58,6 +59,10 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 
 	if (BIT_CHECK(queue_t->flags, EG_QUEUE_FORCE_PUSH_FLAG)) {
 		queue_t->force_push = 1;
+	}
+
+	if (BIT_CHECK(queue_t->flags, EG_QUEUE_ROUND_ROBIN)) {
+		queue_t->round_robin = 1;
 	}
 
 	queue_t->queue = queue_create();
@@ -81,6 +86,20 @@ void delete_queue_t(Queue_t *queue_t)
 	xfree(queue_t);
 }
 
+static inline int process_subscribed_client(QueueClient *queue_client, Queue_t *queue_t, Object *msg)
+{
+	int processed = 0;
+
+	if (BIT_CHECK(queue_client->flags, EG_QUEUE_CLIENT_NOTIFY_FLAG)) {
+		queue_client_event_notify(queue_client->client, queue_t);
+	} else {
+		queue_client_event_message(queue_client->client, queue_t, msg);
+		processed++;
+	}
+
+	return processed;
+}
+
 static int process_subscribed_clients(Queue_t *queue_t, Object *msg)
 {
 	ListNode *node;
@@ -90,15 +109,20 @@ static int process_subscribed_clients(Queue_t *queue_t, Object *msg)
 
 	if (EG_QUEUE_LENGTH(queue_t->subscribed_clients))
 	{
-		list_rewind(queue_t->subscribed_clients, &iterator);
-		while ((node = list_next_node(&iterator)) != NULL)
+		if (queue_t->round_robin)
 		{
-			queue_client = EG_LIST_NODE_VALUE(node);
-			if (BIT_CHECK(queue_client->flags, EG_QUEUE_CLIENT_NOTIFY_FLAG)) {
-				queue_client_event_notify(queue_client->client, queue_t);
-			} else {
-				queue_client_event_message(queue_client->client, queue_t, msg);
-				processed++;
+			list_rotate(queue_t->subscribed_clients);
+
+			queue_client = EG_LIST_NODE_VALUE(EG_LIST_FIRST(queue_t->subscribed_clients));
+			processed += process_subscribed_client(queue_client, queue_t, msg);
+		}
+		else
+		{
+			list_rewind(queue_t->subscribed_clients, &iterator);
+			while ((node = list_next_node(&iterator)) != NULL)
+			{
+				queue_client = EG_LIST_NODE_VALUE(node);
+				processed += process_subscribed_client(queue_client, queue_t, msg);
 			}
 		}
 	}
@@ -213,8 +237,10 @@ void unsubscribe_client_queue_t(Queue_t *queue_t, EagleClient *client)
 	delete_queue_list(client->subscribed_queues, queue_t);
 
 	list_rewind(queue_t->subscribed_clients, &iterator);
-	while ((node = list_next_node(&iterator)) != NULL) {
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
 		queue_client = EG_LIST_NODE_VALUE(node);
+
 		if (queue_client->client == client) {
 			list_delete_value(queue_t->subscribed_clients, queue_client);
 		}
@@ -223,8 +249,10 @@ void unsubscribe_client_queue_t(Queue_t *queue_t, EagleClient *client)
 
 int process_queue_t(Queue_t *queue_t)
 {
-	if (queue_t->auto_delete) {
-		if (EG_LIST_LENGTH(queue_t->declared_clients) == 0) {
+	if (queue_t->auto_delete)
+	{
+		if (EG_LIST_LENGTH(queue_t->declared_clients) == 0)
+		{
 			if (delete_queue_list(server->queues, queue_t) == EG_STATUS_ERR) {
 				return EG_STATUS_ERR;
 			}

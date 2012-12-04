@@ -37,6 +37,7 @@
 
 #define EG_QUEUE_AUTODELETE_FLAG 0
 #define EG_QUEUE_FORCE_PUSH_FLAG 1
+#define EG_QUEUE_ROUND_ROBIN 2
 
 #define EG_QUEUE_CLIENT_NOTIFY_FLAG 0
 
@@ -52,6 +53,7 @@ typedef struct Queue_t {
 	uint32_t flags;
 	int auto_delete;
 	int force_push;
+	int round_robin;
 	Queue *queue;
 	List *declared_clients;
 	List *subscribed_clients;

@@ -79,6 +79,7 @@ ListIterator *list_get_iterator(List *list, int direction);
 void list_release_iterator(ListIterator *iter);
 ListNode *list_next_node(ListIterator *iter);
 ListNode *list_search_node(List *list, void *value);
+void list_rotate(List *list);
 void list_rewind(List *list, ListIterator *iter);
 
 #endif
