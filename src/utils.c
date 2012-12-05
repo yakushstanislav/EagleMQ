@@ -69,10 +69,13 @@ static void output_message(int level, const char *fmt, va_list args)
 
 	vsnprintf(msg, sizeof(msg), fmt, args);
 
-	if (level == FATAL_LEVEL || level == WARNING_LEVEL) {
-		fprintf(stderr, "%s\n", msg);
-	} else {
-		fprintf(stdout, "%s\n", msg);
+	if (level != LOG_ONLY_LEVEL)
+	{
+		if (level == FATAL_LEVEL || level == WARNING_LEVEL) {
+			fprintf(stderr, "%s\n", msg);
+		} else {
+			fprintf(stdout, "%s\n", msg);
+		}
 	}
 
 	if (log_init) {
@@ -110,6 +113,15 @@ void fatal(const char *fmt,...)
 	va_end(args);
 
 	exit(EG_STATUS_ERR);
+}
+
+void wlog(const char *fmt,...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	output_message(LOG_ONLY_LEVEL, fmt, args);
+	va_end(args);
 }
 
 int check_input_buffer1(char *buffer, size_t size)

@@ -41,13 +41,14 @@
 
 #define strlenz(s) (strlen(s) + 1)
 
-typedef enum { WARNING_LEVEL, INFO_LEVEL, FATAL_LEVEL } message_level;
+typedef enum { WARNING_LEVEL, INFO_LEVEL, FATAL_LEVEL, LOG_ONLY_LEVEL } message_level;
 
 void enable_log(const char *logfile);
 void disable_log();
 void warning(const char *fmt,...);
 void info(const char *fmt,...);
 void fatal(const char *fmt,...);
+void wlog(const char *fmt,...);
 
 int check_input_buffer1(char *buffer, size_t size);
 int check_input_buffer2(char *buffer, size_t size);
