@@ -28,6 +28,16 @@
 #ifndef __QUEUE_LIB_H__
 #define __QUEUE_LIB_H__
 
+#define EG_QUEUE_LENGTH(q) ((q)->len)
+#define EG_QUEUE_FIRST(q) ((q)->head)
+#define EG_QUEUE_LAST(q) ((q)->tail)
+#define EG_QUEUE_PREV_NODE(n) ((n)->prev)
+#define EG_QUEUE_NEXT_NODE(n) ((n)->next)
+#define EG_QUEUE_NODE_VALUE(n) ((n)->value)
+
+#define EG_QUEUE_SET_FREE_METHOD(q, m) ((q)->free = (m))
+#define EG_QUEUE_GET_FREE_METHOD(q) ((q)->free)
+
 typedef struct QueueNode {
 	struct QueueNode *prev;
 	struct QueueNode *next;
@@ -40,16 +50,6 @@ typedef struct Queue {
 	void (*free)(void *ptr);
 	unsigned int len;
 } Queue;
-
-#define EG_QUEUE_LENGTH(q) ((q)->len)
-#define EG_QUEUE_FIRST(q) ((q)->head)
-#define EG_QUEUE_LAST(q) ((q)->tail)
-#define EG_QUEUE_PREV_NODE(n) ((n)->prev)
-#define EG_QUEUE_NEXT_NODE(n) ((n)->next)
-#define EG_QUEUE_NODE_VALUE(n) ((n)->value)
-
-#define EG_QUEUE_SET_FREE_METHOD(q, m) ((q)->free = (m))
-#define EG_QUEUE_GET_FREE_METHOD(q) ((q)->free)
 
 Queue *queue_create(void);
 void queue_release(Queue *queue);
