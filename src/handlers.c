@@ -74,13 +74,19 @@ static void eject_queue_client(EagleClient *client)
 	ListNode *node;
 	Queue_t *queue_t;
 
+	list_rewind(client->subscribed_queues, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		queue_t = EG_LIST_NODE_VALUE(node);
+		unsubscribe_client_queue_t(queue_t, client);
+	}
+
 	list_rewind(client->declared_queues, &iterator);
 	while ((node = list_next_node(&iterator)) != NULL)
 	{
 		queue_t = EG_LIST_NODE_VALUE(node);
 
 		undeclare_client_queue_t(queue_t, client);
-		unsubscribe_client_queue_t(queue_t, client);
 		process_queue_t(queue_t);
 	}
 }

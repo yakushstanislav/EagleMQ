@@ -39,6 +39,8 @@
 #include "xmalloc.h"
 #include "utils.h"
 
+static void free_subscribed_client_handler(void *ptr);
+
 Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags)
 {
 	Queue_t *queue_t = (Queue_t*)xmalloc(sizeof(*queue_t));
@@ -70,6 +72,7 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 	queue_t->subscribed_clients = list_create();
 
 	EG_QUEUE_SET_FREE_METHOD(queue_t->queue, free_object_list_handler);
+	EG_QUEUE_SET_FREE_METHOD(queue_t->subscribed_clients, free_subscribed_client_handler);
 
 	return queue_t;
 }
@@ -291,4 +294,9 @@ int delete_queue_list(List *list, Queue_t *queue_t)
 void free_queue_list_handler(void *ptr)
 {
 	delete_queue_t(ptr);
+}
+
+static void free_subscribed_client_handler(void *ptr)
+{
+	xfree(ptr);
 }
