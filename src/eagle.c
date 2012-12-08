@@ -348,6 +348,8 @@ int main(int argc, char *argv[])
 	wlog("Server started, version: %s", EAGLE_VERSION);
 
 	start_main_loop(server->loop);
+
+	delete_time_event(server->loop, server->ufd);
 	delete_event_loop(server->loop);
 
 	destroy_server();
