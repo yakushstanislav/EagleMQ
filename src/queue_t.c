@@ -269,6 +269,7 @@ void eject_clients_queue_t(Queue_t *queue_t)
 {
 	ListNode *node;
 	ListIterator iterator;
+	QueueClient *queue_client;
 
 	list_rewind(queue_t->declared_clients, &iterator);
 	while ((node = list_next_node(&iterator)) != NULL) {
@@ -276,8 +277,10 @@ void eject_clients_queue_t(Queue_t *queue_t)
 	}
 
 	list_rewind(queue_t->subscribed_clients, &iterator);
-	while ((node = list_next_node(&iterator)) != NULL) {
-		unsubscribe_client_queue_t(queue_t, EG_LIST_NODE_VALUE(node));
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		queue_client = EG_LIST_NODE_VALUE(node);
+		unsubscribe_client_queue_t(queue_t, queue_client->client);
 	}
 }
 
