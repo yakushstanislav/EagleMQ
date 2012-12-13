@@ -39,8 +39,6 @@
 #include "xmalloc.h"
 #include "utils.h"
 
-static void free_subscribed_client_handler(void *ptr);
-
 Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags)
 {
 	Queue_t *queue_t = (Queue_t*)xmalloc(sizeof(*queue_t));
@@ -69,10 +67,10 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 
 	queue_t->queue = queue_create();
 	queue_t->declared_clients = list_create();
-	queue_t->subscribed_clients = list_create();
+	queue_t->subscribed_clients_msg = list_create();
+	queue_t->subscribed_clients_notify = list_create();
 
 	EG_QUEUE_SET_FREE_METHOD(queue_t->queue, free_object_list_handler);
-	EG_QUEUE_SET_FREE_METHOD(queue_t->subscribed_clients, free_subscribed_client_handler);
 
 	return queue_t;
 }
@@ -82,51 +80,52 @@ void delete_queue_t(Queue_t *queue_t)
 	eject_clients_queue_t(queue_t);
 
 	list_release(queue_t->declared_clients);
-	list_release(queue_t->subscribed_clients);
+	list_release(queue_t->subscribed_clients_msg);
+	list_release(queue_t->subscribed_clients_notify);
 
 	queue_release(queue_t->queue);
 
 	xfree(queue_t);
 }
 
-static inline int process_subscribed_client(QueueClient *queue_client, Queue_t *queue_t, Object *msg)
-{
-	int processed = 0;
-
-	if (BIT_CHECK(queue_client->flags, EG_QUEUE_CLIENT_NOTIFY_FLAG)) {
-		queue_client_event_notify(queue_client->client, queue_t);
-	} else {
-		queue_client_event_message(queue_client->client, queue_t, msg);
-		processed++;
-	}
-
-	return processed;
-}
-
 static int process_subscribed_clients(Queue_t *queue_t, Object *msg)
 {
 	ListNode *node;
 	ListIterator iterator;
-	QueueClient *queue_client;
+	EagleClient *client;
 	int processed = 0;
 
-	if (EG_QUEUE_LENGTH(queue_t->subscribed_clients))
+	if (EG_QUEUE_LENGTH(queue_t->subscribed_clients_msg))
 	{
 		if (queue_t->round_robin)
 		{
-			list_rotate(queue_t->subscribed_clients);
+			list_rotate(queue_t->subscribed_clients_msg);
 
-			queue_client = EG_LIST_NODE_VALUE(EG_LIST_FIRST(queue_t->subscribed_clients));
-			processed += process_subscribed_client(queue_client, queue_t, msg);
+			client = EG_LIST_NODE_VALUE(EG_LIST_FIRST(queue_t->subscribed_clients_msg));
+			queue_client_event_message(client, queue_t, msg);
+
+			processed++;
 		}
 		else
 		{
-			list_rewind(queue_t->subscribed_clients, &iterator);
+			list_rewind(queue_t->subscribed_clients_msg, &iterator);
 			while ((node = list_next_node(&iterator)) != NULL)
 			{
-				queue_client = EG_LIST_NODE_VALUE(node);
-				processed += process_subscribed_client(queue_client, queue_t, msg);
+				client = EG_LIST_NODE_VALUE(node);
+				queue_client_event_message(client, queue_t, msg);
+
+				processed++;
 			}
+		}
+	}
+
+	if (EG_QUEUE_LENGTH(queue_t->subscribed_clients_notify))
+	{
+		list_rewind(queue_t->subscribed_clients_notify, &iterator);
+		while ((node = list_next_node(&iterator)) != NULL)
+		{
+			client = EG_LIST_NODE_VALUE(node);
+			queue_client_event_notify(client, queue_t);
 		}
 	}
 
@@ -195,7 +194,8 @@ uint32_t get_declared_clients_queue_t(Queue_t *queue_t)
 
 uint32_t get_subscribed_clients_queue_t(Queue_t *queue_t)
 {
-	return EG_LIST_LENGTH(queue_t->subscribed_clients);
+	return EG_LIST_LENGTH(queue_t->subscribed_clients_msg) +
+		EG_LIST_LENGTH(queue_t->subscribed_clients_notify);
 }
 
 uint32_t get_size_queue_t(Queue_t *queue_t)
@@ -222,30 +222,36 @@ void undeclare_client_queue_t(Queue_t *queue_t, EagleClient *client)
 
 void subscribe_client_queue_t(Queue_t *queue_t, EagleClient *client, uint32_t flags)
 {
-	QueueClient *queue_client = (QueueClient*)xmalloc(sizeof(*queue_client));
-
-	queue_client->client = client;
-	queue_client->flags = flags;
-
 	add_queue_list(client->subscribed_queues, queue_t);
-	list_add_value_tail(queue_t->subscribed_clients, queue_client);
+
+	if (!BIT_CHECK(flags, EG_QUEUE_CLIENT_NOTIFY_FLAG)) {
+		list_add_value_tail(queue_t->subscribed_clients_msg, client);
+	} else {
+		list_add_value_tail(queue_t->subscribed_clients_notify, client);
+	}
 }
 
 void unsubscribe_client_queue_t(Queue_t *queue_t, EagleClient *client)
 {
 	ListNode *node;
 	ListIterator iterator;
-	QueueClient *queue_client;
 
 	delete_queue_list(client->subscribed_queues, queue_t);
 
-	list_rewind(queue_t->subscribed_clients, &iterator);
+	list_rewind(queue_t->subscribed_clients_msg, &iterator);
 	while ((node = list_next_node(&iterator)) != NULL)
 	{
-		queue_client = EG_LIST_NODE_VALUE(node);
+		if (EG_LIST_NODE_VALUE(node) == client) {
+			list_delete_node(queue_t->subscribed_clients_msg, node);
+			return;
+		}
+	}
 
-		if (queue_client->client == client) {
-			list_delete_value(queue_t->subscribed_clients, queue_client);
+	list_rewind(queue_t->subscribed_clients_notify, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		if (EG_LIST_NODE_VALUE(node) == client) {
+			list_delete_node(queue_t->subscribed_clients_notify, node);
 		}
 	}
 }
@@ -269,18 +275,29 @@ void eject_clients_queue_t(Queue_t *queue_t)
 {
 	ListNode *node;
 	ListIterator iterator;
-	QueueClient *queue_client;
+	EagleClient *client;
 
 	list_rewind(queue_t->declared_clients, &iterator);
 	while ((node = list_next_node(&iterator)) != NULL) {
 		undeclare_client_queue_t(queue_t, EG_LIST_NODE_VALUE(node));
 	}
 
-	list_rewind(queue_t->subscribed_clients, &iterator);
+	list_rewind(queue_t->subscribed_clients_msg, &iterator);
 	while ((node = list_next_node(&iterator)) != NULL)
 	{
-		queue_client = EG_LIST_NODE_VALUE(node);
-		unsubscribe_client_queue_t(queue_t, queue_client->client);
+		client = EG_LIST_NODE_VALUE(node);
+
+		delete_queue_list(client->subscribed_queues, queue_t);
+		list_delete_node(queue_t->subscribed_clients_msg, node);
+	}
+
+	list_rewind(queue_t->subscribed_clients_notify, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		client = EG_LIST_NODE_VALUE(node);
+
+		delete_queue_list(client->subscribed_queues, queue_t);
+		list_delete_node(queue_t->subscribed_clients_notify, node);
 	}
 }
 
@@ -297,9 +314,4 @@ int delete_queue_list(List *list, Queue_t *queue_t)
 void free_queue_list_handler(void *ptr)
 {
 	delete_queue_t(ptr);
-}
-
-static void free_subscribed_client_handler(void *ptr)
-{
-	xfree(ptr);
 }

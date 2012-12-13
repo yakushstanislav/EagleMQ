@@ -41,11 +41,6 @@
 
 #define EG_QUEUE_CLIENT_NOTIFY_FLAG 0
 
-typedef struct QueueAsyncClient {
-	EagleClient *client;
-	uint32_t flags;
-} QueueClient;
-
 typedef struct Queue_t {
 	char name[64];
 	uint32_t max_msg;
@@ -56,7 +51,8 @@ typedef struct Queue_t {
 	int round_robin;
 	Queue *queue;
 	List *declared_clients;
-	List *subscribed_clients;
+	List *subscribed_clients_msg;
+	List *subscribed_clients_notify;
 } Queue_t;
 
 Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags);
