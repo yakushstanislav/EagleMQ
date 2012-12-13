@@ -267,7 +267,7 @@ static void user_create_command_handler(EagleClient *client)
 	}
 
 	user = create_user(req->body.name, req->body.password, req->body.perm);
-	add_user_list(server->users, user);
+	list_add_value_tail(server->users, user);
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_USER_CREATE);
 }
@@ -416,7 +416,7 @@ static void user_delete_command_handler(EagleClient *client)
 		return;
 	}
 
-	if (delete_user_list(server->users, user) == EG_STATUS_ERR) {
+	if (list_delete_value(server->users, user) == EG_STATUS_ERR) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_USER_DELETE);
 		return;
 	}
@@ -458,7 +458,7 @@ static void queue_create_command_handler(EagleClient *client)
 	queue_t = create_queue_t(req->body.name, req->body.max_msg,
 		((req->body.max_msg_size == 0) ? EG_MAX_MSG_SIZE : req->body.max_msg_size), req->body.flags);
 
-	add_queue_list(server->queues, queue_t);
+	list_add_value_tail(server->queues, queue_t);
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_CREATE);
 }
@@ -895,7 +895,7 @@ static void queue_delete_command_handler(EagleClient *client)
 		return;
 	}
 
-	if (delete_queue_list(server->queues, queue_t) == EG_STATUS_ERR) {
+	if (list_delete_value(server->queues, queue_t) == EG_STATUS_ERR) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_DELETE);
 		return;
 	}

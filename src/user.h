@@ -68,8 +68,6 @@ EagleUser *find_user(List *list, const char *name, const char *password);
 void rename_user(EagleUser *user, const char *name);
 void set_user_perm(EagleUser *user, uint64_t perm);
 uint64_t get_user_perm(EagleUser *user);
-void add_user_list(List *list, EagleUser *user);
-int delete_user_list(List *list, EagleUser *user);
 void free_user_list_handler(void *ptr);
 
 #endif

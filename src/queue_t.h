@@ -69,10 +69,8 @@ void declare_client_queue_t(Queue_t *queue_t, EagleClient *client);
 void undeclare_client_queue_t(Queue_t *queue_t, EagleClient *client);
 void subscribe_client_queue_t(Queue_t *queue_t, EagleClient *client, uint32_t flags);
 void unsubscribe_client_queue_t(Queue_t *queue_t, EagleClient *client);
-int process_queue_t(Queue_t *queue_t);
+void process_queue_t(Queue_t *queue_t);
 void eject_clients_queue_t(Queue_t *queue_t);
-void add_queue_list(List *list, Queue_t *queue_t);
-int delete_queue_list(List *list, Queue_t *queue_t);
 void free_queue_list_handler(void *ptr);
 
 #endif

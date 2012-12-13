@@ -93,16 +93,6 @@ uint64_t get_user_perm(EagleUser *user)
 	return user->perm;
 }
 
-void add_user_list(List *list, EagleUser *user)
-{
-	list_add_value_tail(list, user);
-}
-
-int delete_user_list(List *list, EagleUser *user)
-{
-	return list_delete_value(list, user);
-}
-
 void free_user_list_handler(void *ptr)
 {
 	delete_user(ptr);

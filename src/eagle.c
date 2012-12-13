@@ -164,7 +164,7 @@ void init_admin(void)
 	EagleUser *admin;
 
 	admin = create_user(name, password, EG_USER_SUPER_PERM);
-	add_user_list(server->users, admin);
+	list_add_value_tail(server->users, admin);
 }
 
 void init_server(void)
