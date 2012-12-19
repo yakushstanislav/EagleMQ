@@ -129,7 +129,7 @@ typedef enum ProtocolEventType {
 typedef struct ProtocolRequestHeader {
 	uint16_t magic;
 	uint8_t cmd;
-	uint8_t reserved;
+	uint8_t noack;
 	uint32_t bodylen;
 } ProtocolRequestHeader;
 

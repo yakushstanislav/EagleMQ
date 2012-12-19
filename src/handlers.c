@@ -944,16 +944,23 @@ static void add_response(EagleClient *client, void *data, int size)
 
 static void add_status_response(EagleClient *client, int cmd, int status)
 {
-	ProtocolResponseHeader *res = (ProtocolResponseHeader*)xmalloc(sizeof(*res));
+	ProtocolResponseHeader *res;
 
-	set_response_header(res, cmd, status, 0);
+	if (!client->noack)
+	{
+		res = (ProtocolResponseHeader*)xmalloc(sizeof(*res));
 
-	add_response(client, res, sizeof(*res));
+		set_response_header(res, cmd, status, 0);
+
+		add_response(client, res, sizeof(*res));
+	}
 }
 
-static inline void switch_command(EagleClient *client, int cmd)
+static inline void parse_command(EagleClient *client, ProtocolRequestHeader* req)
 {
-	switch (cmd)
+	client->noack = req->noack;
+
+	switch (req->cmd)
 	{
 		case EG_PROTOCOL_CMD_AUTH:
 			auth_command_handler(client);
@@ -1044,7 +1051,7 @@ static inline void switch_command(EagleClient *client, int cmd)
 			break;
 
 		default:
-			add_status_response(client, cmd, EG_PROTOCOL_ERROR_COMMAND);
+			add_status_response(client, req->cmd, EG_PROTOCOL_ERROR_COMMAND);
 			break;
 	}
 }
@@ -1122,7 +1129,7 @@ process:
 	}
 
 	req = (ProtocolRequestHeader*)client->request;
-	switch_command(client, req->cmd);
+	parse_command(client, req);
 
 	if ((int)(client->nread - client->pos) >= (int)sizeof(*req)) {
 		client->offset += client->pos;
@@ -1265,6 +1272,7 @@ EagleClient *create_client(int fd)
 	client->request = (char*)xmalloc(EG_BUF_SIZE);
 	client->length = EG_BUF_SIZE;
 	client->pos = 0;
+	client->noack = 0;
 	client->offset = 0;
 	client->buffer = (char*)xmalloc(EG_BUF_SIZE);
 	client->bodylen = 0;

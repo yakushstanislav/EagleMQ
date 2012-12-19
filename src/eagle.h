@@ -66,6 +66,7 @@ typedef struct EagleClient {
 	char *request;
 	size_t length;
 	size_t pos;
+	int noack;
 	int offset;
 	char *buffer;
 	size_t bodylen;
