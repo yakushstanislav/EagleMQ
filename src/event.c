@@ -302,7 +302,7 @@ int process_events(EventLoop *loop, int flags)
 	FileEvent *file_event;
 	TimeEvent *shortest = NULL;
 	struct timeval tv, *tvp;
-	int processed, i, mask, fd, rfired, events;
+	int processed = 0, i, mask, fd, rfired, events;
 	long sec, ms;
 
 	if (!(flags & EG_EVENT_TIME) && !(flags & EG_EVENT_FILE)) {
