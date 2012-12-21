@@ -1060,8 +1060,6 @@ void process_request(EagleClient *client)
 {
 	ProtocolRequestHeader *req;
 
-	client->offset = 0;
-
 process:
 	if (!client->bodylen)
 	{
@@ -1091,26 +1089,32 @@ process:
 
 		if (delta == (int)req->bodylen)
 		{
-			client->pos = client->nread;
 			memcpy(client->request, client->buffer + client->offset, client->nread);
+			client->pos = client->nread;
+			client->offset = 0;
+			client->nread = 0;
 		}
 		else if (delta < (int)req->bodylen)
 		{
-			client->bodylen = req->bodylen - (client->nread - sizeof(*req));
-			client->pos = client->nread;
 			memcpy(client->request, client->buffer + client->offset, client->nread);
+			client->bodylen = req->bodylen - delta;
+			client->pos = client->nread;
 			return;
 		}
 		else if (delta > (int)req->bodylen)
 		{
 			client->pos = req->bodylen + sizeof(*req);
 			memcpy(client->request, client->buffer + client->offset, client->pos);
+			client->offset += client->pos;
+			client->nread -= client->pos;
 		}
 	} else {
 		if (client->nread == client->bodylen)
 		{
 			memcpy(client->request + client->pos, client->buffer, client->nread);
 			client->pos += client->nread;
+			client->offset = 0;
+			client->nread = 0;
 			client->bodylen = 0;
 		}
 		else if (client->nread < client->bodylen)
@@ -1118,12 +1122,15 @@ process:
 			memcpy(client->request + client->pos, client->buffer, client->nread);
 			client->pos += client->nread;
 			client->bodylen -= client->nread;
+			client->offset = 0;
 			return;
 		}
 		else if (client->nread > client->bodylen)
 		{
 			memcpy(client->request + client->pos, client->buffer, client->bodylen);
 			client->pos += client->bodylen;
+			client->nread -= client->bodylen;
+			client->offset = client->bodylen;
 			client->bodylen = 0;
 		}
 	}
@@ -1131,9 +1138,7 @@ process:
 	req = (ProtocolRequestHeader*)client->request;
 	parse_command(client, req);
 
-	if ((int)(client->nread - client->pos) >= (int)sizeof(*req)) {
-		client->offset += client->pos;
-		client->nread -= client->pos;
+	if ((int)client->nread >= (int)sizeof(*req)) {
 		goto process;
 	}
 }
