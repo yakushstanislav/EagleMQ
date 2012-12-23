@@ -1070,12 +1070,18 @@ process:
 
 		req = (ProtocolRequestHeader*)(client->buffer + client->offset);
 
-		if (req->magic != EG_PROTOCOL_REQ) {
+		if (req->magic != EG_PROTOCOL_REQ)
+		{
+			client->offset = 0;
+			client->bodylen = 0;
 			add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
 			return;
 		}
 
-		if (req->bodylen > EG_MAX_BUF_SIZE) {
+		if (req->bodylen > EG_MAX_BUF_SIZE)
+		{
+			client->offset = 0;
+			client->bodylen = 0;
 			add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
 			return;
 		}
