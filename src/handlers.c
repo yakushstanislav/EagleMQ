@@ -503,6 +503,7 @@ static void queue_declare_command_handler(EagleClient *client)
 static void queue_exist_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueExist *req = (ProtocolRequestQueueExist*)client->request;
+	ProtocolResponseQueueExist *res;
 
 	if (client->pos < sizeof(*req)) {
 		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
@@ -520,12 +521,17 @@ static void queue_exist_command_handler(EagleClient *client)
 		return;
 	}
 
-	if (!find_queue_t(server->queues, req->body.name)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_EXIST);
-		return;
+	res = (ProtocolResponseQueueExist*)xcalloc(sizeof(*res));
+
+	set_response_header(&res->header, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_EXIST, sizeof(res->body));
+
+	if (find_queue_t(server->queues, req->body.name)) {
+		res->body.status = 1;
+	} else {
+		res->body.status = 0;
 	}
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_EXIST);
+	add_response(client, res, sizeof(*res));
 }
 
 static void queue_list_command_handler(EagleClient *client)
