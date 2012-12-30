@@ -2,7 +2,10 @@ EAGLEMQ_BIN=eaglemq
 EAGLEMQ_LDFLAGS=-pthread
 EAGLEMQ_OBJ=eagle.o event.o network.o xmalloc.o utils.o object.o handlers.o list.o queue.o user.o queue_t.o
 
-CFLAGS=-std=c99 -pedantic -Wall -O2 -g
+CC=gcc
+OPTIMIZATION?=-O2
+
+CFLAGS=-std=c99 -pedantic -Wall $(OPTIMIZATION) -g
 
 INSTALL_DIR=/usr/local/bin
 INSTALL_CMD=cp -pf
@@ -51,13 +54,13 @@ jemalloc:
 	cd ../deps && $(MAKE) JEMALLOC_CFLAGS="-std=gnu99 -Wall -pipe -g3 -O3 -funroll-loops" jemalloc
 
 $(EAGLEMQ_BIN): $(EAGLEMQ_OBJ)
-	gcc -o $@ $^ $(EAGLEMQ_LDFLAGS)
+	$(CC) -o $@ $^ $(EAGLEMQ_LDFLAGS)
 
 %.o: %.c
-	gcc -c $< $(CFLAGS)
+	$(CC) -c $< $(CFLAGS)
 
 dep:
-	gcc -MM *.c > Makefile.dep
+	$(CC) -MM *.c > Makefile.dep
 
 run:
 	./$(EAGLEMQ_BIN)
