@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
 	init_server();
 	init_admin();
 
-	wlog("Server started, version: %s", EAGLE_VERSION);
+	wlog("Server started (version: %s)", EAGLE_VERSION);
 
 	start_main_loop(server->loop);
 
