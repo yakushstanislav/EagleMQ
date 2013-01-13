@@ -412,10 +412,11 @@ void start_main_loop(EventLoop *loop)
 {
 	loop->stop = 0;
 
-	while (!loop->stop) {
-		if (loop->before_sleep_handler != NULL) {
+	while (!loop->stop)
+	{
+		if (loop->before_sleep_handler != NULL)
 			loop->before_sleep_handler(loop);
-		}
+
 		process_events(loop, EG_EVENTS_ALL);
 	}
 }
