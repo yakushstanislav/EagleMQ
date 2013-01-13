@@ -279,12 +279,12 @@ void usage(void)
 		"-p <port> - server port(default: %d)\n"
 		"-u <unix socket> - server socket\n"
 		"-d <daemon> - run server as daemon\n"
-		"-l <log> - path to log file(default: %s)\n"
-		"-m <max> - maximum connections on the server(default: %d)\n"
-		"-t <timeout> - timeout for not active connections(default: %d sec)\n"
-		"-pid <path to the PID file> - path to the PID file of server\n"
-		"-name <name> - administrator name(default: %s)\n"
-		"-password <password> - administrator password(default: %s)\n"
+		"--log-file <log> - path to log file(default: %s)\n"
+		"--max-clients <max> - maximum connections on the server(default: %d)\n"
+		"--client-timeout <timeout> - timeout for not active connections(default: %d sec)\n"
+		"--pid-file <PID file> - path to the PID file of server\n"
+		"--name <name> - administrator name(default: %s)\n"
+		"--password <password> - administrator password(default: %s)\n"
 		"--v or --version - output version and exit\n"
 		"-h or --help - output this help and exit\n",
 			EAGLE_VERSION, EG_DEFAULT_ADDR, EG_DEFAULT_PORT, EG_DEFAULT_LOG_PATH,
@@ -308,18 +308,18 @@ void parse_args(int argc, char *argv[])
 			server->unix_socket = argv[i + 1];
 		} else if (!strcmp(argv[i], "-d")) {
 			server->daemonize = 1;
-		} else if (!strcmp(argv[i], "-l") && !last_arg) {
+		} else if (!strcmp(argv[i], "--log-file") && !last_arg) {
 			server->logfile = argv[i + 1];
-		} else if (!strcmp(argv[i], "-m") && !last_arg) {
+		} else if (!strcmp(argv[i], "--max-clients") && !last_arg) {
 			server->max_clients = atoi(argv[i + 1]);
-		} else if (!strcmp(argv[i], "-t") && !last_arg) {
+		} else if (!strcmp(argv[i], "--client-timeout") && !last_arg) {
 			server->timeout = atoi(argv[i + 1]);
-		} else if (!strcmp(argv[i], "-pid") && !last_arg) {
+		} else if (!strcmp(argv[i], "--pid-file") && !last_arg) {
 			server->pidfile = argv[i + 1];
-		} else if (!strcmp(argv[i], "-name") && !last_arg) {
+		} else if (!strcmp(argv[i], "--name") && !last_arg) {
 			if (strlen(argv[i + 1]) >= 32) fatal("Error name length");
 			name = argv[i + 1];
-		} else if (!strcmp(argv[i], "-password") && !last_arg) {
+		} else if (!strcmp(argv[i], "--password") && !last_arg) {
 			if (strlen(argv[i + 1]) >= 32) fatal("Error password length");
 			password = argv[i + 1];
 		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version")) {
