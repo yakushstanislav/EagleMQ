@@ -144,3 +144,24 @@ Queue *queue_purge(Queue *queue)
 
 	return queue;
 }
+
+QueueNode *queue_next_node(QueueIterator *iter)
+{
+	QueueNode *current = iter->next;
+
+	if (current != NULL) {
+		if (iter->direction == EG_START_HEAD) {
+			iter->next = current->next;
+		} else {
+			iter->next = current->prev;
+		}
+	}
+
+	return current;
+}
+
+void queue_rewind(Queue *queue, QueueIterator *iter)
+{
+	iter->next = queue->head;
+	iter->direction = EG_START_HEAD;
+}

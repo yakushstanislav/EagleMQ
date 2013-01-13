@@ -28,6 +28,9 @@
 #ifndef __QUEUE_LIB_H__
 #define __QUEUE_LIB_H__
 
+#define EG_START_HEAD 0
+#define EG_START_TAIL 1
+
 #define EG_QUEUE_LENGTH(q) ((q)->len)
 #define EG_QUEUE_FIRST(q) ((q)->head)
 #define EG_QUEUE_LAST(q) ((q)->tail)
@@ -44,6 +47,11 @@ typedef struct QueueNode {
 	void *value;
 } QueueNode;
 
+typedef struct QueueIterator {
+  QueueNode *next;
+  int direction;
+} QueueIterator;
+
 typedef struct Queue {
 	QueueNode *head;
 	QueueNode *tail;
@@ -57,5 +65,7 @@ Queue *queue_push_value(Queue *queue, void *value);
 void *queue_get_value(Queue *queue);
 void *queue_pop_value(Queue *queue);
 Queue *queue_purge(Queue *queue);
+QueueNode *queue_next_node(QueueIterator *iter);
+void queue_rewind(Queue *queue, QueueIterator *iter);
 
 #endif
