@@ -70,7 +70,7 @@ static int net_listen(char *err, int sock, struct sockaddr *sa, socklen_t len)
 		return EG_NET_ERR;
 	}
 
-	if (listen(sock, 511) == -1) { /* the magic 511 constant is from nginx and Redis */
+	if (listen(sock, 511) == -1) { /* 511 is optimal backlog value for most OS */
 		net_set_error(err, "listen: %s", strerror(errno));
 		close(sock);
 		return EG_NET_ERR;
