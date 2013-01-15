@@ -246,7 +246,7 @@ void init_server_config(void)
 	server->port = EG_DEFAULT_PORT;
 	server->unix_socket = EG_DEFAULT_UNIX_SOCKET;
 	server->max_clients = EG_DEFAULT_MAX_CLIENTS;
-	server->timeout = EG_DEFAULT_TIMEOUT;
+	server->client_timeout = EG_DEFAULT_CLIENT_TIMEOUT;
 	server->clients = list_create();
 	server->users = list_create();
 	server->queues = list_create();
@@ -288,7 +288,7 @@ void usage(void)
 		"--v or --version - output version and exit\n"
 		"-h or --help - output this help and exit\n",
 			EAGLE_VERSION, EG_DEFAULT_ADDR, EG_DEFAULT_PORT, EG_DEFAULT_LOG_PATH,
-			EG_DEFAULT_MAX_CLIENTS, EG_DEFAULT_TIMEOUT,
+			EG_DEFAULT_MAX_CLIENTS, EG_DEFAULT_CLIENT_TIMEOUT,
 			EG_DEFAULT_ADMIN_NAME, EG_DEFAULT_ADMIN_PASSWORD);
 }
 
@@ -313,7 +313,7 @@ void parse_args(int argc, char *argv[])
 		} else if (!strcmp(argv[i], "--max-clients") && !last_arg) {
 			server->max_clients = atoi(argv[i + 1]);
 		} else if (!strcmp(argv[i], "--client-timeout") && !last_arg) {
-			server->timeout = atoi(argv[i + 1]);
+			server->client_timeout = atoi(argv[i + 1]);
 		} else if (!strcmp(argv[i], "--pid-file") && !last_arg) {
 			server->pidfile = argv[i + 1];
 		} else if (!strcmp(argv[i], "--name") && !last_arg) {

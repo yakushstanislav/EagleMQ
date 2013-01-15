@@ -46,7 +46,7 @@
 #define EG_DEFAULT_ADMIN_NAME "eagle"
 #define EG_DEFAULT_ADMIN_PASSWORD "eagle"
 #define EG_DEFAULT_MAX_CLIENTS 16384
-#define EG_DEFAULT_TIMEOUT 0
+#define EG_DEFAULT_CLIENT_TIMEOUT 0
 #define EG_DEFAULT_DAEMONIZE 0
 #define EG_DEFAULT_PID_PATH NULL
 #define EG_DEFAULT_LOG_PATH "eaglemq.log"
@@ -88,7 +88,7 @@ typedef struct EagleServer {
 	char *unix_socket;
 	mode_t unix_perm;
 	size_t max_clients;
-	int timeout;
+	int client_timeout;
 	char error[NET_ERR_LEN];
 	List *clients;
 	List *users;
