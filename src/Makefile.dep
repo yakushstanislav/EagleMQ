@@ -1,5 +1,6 @@
 eagle.o: eagle.c fmacros.h eagle.h event.h network.h list.h user.h logo.h \
- version.h xmalloc.h handlers.h object.h queue_t.h queue.h utils.h
+ version.h xmalloc.h handlers.h object.h queue_t.h queue.h utils.h \
+ storage.h
 event.o: event.c xmalloc.h event.h event_epoll.c
 event_epoll.o: event_epoll.c
 event_select.o: event_select.c
@@ -12,6 +13,8 @@ object.o: object.c eagle.h event.h network.h list.h user.h object.h \
 queue.o: queue.c queue.h xmalloc.h
 queue_t.o: queue_t.c eagle.h event.h network.h list.h user.h queue_t.h \
  queue.h object.h handlers.h xmalloc.h utils.h
+storage.o: storage.c fmacros.h eagle.h event.h network.h list.h user.h \
+ storage.h version.h queue_t.h queue.h object.h xmalloc.h utils.h
 user.o: user.c eagle.h event.h network.h list.h user.h xmalloc.h utils.h
 utils.o: utils.c eagle.h event.h network.h list.h user.h utils.h
 xmalloc.o: xmalloc.c xmalloc.h utils.h
