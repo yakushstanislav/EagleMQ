@@ -56,6 +56,7 @@
 #include "list.h"
 #include "user.h"
 #include "queue_t.h"
+#include "storage.h"
 
 EagleServer *server;
 
@@ -119,6 +120,22 @@ void unblock_open_files_limit(void)
     }
 }
 
+void storage_timeout(void)
+{
+	if (server->storage_timeout)
+	{
+		if ((server->now_time - server->last_save) > server->storage_timeout)
+		{
+			wlog("Save all data to the storage...");
+			if (storage_save(server->storage) != EG_STATUS_OK) {
+				warning("Error saving data in %s\n", server->storage);
+			}
+
+			server->last_save = time(NULL);
+		}
+	}
+}
+
 int server_updater(EventLoop *loop, long long id, void *data)
 {
 	EG_NOTUSED(loop);
@@ -128,6 +145,7 @@ int server_updater(EventLoop *loop, long long id, void *data)
 	server->now_time = time(NULL);
 
 	client_timeout();
+	storage_timeout();
 
 	if (server->shutdown) {
 		stop_event_loop(server->loop);
@@ -165,6 +183,20 @@ void init_admin(void)
 
 	admin = create_user(name, password, EG_USER_SUPER_PERM);
 	list_add_value_tail(server->users, admin);
+}
+
+void init_storage()
+{
+	if (access(server->storage, F_OK) == -1)
+	{
+		if (storage_save(server->storage) != EG_STATUS_OK) {
+			warning("Error init storage %s\n", server->storage);
+		}
+	}
+
+	if (storage_load(server->storage) != EG_STATUS_OK) {
+		warning("Error loading data from %s", server->storage);
+	}
 }
 
 void init_server(void)
@@ -247,12 +279,15 @@ void init_server_config(void)
 	server->unix_socket = EG_DEFAULT_UNIX_SOCKET;
 	server->max_clients = EG_DEFAULT_MAX_CLIENTS;
 	server->client_timeout = EG_DEFAULT_CLIENT_TIMEOUT;
+	server->storage_timeout = EG_DEFAULT_SAVE_TIMEOUT;
 	server->clients = list_create();
 	server->users = list_create();
 	server->queues = list_create();
 	server->now_time = time(NULL);
 	server->start_time = time(NULL);
+	server->last_save = time(NULL);
 	server->daemonize = EG_DEFAULT_DAEMONIZE;
+	server->storage = EG_DEFAULT_STORAGE_PATH;
 	server->pidfile = EG_DEFAULT_PID_PATH;
 	server->logfile = EG_DEFAULT_LOG_PATH;
 	server->shutdown = 0;
@@ -279,16 +314,18 @@ void usage(void)
 		"-p <port> - server port(default: %d)\n"
 		"-u <unix socket> - server socket\n"
 		"-d <daemon> - run server as daemon\n"
-		"--log-file <log> - path to log file(default: %s)\n"
+		"--log-file <path> - path to the log file(default: %s)\n"
 		"--max-clients <max> - maximum connections on the server(default: %d)\n"
 		"--client-timeout <timeout> - timeout for not active connections(default: %d sec)\n"
-		"--pid-file <PID file> - path to the PID file of server\n"
+		"--save-timeout <timeout> - timeout for save data to the storage(default: %d sec)\n"
+		"--storage-file <path> - path to the storage\n"
+		"--pid-file <path> - path to the PID file of server\n"
 		"--name <name> - administrator name(default: %s)\n"
 		"--password <password> - administrator password(default: %s)\n"
 		"--v or --version - output version and exit\n"
 		"-h or --help - output this help and exit\n",
 			EAGLE_VERSION, EG_DEFAULT_ADDR, EG_DEFAULT_PORT, EG_DEFAULT_LOG_PATH,
-			EG_DEFAULT_MAX_CLIENTS, EG_DEFAULT_CLIENT_TIMEOUT,
+			EG_DEFAULT_MAX_CLIENTS, EG_DEFAULT_CLIENT_TIMEOUT, EG_DEFAULT_SAVE_TIMEOUT,
 			EG_DEFAULT_ADMIN_NAME, EG_DEFAULT_ADMIN_PASSWORD);
 }
 
@@ -314,6 +351,10 @@ void parse_args(int argc, char *argv[])
 			server->max_clients = atoi(argv[i + 1]);
 		} else if (!strcmp(argv[i], "--client-timeout") && !last_arg) {
 			server->client_timeout = atoi(argv[i + 1]);
+		} else if (!strcmp(argv[i], "--save-timeout") && !last_arg) {
+			server->storage_timeout = atoi(argv[i + 1]);
+		} else if (!strcmp(argv[i], "--storage-file") && !last_arg) {
+			server->storage = argv[i + 1];
 		} else if (!strcmp(argv[i], "--pid-file") && !last_arg) {
 			server->pidfile = argv[i + 1];
 		} else if (!strcmp(argv[i], "--name") && !last_arg) {
@@ -344,6 +385,7 @@ int main(int argc, char *argv[])
 
 	init_server();
 	init_admin();
+	init_storage();
 
 	wlog("Server started (version: %s)", EAGLE_VERSION);
 
