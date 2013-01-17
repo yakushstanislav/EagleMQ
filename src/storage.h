@@ -38,5 +38,7 @@
 
 int storage_load(char *filename);
 int storage_save(char *filename);
+int storage_save_background(char *filename);
+void remove_temp_file(pid_t pid);
 
 #endif

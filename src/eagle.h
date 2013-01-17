@@ -89,6 +89,7 @@ typedef struct EagleServer {
 	int port;
 	char *unix_socket;
 	mode_t unix_perm;
+	pid_t child_pid;
 	size_t max_clients;
 	int client_timeout;
 	int storage_timeout;

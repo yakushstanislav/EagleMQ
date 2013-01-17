@@ -421,3 +421,42 @@ error:
 
 	return EG_STATUS_ERR;
 }
+
+int storage_save_background(char *filename)
+{
+	pid_t child_pid;
+
+	if (server->child_pid != -1)
+		return EG_STATUS_ERR;
+
+	if ((child_pid = fork()) == 0)
+	{
+		if (server->fd > 0)
+			close(server->fd);
+
+		if (server->sfd > 0)
+			close(server->sfd);
+
+		_exit(storage_save(filename));
+	}
+	else
+	{
+		if (child_pid == -1)
+		{
+			warning("Error save data in background: %s\n", strerror(errno));
+			return EG_STATUS_ERR;
+		}
+
+		server->child_pid = child_pid;
+	}
+
+	return EG_STATUS_OK;
+}
+
+void remove_temp_file(pid_t pid)
+{
+	char tmpfile[32];
+
+	snprintf(tmpfile, sizeof(tmpfile), "eaglemq-%d.dat", (int)pid);
+	unlink(tmpfile);
+}

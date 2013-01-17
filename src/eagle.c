@@ -122,13 +122,28 @@ void unblock_open_files_limit(void)
 
 void storage_timeout(void)
 {
-	if (server->storage_timeout)
+	pid_t pid;
+	int stat;
+
+	if (server->child_pid != -1)
+	{
+		if ((pid = wait3(&stat, WNOHANG, NULL)) != 0)
+		{
+			if (WEXITSTATUS(stat) != EG_STATUS_OK) {
+				warning("Error background saving data in %s", server->storage);
+			}
+
+			server->child_pid = -1;
+		}
+	}
+
+	if (server->storage_timeout && server->child_pid == -1)
 	{
 		if ((server->now_time - server->last_save) > server->storage_timeout)
 		{
 			wlog("Save all data to the storage...");
-			if (storage_save(server->storage) != EG_STATUS_OK) {
-				warning("Error saving data in %s\n", server->storage);
+			if (storage_save_background(server->storage) != EG_STATUS_OK) {
+				warning("Error saving data in %s", server->storage);
 			}
 
 			server->last_save = time(NULL);
@@ -247,6 +262,20 @@ void init_server(void)
 
 void destroy_server()
 {
+	if (server->child_pid != -1)
+	{
+		kill(server->child_pid, SIGKILL);
+		remove_temp_file(server->child_pid);
+	}
+
+	if (server->fd > 0) {
+		close(server->fd);
+	}
+
+	if (server->sfd > 0) {
+		close(server->sfd);
+	}
+
 	if (server->pidfile) {
 		unlink(server->pidfile);
 	}
@@ -277,6 +306,8 @@ void init_server_config(void)
 	server->addr = EG_DEFAULT_ADDR;
 	server->port = EG_DEFAULT_PORT;
 	server->unix_socket = EG_DEFAULT_UNIX_SOCKET;
+	server->unix_perm = 0;
+	server->child_pid = -1;
 	server->max_clients = EG_DEFAULT_MAX_CLIENTS;
 	server->client_timeout = EG_DEFAULT_CLIENT_TIMEOUT;
 	server->storage_timeout = EG_DEFAULT_SAVE_TIMEOUT;
