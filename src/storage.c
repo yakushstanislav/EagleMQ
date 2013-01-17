@@ -43,7 +43,7 @@
 #include "xmalloc.h"
 #include "utils.h"
 
-static int storage_write(FILE *fp, void* buffer, size_t length)
+static int storage_write(FILE *fp, void *buffer, size_t length)
 {
 	if (fwrite(buffer, length, 1, fp) == 0)
 		return -1;
@@ -51,7 +51,7 @@ static int storage_write(FILE *fp, void* buffer, size_t length)
 	return length;
 }
 
-static int storage_read(FILE *fp, void* buffer, size_t length)
+static int storage_read(FILE *fp, void *buffer, size_t length)
 {
 	if (fread(buffer, length, 1, fp) == 0)
 		return -1;
@@ -173,7 +173,7 @@ static int storage_save_queue_message(FILE *fp, Object *msg)
 	return EG_STATUS_OK;
 }
 
-static int storage_save_queue_messages(FILE* fp, Queue_t *queue_t)
+static int storage_save_queue_messages(FILE *fp, Queue_t *queue_t)
 {
 	QueueIterator iterator;
 	QueueNode *node;
@@ -264,7 +264,7 @@ static int storage_load_user(FILE *fp)
 	return EG_STATUS_OK;
 }
 
-static int storage_load_queue_message(FILE* fp, Queue_t *queue_t)
+static int storage_load_queue_message(FILE *fp, Queue_t *queue_t)
 {
 	uint32_t message_length;
 	void *data;
