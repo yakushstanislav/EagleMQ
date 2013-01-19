@@ -61,7 +61,7 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 		queue_t->force_push = 1;
 	}
 
-	if (BIT_CHECK(queue_t->flags, EG_QUEUE_ROUND_ROBIN)) {
+	if (BIT_CHECK(queue_t->flags, EG_QUEUE_ROUND_ROBIN_FLAG)) {
 		queue_t->round_robin = 1;
 	}
 

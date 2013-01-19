@@ -231,6 +231,9 @@ static int storage_save_queues(FILE *fp)
 	{
 		queue_t = EG_LIST_NODE_VALUE(node);
 
+		if (!BIT_CHECK(queue_t->flags, EG_QUEUE_DURABLE_FLAG))
+			continue;
+
 		if (storage_save_queue(fp, queue_t) != EG_STATUS_OK)
 			return EG_STATUS_ERR;
 	}
