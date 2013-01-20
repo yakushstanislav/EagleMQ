@@ -232,15 +232,20 @@ void init_server(void)
 
 	server->loop = create_event_loop(server->max_clients + 1);
 
-	if (server->port != 0) {
-		if ((server->fd = net_tcp_server(server->error, server->addr, server->port)) == EG_NET_ERR) {
+	if (server->port != 0)
+	{
+		server->fd = net_tcp_server(server->error, server->addr, server->port);
+		if (server->fd == EG_NET_ERR) {
 			fatal("Error create server: %s\n%s", server->addr, server->error);
 		}
 	}
 
-	if (server->unix_socket != NULL) {
+	if (server->unix_socket != NULL)
+	{
 		unlink(server->unix_socket);
-		if ((server->sfd = net_unix_server(server->error, server->unix_socket, server->unix_perm)) == EG_NET_ERR) {
+
+		server->sfd = net_unix_server(server->error, server->unix_socket, server->unix_perm);
+		if (server->sfd == EG_NET_ERR) {
 			fatal("Opening socket: %s\n", server->error);
 		}
 	}
