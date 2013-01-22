@@ -52,6 +52,7 @@ Command *.save* is used to save data to disk.
 *async* sets the mode of use.
 
 If *async* is 0 - use synchronously data saving.
+
 If *async* is 1 - use asynchronous data saving.
 
 .flush(flags)
