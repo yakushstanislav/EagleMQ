@@ -45,6 +45,15 @@ The server provides the following statistics:
 * Users - the number of users
 * Queues - number of queues
 
+.save(async)
+------------
+Command *.save* is used to save data to disk.
+
+*async* sets the mode of use.
+
+If *async* is 0 - use synchronously data saving.
+If *async* is 1 - use asynchronous data saving.
+
 .flush(flags)
 ----------------
 Command *.flush* is used to force deletion the data from the server.

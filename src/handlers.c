@@ -44,6 +44,7 @@
 #include "list.h"
 #include "user.h"
 #include "queue_t.h"
+#include "storage.h"
 #include "xmalloc.h"
 #include "utils.h"
 
@@ -202,6 +203,36 @@ static void stat_command_handler(EagleClient *client)
 	stat->body.resv4 = 0;
 
 	add_response(client, stat, sizeof(*stat));
+}
+
+static void save_comand_handler(EagleClient *client)
+{
+	ProtocolRequestSave *req = (ProtocolRequestSave*)client->request;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	if (req->body.async)
+	{
+		if (storage_save_background(server->storage) != EG_STATUS_OK) {
+			add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_SAVE);
+		}
+	}
+	else
+	{
+		if (storage_save(server->storage) != EG_STATUS_OK) {
+			add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_SAVE);
+		}
+	}
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_SAVE);
 }
 
 static void flush_command_handler(EagleClient *client)
@@ -978,6 +1009,10 @@ static inline void parse_command(EagleClient *client, ProtocolRequestHeader* req
 
 		case EG_PROTOCOL_CMD_STAT:
 			stat_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_SAVE:
+			save_comand_handler(client);
 			break;
 
 		case EG_PROTOCOL_CMD_FLUSH:

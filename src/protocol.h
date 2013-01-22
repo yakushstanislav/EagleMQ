@@ -44,8 +44,9 @@ typedef enum ProtocolCommand {
 	EG_PROTOCOL_CMD_AUTH = 0x1,
 	EG_PROTOCOL_CMD_PING = 0x2,
 	EG_PROTOCOL_CMD_STAT = 0x3,
-	EG_PROTOCOL_CMD_FLUSH = 0x4,
-	EG_PROTOCOL_CMD_DISCONNECT = 0x5,
+	EG_PROTOCOL_CMD_SAVE = 0x4,
+	EG_PROTOCOL_CMD_FLUSH = 0x5,
+	EG_PROTOCOL_CMD_DISCONNECT = 0x6,
 
 	/* user control commands */
 	EG_PROTOCOL_CMD_USER_CREATE = 0x10,
@@ -74,7 +75,8 @@ typedef enum ProtocolResponseStatus {
 	EG_PROTOCOL_SUCCESS_AUTH = 0x2,
 	EG_PROTOCOL_SUCCESS_PING = 0x3,
 	EG_PROTOCOL_SUCCESS_STAT = 0x4,
-	EG_PROTOCOL_SUCCESS_FLUSH = 0x5,
+	EG_PROTOCOL_SUCCESS_SAVE = 0x5,
+	EG_PROTOCOL_SUCCESS_FLUSH = 0x6,
 	EG_PROTOCOL_SUCCESS_USER_CREATE = 0x10,
 	EG_PROTOCOL_SUCCESS_USER_LIST = 0x11,
 	EG_PROTOCOL_SUCCESS_USER_RENAME = 0x12,
@@ -99,7 +101,8 @@ typedef enum ProtocolResponseStatus {
 	EG_PROTOCOL_ERROR_AUTH = 0x44,
 	EG_PROTOCOL_ERROR_PING = 0x45,
 	EG_PROTOCOL_ERROR_STAT = 0x46,
-	EG_PROTOCOL_ERROR_FLUSH = 0x47,
+	EG_PROTOCOL_ERROR_SAVE = 0x47,
+	EG_PROTOCOL_ERROR_FLUSH = 0x48,
 	EG_PROTOCOL_ERROR_USER_CREATE = 0x50,
 	EG_PROTOCOL_ERROR_USER_LIST = 0x51,
 	EG_PROTOCOL_ERROR_USER_RENAME = 0x52,
@@ -157,6 +160,13 @@ typedef struct ProtocolRequestAuth {
 
 typedef ProtocolRequestHeader ProtocolRequestPing;
 typedef ProtocolRequestHeader ProtocolRequestStat;
+
+typedef struct ProtocolRequestSave {
+	ProtocolRequestHeader header;
+	struct {
+		uint8_t async;
+	} body;
+} ProtocolRequestSave;
 
 typedef struct ProtocolRequestFlush {
 	ProtocolRequestHeader header;
