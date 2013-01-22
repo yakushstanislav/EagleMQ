@@ -8,6 +8,7 @@ EagleMQ это открытый, высокопроизводительный и
 * .auth
 * .ping
 * .stat
+* .save
 * .flush
 * .disconnect
 
