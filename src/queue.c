@@ -145,6 +145,28 @@ Queue *queue_purge(Queue *queue)
 	return queue;
 }
 
+QueueIterator *queue_get_iterator(Queue *queue, int direction)
+{
+	QueueIterator *iter;
+
+	iter = (QueueIterator*)xmalloc(sizeof(*iter));
+
+	if (direction == EG_START_HEAD) {
+		iter->next = queue->head;
+	} else {
+		iter->next = queue->tail;
+	}
+
+	iter->direction = direction;
+
+	return iter;
+}
+
+void queue_release_iterator(QueueIterator *iter)
+{
+	xfree(iter);
+}
+
 QueueNode *queue_next_node(QueueIterator *iter)
 {
 	QueueNode *current = iter->next;

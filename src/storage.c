@@ -175,18 +175,23 @@ static int storage_save_queue_message(FILE *fp, Object *msg)
 
 static int storage_save_queue_messages(FILE *fp, Queue_t *queue_t)
 {
-	QueueIterator iterator;
+	QueueIterator *iterator;
 	QueueNode *node;
 	Object *msg;
 
-	queue_rewind(queue_t->queue, &iterator);
-	while ((node = queue_next_node(&iterator)) != NULL)
+	iterator = queue_get_iterator(queue_t->queue, EG_START_TAIL);
+
+	while ((node = queue_next_node(iterator)) != NULL)
 	{
 		msg = EG_QUEUE_NODE_VALUE(node);
 
-		if (storage_save_queue_message(fp, msg) != EG_STATUS_OK)
+		if (storage_save_queue_message(fp, msg) != EG_STATUS_OK) {
+			queue_release_iterator(iterator);
 			return EG_STATUS_ERR;
+		}
 	}
+
+	queue_release_iterator(iterator);
 
 	return EG_STATUS_OK;
 }

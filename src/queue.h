@@ -65,6 +65,8 @@ Queue *queue_push_value(Queue *queue, void *value);
 void *queue_get_value(Queue *queue);
 void *queue_pop_value(Queue *queue);
 Queue *queue_purge(Queue *queue);
+QueueIterator *queue_get_iterator(Queue *queue, int direction);
+void queue_release_iterator(QueueIterator *iter);
 QueueNode *queue_next_node(QueueIterator *iter);
 void queue_rewind(Queue *queue, QueueIterator *iter);
 
