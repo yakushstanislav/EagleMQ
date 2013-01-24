@@ -976,7 +976,7 @@ static void add_response(EagleClient *client, void *data, int size)
 		return;
 	}
 
-	add_object_list(client->responses, object);
+	list_add_value_tail(client->responses, object);
 }
 
 static void add_status_response(EagleClient *client, int cmd, int status)

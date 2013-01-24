@@ -76,11 +76,6 @@ void decrement_references_count(Object *object)
 	}
 }
 
-void add_object_list(List *list, Object *object)
-{
-	list_add_value_tail(list, object);
-}
-
 void free_object_list_handler(void *ptr)
 {
 	release_object(ptr);

@@ -30,21 +30,20 @@
 
 #include "eagle.h"
 
+#define OBJECT_SIZE(x) ((x)->size)
+#define OBJECT_DATA(x) ((x)->data)
+
 typedef struct Object {
 	void *data;
 	unsigned int size;
 	unsigned int refcount;
 } Object;
 
-#define OBJECT_SIZE(x) ((x)->size)
-#define OBJECT_DATA(x) ((x)->data)
-
 Object *create_object(void *ptr, int size);
 Object *create_dup_object(void *ptr, int size);
 void release_object(Object *object);
 void increment_references_count(Object *object);
 void decrement_references_count(Object *object);
-void add_object_list(List *list, Object *object);
 void free_object_list_handler(void *ptr);
 
 #endif

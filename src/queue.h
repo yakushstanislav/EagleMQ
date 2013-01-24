@@ -48,8 +48,8 @@ typedef struct QueueNode {
 } QueueNode;
 
 typedef struct QueueIterator {
-  QueueNode *next;
-  int direction;
+	QueueNode *next;
+	int direction;
 } QueueIterator;
 
 typedef struct Queue {
