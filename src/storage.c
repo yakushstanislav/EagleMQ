@@ -40,6 +40,7 @@
 #include "user.h"
 #include "queue_t.h"
 #include "queue.h"
+#include "lzf.h"
 #include "xmalloc.h"
 #include "utils.h"
 
