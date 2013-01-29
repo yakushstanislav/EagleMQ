@@ -75,6 +75,49 @@ static int storage_read_type(FILE *fp)
 	return type;
 }
 
+static int storage_write_data(FILE *fp, void *data, uint32_t length)
+{
+	if (storage_write(fp, &length, sizeof(length)) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_write(fp, data, length) == -1)
+		return EG_STATUS_ERR;
+
+	return EG_STATUS_OK;
+}
+
+static int storage_read_data(FILE *fp, void *data, uint32_t maxlen)
+{
+	uint32_t length;
+
+	if (storage_read(fp, &length, sizeof(length)) == -1)
+		return EG_STATUS_ERR;
+
+	if (length > maxlen)
+		return EG_STATUS_ERR;
+
+	if (storage_read(fp, data, length) == -1)
+		return EG_STATUS_ERR;
+
+	return EG_STATUS_OK;
+}
+
+static Object *storage_read_data_object(FILE *fp)
+{
+	uint32_t length;
+	void *data;
+
+	if (storage_read(fp, &length, sizeof(length)) == -1)
+		return NULL;
+
+	data = xmalloc(length);
+
+	if (storage_read(fp, data, length) == -1)
+		return NULL;
+
+	return create_object(data, length);
+}
+
 static int storage_write_magic(FILE *fp)
 {
 	char magic[16];
@@ -113,25 +156,16 @@ static int storage_read_magic(FILE *fp)
 
 static int storage_save_user(FILE *fp, EagleUser *user)
 {
-	uint32_t name_length = strlenz(user->name);
-	uint32_t password_length = strlenz(user->password);
-
 	if (storage_write_type(fp, EG_STORAGE_TYPE_USER) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_write(fp, &name_length, sizeof(name_length)) == -1)
+	if (storage_write_data(fp, user->name, strlenz(user->name)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_write(fp, user->name, name_length) == -1)
+	if (storage_write_data(fp, user->password, strlenz(user->password)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_write(fp, &password_length, sizeof(password_length)) == -1)
-		return EG_STATUS_ERR;
-
-	if (storage_write(fp, user->password, password_length) == -1)
-		return EG_STATUS_ERR;
-
-	if (storage_write(fp, &user->perm, sizeof(user->perm)) == -1)
+	if (storage_write_data(fp, &user->perm, sizeof(user->perm)) == -1)
 		return EG_STATUS_ERR;
 
 	return EG_STATUS_OK;
@@ -160,15 +194,10 @@ static int storage_save_users(FILE *fp)
 
 static int storage_save_queue_message(FILE *fp, Object *msg)
 {
-	uint32_t message_length = msg->size;
-
 	if (storage_write_type(fp, EG_STORAGE_TYPE_MESSAGE) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_write(fp, &message_length, sizeof(message_length)) == -1)
-		return EG_STATUS_ERR;
-
-	if (storage_write(fp, msg->data, message_length) == -1)
+	if (storage_write_data(fp, msg->data, msg->size) == -1)
 		return EG_STATUS_ERR;
 
 	return EG_STATUS_OK;
@@ -199,28 +228,24 @@ static int storage_save_queue_messages(FILE *fp, Queue_t *queue_t)
 
 static int storage_save_queue(FILE *fp, Queue_t *queue_t)
 {
-	uint32_t name_length = strlenz(queue_t->name);
 	uint32_t queue_size = get_size_queue_t(queue_t);
 
 	if (storage_write_type(fp, EG_STORAGE_TYPE_QUEUE) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_write(fp, &name_length, sizeof(name_length)) == -1)
+	if (storage_write_data(fp, queue_t->name, strlenz(queue_t->name)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_write(fp, queue_t->name, name_length) == -1)
+	if (storage_write_data(fp, &queue_t->max_msg, sizeof(queue_t->max_msg)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_write(fp, &queue_t->max_msg, sizeof(queue_t->max_msg)) == -1)
+	if (storage_write_data(fp, &queue_t->max_msg_size, sizeof(queue_t->max_msg_size)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_write(fp, &queue_t->max_msg_size, sizeof(queue_t->max_msg_size)) == -1)
+	if (storage_write_data(fp, &queue_t->flags, sizeof(queue_t->flags)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_write(fp, &queue_t->flags, sizeof(queue_t->flags)) == -1)
-		return EG_STATUS_ERR;
-
-	if (storage_write(fp, &queue_size, sizeof(queue_size)) == -1)
+	if (storage_write_data(fp, &queue_size, sizeof(queue_size)) == -1)
 		return EG_STATUS_ERR;
 
 	return storage_save_queue_messages(fp, queue_t);
@@ -250,22 +275,14 @@ static int storage_save_queues(FILE *fp)
 static int storage_load_user(FILE *fp)
 {
 	EagleUser user;
-	uint32_t name_length;
-	uint32_t password_length;
 
-	if (storage_read(fp, &name_length, sizeof(name_length)) == -1)
+	if (storage_read_data(fp, user.name, sizeof(user.name)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_read(fp, &user.name, name_length) == -1)
+	if (storage_read_data(fp, user.password, sizeof(user.password)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_read(fp, &password_length, sizeof(password_length)) == -1)
-		return EG_STATUS_ERR;
-
-	if (storage_read(fp, &user.password, password_length) == -1)
-		return EG_STATUS_ERR;
-
-	if (storage_read(fp, &user.perm, sizeof(user.perm)) == -1)
+	if (storage_read_data(fp, &user.perm, sizeof(user.perm)) == -1)
 		return EG_STATUS_ERR;
 
 	list_add_value_tail(server->users, create_user(user.name, user.password, user.perm));
@@ -275,21 +292,15 @@ static int storage_load_user(FILE *fp)
 
 static int storage_load_queue_message(FILE *fp, Queue_t *queue_t)
 {
-	uint32_t message_length;
-	void *data;
+	Object *msg;
 
 	if (storage_read_type(fp) != EG_STORAGE_TYPE_MESSAGE)
 		return EG_STATUS_ERR;
 
-	if (storage_read(fp, &message_length, sizeof(message_length)) == -1)
+	if ((msg = storage_read_data_object(fp)) == NULL)
 		return EG_STATUS_ERR;
 
-	data = xmalloc(message_length);
-
-	if (storage_read(fp, data, message_length) == -1)
-		return EG_STATUS_ERR;
-
-	push_message_queue_t(queue_t, create_object(data, message_length));
+	push_message_queue_t(queue_t, msg);
 
 	return EG_STATUS_OK;
 }
@@ -298,26 +309,22 @@ static int storage_load_queue(FILE *fp)
 {
 	Queue_t *queue_t;
 	Queue_t data;
-	uint32_t name_length;
 	uint32_t queue_size;
 	int i;
 
-	if (storage_read(fp, &name_length, sizeof(name_length)) == -1)
+	if (storage_read_data(fp, &data.name, sizeof(data.name)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_read(fp, &data.name, name_length) == -1)
+	if (storage_read_data(fp, &data.max_msg, sizeof(data.max_msg)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_read(fp, &data.max_msg, sizeof(data.max_msg)) == -1)
+	if (storage_read_data(fp, &data.max_msg_size, sizeof(data.max_msg_size)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_read(fp, &data.max_msg_size, sizeof(data.max_msg_size)) == -1)
+	if (storage_read_data(fp, &data.flags, sizeof(data.flags)) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_read(fp, &data.flags, sizeof(data.flags)) == -1)
-		return EG_STATUS_ERR;
-
-	if (storage_read(fp, &queue_size, sizeof(queue_size)) == -1)
+	if (storage_read_data(fp, &queue_size, sizeof(queue_size)) == -1)
 		return EG_STATUS_ERR;
 
 	queue_t = create_queue_t(data.name, data.max_msg, data.max_msg_size, data.flags);
