@@ -75,8 +75,57 @@ static int storage_read_type(FILE *fp)
 	return type;
 }
 
+static int storage_write_lzf_data(FILE *fp, void *data, uint32_t length)
+{
+	uint32_t comprlen, outlen;
+	void *out;
+
+	if (length <= 4)
+		return 0;
+
+	outlen = length - 4;
+	out = xmalloc(outlen + 1);
+
+	comprlen = lzf_compress(data, length, out, outlen);
+	if (comprlen == 0) {
+		xfree(out);
+		return 0;
+	}
+
+	if (storage_write(fp, &length, sizeof(length)) == -1)
+		goto error;
+
+	if (storage_write(fp, &comprlen, sizeof(comprlen)) == -1)
+		goto error;
+
+	if (storage_write(fp, out, comprlen) == -1)
+		goto error;
+
+	xfree(out);
+
+	return 1;
+
+error:
+	xfree(out);
+	return -1;
+}
+
 static int storage_write_data(FILE *fp, void *data, uint32_t length)
 {
+	int err;
+	uint32_t comprlen = 0;
+
+	err = storage_write_lzf_data(fp, data, length);
+
+	if (err == -1)
+		return EG_STATUS_ERR;
+
+	if (err)
+		return EG_STATUS_OK;
+
+	if (storage_write(fp, &comprlen, sizeof(comprlen)) == -1)
+		return EG_STATUS_ERR;
+
 	if (storage_write(fp, &length, sizeof(length)) == -1)
 		return EG_STATUS_ERR;
 
@@ -88,34 +137,91 @@ static int storage_write_data(FILE *fp, void *data, uint32_t length)
 
 static int storage_read_data(FILE *fp, void *data, uint32_t maxlen)
 {
+	uint32_t comprlen;
 	uint32_t length;
+	void *compressed;
+
+	if (storage_read(fp, &comprlen, sizeof(comprlen)) == -1)
+		return EG_STATUS_ERR;
 
 	if (storage_read(fp, &length, sizeof(length)) == -1)
 		return EG_STATUS_ERR;
 
-	if (length > maxlen)
+	if ((length > maxlen && !comprlen) || comprlen > maxlen)
 		return EG_STATUS_ERR;
 
-	if (storage_read(fp, data, length) == -1)
-		return EG_STATUS_ERR;
+	if (comprlen)
+	{
+		compressed = xmalloc(length);
+
+		if (storage_read(fp, compressed, length) == -1) {
+			xfree(compressed);
+			return EG_STATUS_ERR;
+		}
+
+		if (lzf_decompress(compressed, length, data, comprlen) == 0) {
+			xfree(compressed);
+			return EG_STATUS_ERR;
+		}
+
+		xfree(compressed);
+	}
+	else
+	{
+		if (storage_read(fp, data, length) == -1)
+			return EG_STATUS_ERR;
+	}
 
 	return EG_STATUS_OK;
 }
 
 static Object *storage_read_data_object(FILE *fp)
 {
+	uint32_t comprlen;
 	uint32_t length;
+	void *compressed;
 	void *data;
+
+	if (storage_read(fp, &comprlen, sizeof(comprlen)) == -1)
+		return NULL;
 
 	if (storage_read(fp, &length, sizeof(length)) == -1)
 		return NULL;
 
-	data = xmalloc(length);
+	if (comprlen)
+	{
+		compressed = xmalloc(length);
 
-	if (storage_read(fp, data, length) == -1)
-		return NULL;
+		if (storage_read(fp, compressed, length) == -1) {
+			xfree(compressed);
+			return NULL;
+		}
 
-	return create_object(data, length);
+		data = xmalloc(comprlen);
+
+		if (lzf_decompress(compressed, length, data, comprlen) == 0) {
+			xfree(compressed);
+			xfree(data);
+			return NULL;
+		}
+
+		xfree(compressed);
+
+		return create_object(data, comprlen);
+	}
+	else
+	{
+		data = xmalloc(length);
+
+		if (storage_read(fp, data, length) == -1) {
+			xfree(data);
+			return NULL;
+		}
+
+		return create_object(data, length);
+	}
+
+	return NULL;
 }
 
 static int storage_write_magic(FILE *fp)
