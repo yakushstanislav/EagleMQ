@@ -120,6 +120,33 @@ void unblock_open_files_limit(void)
     }
 }
 
+int linux_overcommit_memory_value(void)
+{
+	FILE *fp;
+	char buf[64];
+
+	if ((fp = fopen("/proc/sys/vm/overcommit_memory","r")) == NULL)
+		return -1;
+
+	if (fgets(buf,64,fp) == NULL)
+	{
+		fclose(fp);
+		return -1;
+	}
+
+	fclose(fp);
+
+	return atoi(buf);
+}
+
+void linux_overcommit_memory_warning(void)
+{
+	if (linux_overcommit_memory_value() == 0) {
+		warning("Please, for correct work set the overcommit memory value to 1."
+			"Run the command 'sysctl vm.overcommit_memory=1'.");
+	}
+}
+
 void storage_timeout(void)
 {
 	pid_t pid;
@@ -418,6 +445,8 @@ int main(int argc, char *argv[])
 	parse_args(argc, argv);
 
 	show_logo();
+
+	linux_overcommit_memory_warning();
 
 	init_server();
 	init_admin();
