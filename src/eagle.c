@@ -142,7 +142,7 @@ int linux_overcommit_memory_value(void)
 void linux_overcommit_memory_warning(void)
 {
 	if (linux_overcommit_memory_value() == 0) {
-		warning("Please, for correct work set the overcommit memory value to 1."
+		warning("Please, for correct work set the overcommit memory value to 1. "
 			"Run the command 'sysctl vm.overcommit_memory=1'.");
 	}
 }
