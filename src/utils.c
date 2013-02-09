@@ -130,7 +130,7 @@ int check_input_buffer1(char *buffer, size_t size)
 	int length = 0;
 
 	while (ptr < end_ptr) {
-		if (*++ptr =='\0') {
+		if (*++ptr == '\0') {
 			length = ptr - buffer;
 			break;
 		}
