@@ -177,84 +177,84 @@ EagleMQ является многопользовательской систем
     <tr>
         <td>4</td>
         <td>QUEUE_CREATE_PERM</td>
-        <td>10</td>
+        <td>20</td>
         <td>.queue_create</td>
         <td>Разрешение на создание очереди</td>
     </tr>
     <tr>
         <td>5</td>
         <td>QUEUE_DECLARE_PERM</td>
-        <td>11</td>
+        <td>21</td>
         <td>.queue_declare</td>
         <td>Разрешение на декларирование очереди</td>
     </tr>
     <tr>
         <td>6</td>
         <td>QUEUE_EXIST_PERM</td>
-        <td>12</td>
+        <td>22</td>
         <td>.queue_exist</td>
         <td>Разрешение на проверку существования очереди</td>
     </tr>
     <tr>
         <td>7</td>
         <td>QUEUE_LIST_PERM</td>
-        <td>13</td>
+        <td>23</td>
         <td>.queue_list</td>
         <td>Разрешения на получение списка очередей</td>
     </tr>
     <tr>
         <td>8</td>
         <td>QUEUE_SIZE_PERM</td>
-        <td>14</td>
+        <td>24</td>
         <td>.queue_size</td>
         <td>Разрешения на получения размера очереди</td>
     </tr>
     <tr>
         <td>9</td>
         <td>QUEUE_PUSH_PERM</td>
-        <td>15</td>
+        <td>25</td>
         <td>.queue_push</td>
         <td>Разрешение на отправку сообщения в очередь</td>
     </tr>
     <tr>
         <td>10</td>
         <td>QUEUE_GET_PERM</td>
-        <td>16</td>
+        <td>26</td>
         <td>.queue_get</td>
         <td>Разрешение на получение сообщения из очереди</td>
     </tr>
     <tr>
         <td>11</td>
         <td>QUEUE_POP_PERM</td>
-        <td>17</td>
+        <td>27</td>
         <td>.queue_pop</td>
         <td>Разрешение на выталкивание сообщения из очереди</td>
     </tr>
     <tr>
         <td>12</td>
         <td>QUEUE_SUBSCRIBE_PERM</td>
-        <td>18</td>
+        <td>28</td>
         <td>.queue_subscribe</td>
         <td>Разрешение на подписку на очередь</td>
     </tr>
     <tr>
         <td>13</td>
         <td>QUEUE_UNSUBSCRIBE_PERM</td>
-        <td>19</td>
+        <td>29</td>
         <td>.queue_unsubscribe</td>
         <td>Разрешение на отписку на очередь</td>
     </tr>
     <tr>
         <td>14</td>
         <td>QUEUE_PURGE_PERM</td>
-        <td>20</td>
+        <td>30</td>
         <td>.queue_purge</td>
         <td>Разрешение на удаление всех сообщений из очереди</td>
     </tr>
     <tr>
         <td>15</td>
         <td>QUEUE_DELETE_PERM</td>
-        <td>21</td>
+        <td>31</td>
         <td>.queue_delete</td>
         <td>Разрешение на удаление очереди</td>
     </tr>
