@@ -33,6 +33,7 @@
 #include "event.h"
 #include "network.h"
 #include "list.h"
+#include "queue.h"
 #include "user.h"
 
 #define EG_NOTUSED(X) ((void)X)
@@ -62,6 +63,31 @@
 #define BIT_SET(a, b) ((a) |= (1<<(b)))
 #define BIT_CHECK(a, b) ((a) & (1<<(b)))
 
+/* ------- Queue flags ------- */
+
+#define EG_QUEUE_AUTODELETE_FLAG 0
+#define EG_QUEUE_FORCE_PUSH_FLAG 1
+#define EG_QUEUE_ROUND_ROBIN_FLAG 2
+#define EG_QUEUE_DURABLE_FLAG 3
+
+#define EG_QUEUE_CLIENT_NOTIFY_FLAG 0
+
+typedef struct Queue_t {
+	char name[64];
+	uint32_t max_msg;
+	uint32_t max_msg_size;
+	uint32_t flags;
+	int auto_delete;
+	int force_push;
+	int round_robin;
+	Queue *queue;
+	List *declared_clients;
+	List *subscribed_clients_msg;
+	List *subscribed_clients_notify;
+} Queue_t;
+ 
+/* ------- Client context ------- */
+
 typedef struct EagleClient {
 	int fd;
 	uint64_t perm;
@@ -79,6 +105,8 @@ typedef struct EagleClient {
 	size_t sentlen;
 	time_t last_action;
 } EagleClient;
+
+/* ------- Global context ------- */
 
 typedef struct EagleServer {
 	EventLoop *loop;
