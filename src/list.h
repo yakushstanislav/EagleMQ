@@ -40,11 +40,9 @@
 #define EG_LIST_NEXT_NODE(n) ((n)->next)
 #define EG_LIST_NODE_VALUE(n) ((n)->value)
 
-#define EG_LIST_SET_DUP_METHOD(l, m) ((l)->dup = (m))
 #define EG_LIST_SET_FREE_METHOD(l, m) ((l)->free = (m))
 #define EG_LIST_SET_MATCH_METHOD(l, m) ((l)->match = (m))
 
-#define EG_LIST_GET_DUP_METHOD(l) ((l)->dup)
 #define EG_LIST_GET_FREE_METHOD(l) ((l)->free)
 #define EG_LIST_GET_MATCH_METHOD(l) ((l)->match)
 
@@ -62,7 +60,6 @@ typedef struct ListIterator {
 typedef struct List {
 	ListNode *head;
 	ListNode *tail;
-	void *(*dup)(void *ptr);
 	void (*free)(void *ptr);
 	int (*match)(void *ptr, void *value);
 	unsigned int len;
@@ -73,7 +70,6 @@ void list_release(List *list);
 List *list_add_value_head(List *list, void *value);
 List *list_add_value_tail(List *list, void *value);
 int list_delete_value(List *list, void *value);
-List *list_insert_value(List *list, ListNode *old, void *value, int after);
 void list_delete_node(List *list, ListNode *node);
 ListIterator *list_get_iterator(List *list, int direction);
 void list_release_iterator(ListIterator *iter);

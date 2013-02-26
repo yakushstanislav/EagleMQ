@@ -41,7 +41,6 @@ List *list_create(void)
 
 	list->head = list->tail = NULL;
 	list->len = 0;
-	list->dup = NULL;
 	list->free = NULL;
 	list->match = NULL;
 
@@ -129,43 +128,6 @@ int list_delete_value(List *list, void *value)
 	list_delete_node(list, node);
 
 	return EG_STATUS_OK;
-}
-
-List *list_insert_value(List *list, ListNode *old, void *value, int after)
-{
-	ListNode *node;
-
-	node = (ListNode*)xmalloc(sizeof(*node));
-
-	node->value = value;
-
-	if (after) {
-		node->prev = old;
-		node->next = old->next;
-
-		if (list->tail == old) {
-			list->tail = node;
-		}
-	} else {
-		node->next = old;
-		node->prev = old->prev;
-
-		if (list->head == old) {
-			list->head = node;
-		}
-	}
-
-	if (node->prev != NULL) {
-		node->prev->next = node;
-	}
-
-	if (node->next != NULL) {
-		node->next->prev = node;
-	}
-
-	list->len++;
-
-	return list;
 }
 
 void list_delete_node(List *list, ListNode *node)
