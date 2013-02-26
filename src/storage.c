@@ -36,6 +36,7 @@
 #include "eagle.h"
 #include "storage.h"
 #include "version.h"
+#include "protocol.h"
 #include "list.h"
 #include "user.h"
 #include "queue_t.h"

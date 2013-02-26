@@ -32,6 +32,7 @@
 
 #include "eagle.h"
 #include "queue_t.h"
+#include "protocol.h"
 #include "object.h"
 #include "handlers.h"
 #include "queue.h"

@@ -63,14 +63,7 @@
 #define BIT_SET(a, b) ((a) |= (1<<(b)))
 #define BIT_CHECK(a, b) ((a) & (1<<(b)))
 
-/* ------- Queue flags ------- */
-
-#define EG_QUEUE_AUTODELETE_FLAG 0
-#define EG_QUEUE_FORCE_PUSH_FLAG 1
-#define EG_QUEUE_ROUND_ROBIN_FLAG 2
-#define EG_QUEUE_DURABLE_FLAG 3
-
-#define EG_QUEUE_CLIENT_NOTIFY_FLAG 0
+/* ------- Queue ------- */
 
 typedef struct Queue_t {
 	char name[64];
@@ -106,7 +99,7 @@ typedef struct EagleClient {
 	time_t last_action;
 } EagleClient;
 
-/* ------- Global context ------- */
+/* ------- Server context ------- */
 
 typedef struct EagleServer {
 	EventLoop *loop;
