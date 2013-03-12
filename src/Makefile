@@ -73,7 +73,7 @@ uninstall:
 	rm -rf $(INSTALL_DIR)/$(EAGLEMQ_BIN)
 
 clean:
-	rm -rf *o $(EAGLEMQ_BIN)
+	rm -rf *.o $(EAGLEMQ_BIN)
 
 distclean: clean
 	cd ../deps && $(MAKE) distclean
