@@ -56,6 +56,7 @@
 #include "list.h"
 #include "user.h"
 #include "queue_t.h"
+#include "route_t.h"
 #include "storage.h"
 
 EagleServer *server;
@@ -319,6 +320,7 @@ void destroy_server()
 	list_release(server->clients);
 	list_release(server->users);
 	list_release(server->queues);
+	list_release(server->routes);
 
 	xfree(server);
 
@@ -346,6 +348,7 @@ void init_server_config(void)
 	server->clients = list_create();
 	server->users = list_create();
 	server->queues = list_create();
+	server->routes = list_create();
 	server->now_time = time(NULL);
 	server->start_time = time(NULL);
 	server->last_save = time(NULL);
@@ -357,6 +360,7 @@ void init_server_config(void)
 
 	EG_LIST_SET_FREE_METHOD(server->users, free_user_list_handler);
 	EG_LIST_SET_FREE_METHOD(server->queues, free_queue_list_handler);
+	EG_LIST_SET_FREE_METHOD(server->routes, free_route_list_handler);
 }
 
 void show_logo(void)

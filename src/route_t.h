@@ -25,58 +25,21 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <string.h>
+#ifndef __ROUTE_H__
+#define __ROUTE_H__
+
+#include <stdint.h>
 
 #include "eagle.h"
 #include "object.h"
-#include "xmalloc.h"
-#include "list.h"
 
-Object *create_object(void *ptr, int size)
-{
-	Object *object = (Object*)xmalloc(sizeof(*object));
+Route_t *create_route_t(const char *name, uint32_t flags);
+void delete_route_t(Route_t *route);
+int push_message_route_t(Route_t *route, const char *key, Object *msg);
+void bind_route_t(Route_t *route, Queue_t *queue_t, const char *key);
+int unbind_route_t(Route_t *route, Queue_t *queue_t, const char *key);
+Route_t *find_route_t(List *list, const char *name);
+uint32_t get_queue_number_route_t(Route_t *route);
+void free_route_list_handler(void *ptr);
 
-	object->data = ptr;
-	object->size = size;
-	object->refcount = 1;
-
-	return object;
-}
-
-Object *create_dup_object(void *ptr, int size)
-{
-	Object *object = (Object*)xmalloc(sizeof(*object));
-
-	object->data = xmalloc(size);
-	object->size = size;
-	object->refcount = 1;
-
-	memcpy(object->data, ptr, size);
-
-	return object;
-}
-
-void release_object(Object *object)
-{
-	xfree(object->data);
-	xfree(object);
-}
-
-void increment_references_count(Object *object)
-{
-	object->refcount++;
-}
-
-void decrement_references_count(Object *object)
-{
-	if (object->refcount <= 1) {
-		release_object(object);
-	} else {
-		object->refcount--;
-	}
-}
-
-void free_object_list_handler(void *ptr)
-{
-	decrement_references_count(ptr);
-}
+#endif

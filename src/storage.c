@@ -38,8 +38,10 @@
 #include "version.h"
 #include "protocol.h"
 #include "list.h"
+#include "keylist.h"
 #include "user.h"
 #include "queue_t.h"
+#include "route_t.h"
 #include "queue.h"
 #include "lzf.h"
 #include "xmalloc.h"
@@ -379,6 +381,96 @@ static int storage_save_queues(FILE *fp)
 	return EG_STATUS_OK;
 }
 
+static int storage_save_route_key_queues(FILE *fp, List *queues)
+{
+	ListIterator iterator;
+	ListNode *node;
+	Queue_t *queue_t;
+
+	list_rewind(queues, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		queue_t = EG_LIST_NODE_VALUE(node);
+
+		if (storage_write_data(fp, queue_t->name, strlenz(queue_t->name)) == -1)
+			return EG_STATUS_ERR;
+	}
+
+	return EG_STATUS_OK;
+}
+
+static int storage_save_route_key(FILE *fp, const char *key, List *queues)
+{
+	uint32_t queue_size = EG_LIST_LENGTH(queues);
+
+	if (storage_write_type(fp, EG_STORAGE_TYPE_ROUTE_KEY) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_write_data(fp, (void*)key, strlenz(key)) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_write_data(fp, &queue_size, sizeof(queue_size)) == -1)
+		return EG_STATUS_ERR;
+
+	return storage_save_route_key_queues(fp, queues);
+}
+
+static int storage_save_route_keys(FILE *fp, Route_t *route)
+{
+	KeylistIterator iterator;
+	KeylistNode *node;
+
+	keylist_rewind(route->keys, &iterator);
+	while ((node = keylist_next_node(&iterator)) != NULL)
+	{
+		if (storage_save_route_key(fp, EG_KEYLIST_NODE_KEY(node),
+			EG_KEYLIST_NODE_VALUE(node)) != EG_STATUS_OK)
+			return EG_STATUS_ERR;
+	}
+
+	return EG_STATUS_OK;
+}
+
+static int storage_save_route(FILE *fp, Route_t *route)
+{
+	uint32_t keys = EG_KEYLIST_LENGTH(route->keys);
+
+	if (storage_write_type(fp, EG_STORAGE_TYPE_ROUTE) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_write_data(fp, route->name, strlenz(route->name)) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_write_data(fp, &route->flags, sizeof(route->flags)) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_write_data(fp, &keys, sizeof(keys)) == -1)
+		return EG_STATUS_ERR;
+
+	return storage_save_route_keys(fp, route);
+}
+
+static int storage_save_routes(FILE *fp)
+{
+	ListIterator iterator;
+	ListNode *node;
+	Route_t *route;
+
+	list_rewind(server->routes, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		route = EG_LIST_NODE_VALUE(node);
+
+		if (!BIT_CHECK(route->flags, EG_ROUTE_DURABLE_FLAG))
+			continue;
+
+		if (storage_save_route(fp, route) != EG_STATUS_OK)
+			return EG_STATUS_ERR;
+	}
+
+	return EG_STATUS_OK;
+}
+
 static int storage_load_user(FILE *fp)
 {
 	EagleUser user;
@@ -438,11 +530,86 @@ static int storage_load_queue(FILE *fp)
 
 	for (i = 0; i < queue_size; i++)
 	{
-		if (storage_load_queue_message(fp, queue_t) != EG_STATUS_OK)
+		if (storage_load_queue_message(fp, queue_t) != EG_STATUS_OK) {
+			delete_queue_t(queue_t);
 			return EG_STATUS_ERR;
+		}
 	}
 
 	list_add_value_tail(server->queues, queue_t);
+
+	return EG_STATUS_OK;
+}
+
+static int storage_load_route_key_queues(FILE *fp, Route_t *route, const char *key)
+{
+	Queue_t *queue_t;
+	char name[64];
+
+	if (storage_read_data(fp, &name, sizeof(name)) == -1)
+		return EG_STATUS_ERR;
+
+	queue_t = find_queue_t(server->queues, name);
+	if (!queue_t)
+		return EG_STATUS_OK;
+
+	bind_route_t(route, queue_t, key);
+
+	return EG_STATUS_OK;
+}
+
+static int storage_load_route_key(FILE *fp, Route_t *route)
+{
+	char key[32];
+	uint32_t queue_size;
+	int i;
+
+	if (storage_read_type(fp) != EG_STORAGE_TYPE_ROUTE_KEY)
+		return EG_STATUS_ERR;
+
+	if (storage_read_data(fp, &key, sizeof(key)) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_read_data(fp, &queue_size, sizeof(queue_size)) == -1)
+		return EG_STATUS_ERR;
+
+	for (i = 0; i < queue_size; i++)
+	{
+		if (storage_load_route_key_queues(fp, route, key) != EG_STATUS_OK) {
+			return EG_STATUS_ERR;
+		}
+	}
+
+	return EG_STATUS_OK;
+}
+
+static int storage_load_route(FILE *fp)
+{
+	Route_t *route;
+	Route_t data;
+	uint32_t keys;
+	int i;
+
+	if (storage_read_data(fp, &data.name, sizeof(data.name)) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_read_data(fp, &data.flags, sizeof(data.flags)) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_read_data(fp, &keys, sizeof(keys)) == -1)
+		return EG_STATUS_ERR;
+
+	route = create_route_t(data.name, data.flags);
+
+	for (i = 0; i < keys; i++)
+	{
+		if (storage_load_route_key(fp, route) != EG_STATUS_OK) {
+			delete_route_t(route);
+			return EG_STATUS_ERR;
+		}
+	}
+
+	list_add_value_tail(server->routes, route);
 
 	return EG_STATUS_OK;
 }
@@ -475,6 +642,10 @@ int storage_load(char *filename)
 
 			case EG_STORAGE_TYPE_QUEUE:
 				if (storage_load_queue(fp) != EG_STATUS_OK) goto error;
+				break;
+
+			case EG_STORAGE_TYPE_ROUTE:
+				if (storage_load_route(fp) != EG_STATUS_OK) goto error;
 				break;
 
 			case EG_STORAGE_EOF:
@@ -518,6 +689,9 @@ int storage_save(char *filename)
 		goto error;
 
 	if (storage_save_queues(fp) != EG_STATUS_OK)
+		goto error;
+
+	if (storage_save_routes(fp) != EG_STATUS_OK)
 		goto error;
 
 	if (storage_write_type(fp, EG_STORAGE_EOF) == -1)

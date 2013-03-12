@@ -33,6 +33,7 @@
 #include "event.h"
 #include "network.h"
 #include "list.h"
+#include "keylist.h"
 #include "queue.h"
 #include "user.h"
 
@@ -60,8 +61,8 @@
 #define EG_MAX_MSG_COUNT 4294967295
 #define EG_MAX_MSG_SIZE 2147483647
 
-#define BIT_SET(a, b) ((a) |= (1<<(b)))
-#define BIT_CHECK(a, b) ((a) & (1<<(b)))
+#define BIT_SET(a, b) ((a) |= (1UL<<(b)))
+#define BIT_CHECK(a, b) ((a) & (1UL<<(b)))
 
 /* ------- Queue ------- */
 
@@ -77,8 +78,19 @@ typedef struct Queue_t {
 	List *declared_clients;
 	List *subscribed_clients_msg;
 	List *subscribed_clients_notify;
+	Keylist *routes;
 } Queue_t;
- 
+
+/* ------- Route ------- */
+
+typedef struct Route_t {
+	char name[64];
+	uint32_t flags;
+	int auto_delete;
+	int round_robin;
+	Keylist *keys;
+} Route_t;
+
 /* ------- Client context ------- */
 
 typedef struct EagleClient {
@@ -118,6 +130,7 @@ typedef struct EagleServer {
 	List *clients;
 	List *users;
 	List *queues;
+	List *routes;
 	time_t now_time;
 	time_t start_time;
 	time_t last_save;

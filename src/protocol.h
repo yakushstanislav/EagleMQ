@@ -32,6 +32,7 @@
 
 #define EG_FLUSH_USER_FLAG 0
 #define EG_FLUSH_QUEUE_FLAG 1
+#define EG_FLUSH_ROUTE_FLAG 2
 
 #define EG_QUEUE_AUTODELETE_FLAG 0
 #define EG_QUEUE_FORCE_PUSH_FLAG 1
@@ -39,6 +40,10 @@
 #define EG_QUEUE_DURABLE_FLAG 3
 
 #define EG_QUEUE_CLIENT_NOTIFY_FLAG 0
+
+#define EG_ROUTE_AUTODELETE_FLAG 0
+#define EG_ROUTE_ROUND_ROBIN_FLAG 1
+#define EG_ROUTE_DURABLE_FLAG 2
 
 typedef enum ProtocolBinaryMagic {
 	EG_PROTOCOL_REQ = 0x70,
@@ -74,7 +79,17 @@ typedef enum ProtocolCommand {
 	EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE = 0x2B,
 	EG_PROTOCOL_CMD_QUEUE_UNSUBSCRIBE = 0x2C,
 	EG_PROTOCOL_CMD_QUEUE_PURGE = 0x2D,
-	EG_PROTOCOL_CMD_QUEUE_DELETE = 0x2E
+	EG_PROTOCOL_CMD_QUEUE_DELETE = 0x2E,
+
+	/* route commands (47..54) */
+	EG_PROTOCOL_CMD_ROUTE_CREATE = 0x2F,
+	EG_PROTOCOL_CMD_ROUTE_EXIST = 0x30,
+	EG_PROTOCOL_CMD_ROUTE_LIST = 0x31,
+	EG_PROTOCOL_CMD_ROUTE_KEYS = 0x32,
+	EG_PROTOCOL_CMD_ROUTE_BIND = 0x33,
+	EG_PROTOCOL_CMD_ROUTE_UNBIND = 0x34,
+	EG_PROTOCOL_CMD_ROUTE_PUSH = 0x35,
+	EG_PROTOCOL_CMD_ROUTE_DELETE = 0x36
 } ProtocolCommand;
 
 typedef enum ProtocolResponseStatus {
@@ -101,6 +116,14 @@ typedef enum ProtocolResponseStatus {
 	EG_PROTOCOL_SUCCESS_QUEUE_UNSUBSCRIBE = 0x2C,
 	EG_PROTOCOL_SUCCESS_QUEUE_PURGE = 0x2D,
 	EG_PROTOCOL_SUCCESS_QUEUE_DELETE = 0x2E,
+	EG_PROTOCOL_SUCCESS_ROUTE_CREATE = 0x2F,
+	EG_PROTOCOL_SUCCESS_ROUTE_EXIST = 0x30,
+	EG_PROTOCOL_SUCCESS_ROUTE_LIST = 0x31,
+	EG_PROTOCOL_SUCCESS_ROUTE_KEYS = 0x32,
+	EG_PROTOCOL_SUCCESS_ROUTE_BIND = 0x33,
+	EG_PROTOCOL_SUCCESS_ROUTE_UNBIND = 0x34,
+	EG_PROTOCOL_SUCCESS_ROUTE_PUSH = 0x35,
+	EG_PROTOCOL_SUCCESS_ROUTE_DELETE = 0x36,
 	EG_PROTOCOL_ERROR = 0x2,
 	EG_PROTOCOL_ERROR_PACKET = 0x3,
 	EG_PROTOCOL_ERROR_COMMAND = 0x4,
@@ -126,7 +149,15 @@ typedef enum ProtocolResponseStatus {
 	EG_PROTOCOL_ERROR_QUEUE_SUBSCRIBE = 0xA6,
 	EG_PROTOCOL_ERROR_QUEUE_UNSUBSCRIBE = 0xA7,
 	EG_PROTOCOL_ERROR_QUEUE_PURGE = 0xA8,
-	EG_PROTOCOL_ERROR_QUEUE_DELETE = 0xA9
+	EG_PROTOCOL_ERROR_QUEUE_DELETE = 0xA9,
+	EG_PROTOCOL_ERROR_ROUTE_CREATE = 0xAA,
+	EG_PROTOCOL_ERROR_ROUTE_EXIST = 0xAB,
+	EG_PROTOCOL_ERROR_ROUTE_LIST = 0xAC,
+	EG_PROTOCOL_ERROR_ROUTE_KEYS = 0xAD,
+	EG_PROTOCOL_ERROR_ROUTE_BIND = 0xAE,
+	EG_PROTOCOL_ERROR_ROUTE_UNBIND = 0xAF,
+	EG_PROTOCOL_ERROR_ROUTE_PUSH = 0xB0,
+	EG_PROTOCOL_ERROR_ROUTE_DELETE = 0xB1
 } ProtocolResponseStatus;
 
 typedef enum ProtocolEventType {
@@ -294,6 +325,63 @@ typedef struct ProtocolRequestQueueDelete {
 	} body;
 } ProtocolRequestQueueDelete;
 
+typedef struct ProtocolRequestRouteCreate {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		uint32_t flags;
+	} body;
+} ProtocolRequestRouteCreate;
+
+typedef struct ProtocolRequestRouteExist {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+	} body;
+} ProtocolRequestRouteExist;
+
+typedef struct ProtocolRequestHeader ProtocolRequestRouteList;
+
+typedef struct ProtocolRequestRouteKeys {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+	} body;
+} ProtocolRequestRouteKeys;
+
+typedef struct ProtocolRequestRouteBind {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		char queue[64];
+		char key[32];
+	} body;
+} ProtocolRequestRouteBind;
+
+typedef struct ProtocolRequestRouteUnbind {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		char queue[64];
+		char key[32];
+	} body;
+} ProtocolRequestRouteUnbind;
+
+typedef struct ProtocolRequestRoutePush {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		char key[32];
+	} body;
+} ProtocolRequestRoutePush;
+
+typedef struct ProtocolRequestRouteDelete {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+	} body;
+} ProtocolRequestRouteDelete;
+
 typedef struct ProtocolResponseStat {
 	ProtocolResponseHeader header;
 	struct {
@@ -331,6 +419,13 @@ typedef struct ProtocolResponseQueueSize {
 		uint32_t size;
 	} body;
 } ProtocolResponseQueueSize;
+
+typedef struct ProtocolResponseRouteExist {
+	ProtocolResponseHeader header;
+	struct {
+		uint32_t status;
+	} body;
+} ProtocolResponseRouteExist;
 
 typedef struct ProtocolEventQueueNotify {
 	ProtocolEventHeader header;

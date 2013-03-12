@@ -32,13 +32,22 @@
 
 #include "eagle.h"
 #include "queue_t.h"
+#include "route_t.h"
 #include "protocol.h"
 #include "object.h"
 #include "handlers.h"
 #include "queue.h"
 #include "list.h"
+#include "keylist.h"
 #include "xmalloc.h"
 #include "utils.h"
+
+static void eject_clients_queue_t(Queue_t *queue_t);
+static void eject_routes_key_queue_t(Queue_t *queue_t, List *routes, const char *key);
+static void eject_routes_queue_t(Queue_t *queue_t);
+
+static void free_route_keylist_handler(void *key, void *value);
+static int match_route_keylist_handler(void *key1, void *key2);
 
 Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags)
 {
@@ -70,8 +79,11 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 	queue_t->declared_clients = list_create();
 	queue_t->subscribed_clients_msg = list_create();
 	queue_t->subscribed_clients_notify = list_create();
+	queue_t->routes = keylist_create();
 
 	EG_QUEUE_SET_FREE_METHOD(queue_t->queue, free_object_list_handler);
+	EG_KEYLIST_SET_FREE_METHOD(queue_t->routes, free_route_keylist_handler);
+	EG_KEYLIST_SET_MATCH_METHOD(queue_t->routes, match_route_keylist_handler);
 
 	return queue_t;
 }
@@ -79,10 +91,13 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 void delete_queue_t(Queue_t *queue_t)
 {
 	eject_clients_queue_t(queue_t);
+	eject_routes_queue_t(queue_t);
 
 	list_release(queue_t->declared_clients);
 	list_release(queue_t->subscribed_clients_msg);
 	list_release(queue_t->subscribed_clients_notify);
+
+	keylist_release(queue_t->routes);
 
 	queue_release(queue_t->queue);
 
@@ -257,6 +272,42 @@ void unsubscribe_client_queue_t(Queue_t *queue_t, EagleClient *client)
 	}
 }
 
+void link_queue_route_t(Queue_t *queue_t, Route_t *route, const char *key)
+{
+	List *list;
+	KeylistNode *node = keylist_get_value(queue_t->routes, (void*)key);
+
+	if (!node)
+	{
+		list = list_create();
+		keylist_set_value(queue_t->routes, xstrdup(key), list);
+		list_add_value_tail(list, route);
+	}
+	else
+	{
+		list = EG_KEYLIST_NODE_VALUE(node);
+		if (!list_search_node(list, route)) {
+			list_add_value_tail(list, route);
+		}
+	}
+}
+
+void unlink_queue_route_t(Queue_t *queue_t, Route_t *route, const char *key)
+{
+	List *list;
+	KeylistNode *node = keylist_get_value(queue_t->routes, (void*)key);
+
+	if (node)
+	{
+		list = EG_KEYLIST_NODE_VALUE(node);
+		list_delete_value(list, route);
+
+		if (!EG_LIST_LENGTH(list)) {
+			keylist_delete_node(queue_t->routes, node);
+		}
+	}
+}
+
 void process_queue_t(Queue_t *queue_t)
 {
 	if (queue_t->auto_delete)
@@ -267,7 +318,7 @@ void process_queue_t(Queue_t *queue_t)
 	}
 }
 
-void eject_clients_queue_t(Queue_t *queue_t)
+static void eject_clients_queue_t(Queue_t *queue_t)
 {
 	ListNode *node;
 	ListIterator iterator;
@@ -297,7 +348,45 @@ void eject_clients_queue_t(Queue_t *queue_t)
 	}
 }
 
+static inline void eject_routes_key_queue_t(Queue_t *queue_t, List *routes, const char *key)
+{
+	ListIterator iterator;
+	ListNode *node;
+	Route_t *route;
+
+	list_rewind(routes, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		route = EG_LIST_NODE_VALUE(node);
+
+		unbind_route_t(route, queue_t, key);
+	}
+}
+
+static void eject_routes_queue_t(Queue_t *queue_t)
+{
+	KeylistIterator iterator;
+	KeylistNode *node;
+
+	keylist_rewind(queue_t->routes, &iterator);
+	while ((node = keylist_next_node(&iterator)) != NULL)
+	{
+		eject_routes_key_queue_t(queue_t, EG_KEYLIST_NODE_VALUE(node), EG_KEYLIST_NODE_KEY(node));
+	}
+}
+
 void free_queue_list_handler(void *ptr)
 {
 	delete_queue_t(ptr);
+}
+
+static void free_route_keylist_handler(void *key, void *value)
+{
+	xfree(key);
+	list_release(value);
+}
+
+static int match_route_keylist_handler(void *key1, void *key2)
+{
+	return !strcmp(key1, key2);
 }

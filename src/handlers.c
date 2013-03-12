@@ -44,6 +44,7 @@
 #include "list.h"
 #include "user.h"
 #include "queue_t.h"
+#include "route_t.h"
 #include "storage.h"
 #include "xmalloc.h"
 #include "utils.h"
@@ -120,6 +121,18 @@ static void delete_queues(void)
 	while ((node = list_next_node(&iterator)) != NULL)
 	{
 		list_delete_node(server->queues, node);
+	}
+}
+
+static void delete_routes(void)
+{
+	ListIterator iterator;
+	ListNode *node;
+
+	list_rewind(server->routes, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		list_delete_node(server->routes, node);
 	}
 }
 
@@ -255,6 +268,10 @@ static void flush_command_handler(EagleClient *client)
 
 	if (BIT_CHECK(req->body.flags, EG_FLUSH_QUEUE_FLAG)) {
 		delete_queues();
+	}
+
+	if (BIT_CHECK(req->body.flags, EG_FLUSH_ROUTE_FLAG)) {
+		delete_routes();
 	}
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_FLUSH);
@@ -940,6 +957,344 @@ static void queue_delete_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_DELETE);
 }
 
+static void route_create_command_handler(EagleClient *client)
+{
+	ProtocolRequestRouteCreate *req = (ProtocolRequestRouteCreate*)client->request;
+	Route_t *route;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_CREATE_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (find_route_t(server->routes, req->body.name)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_CREATE);
+		return;
+	}
+
+	route = create_route_t(req->body.name, req->body.flags);
+
+	list_add_value_tail(server->routes, route);
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_CREATE);
+}
+
+static void route_exist_command_handler(EagleClient *client)
+{
+	ProtocolRequestRouteExist *req = (ProtocolRequestRouteExist*)client->request;
+	ProtocolResponseRouteExist *res;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_EXIST_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	res = (ProtocolResponseRouteExist*)xcalloc(sizeof(*res));
+
+	set_response_header(&res->header, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_EXIST, sizeof(res->body));
+
+	if (find_route_t(server->routes, req->body.name)) {
+		res->body.status = 1;
+	} else {
+		res->body.status = 0;
+	}
+
+	add_response(client, res, sizeof(*res));
+}
+
+static void route_list_command_handler(EagleClient *client)
+{
+	ProtocolRequestRouteList *req = (ProtocolRequestRouteList*)client->request;
+	ProtocolResponseHeader res;
+	ListIterator iterator;
+	ListNode *node;
+	Route_t *route;
+	char *list;
+	uint32_t keys;
+	int i;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_LIST_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	set_response_header(&res, req->cmd, EG_PROTOCOL_SUCCESS_ROUTE_LIST,
+		EG_LIST_LENGTH(server->routes) * (64 + (sizeof(uint32_t) * 2)));
+
+	list = (char*)xcalloc(sizeof(res) + res.bodylen);
+
+	memcpy(list, &res, sizeof(res));
+
+	i = sizeof(res);
+	list_rewind(server->routes, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		route = EG_LIST_NODE_VALUE(node);
+
+		keys = EG_KEYLIST_LENGTH(route->keys);
+
+		memcpy(list + i, route->name, strlenz(route->name));
+		i += 64;
+		memcpy(list + i, &route->flags, sizeof(uint32_t));
+		i += sizeof(uint32_t);
+		memcpy(list + i, &keys, sizeof(uint32_t));
+		i += sizeof(uint32_t);
+	}
+
+	add_response(client, list, sizeof(res) + res.bodylen);
+}
+
+static void route_keys_command_handler(EagleClient *client)
+{
+	ProtocolRequestRouteKeys *req = (ProtocolRequestRouteKeys*)client->request;
+	ProtocolResponseHeader res;
+	KeylistIterator keylist_iterator;
+	KeylistNode *keylist_node;
+	ListIterator list_iterator;
+	ListNode *list_node;
+	Route_t *route;
+	Queue_t *queue_t;
+	char *key;
+	List *queues;
+	char *list;
+	int i;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_KEYS_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	route = find_route_t(server->routes, req->body.name);
+	if (!route) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_KEYS);
+		return;
+	}
+
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_KEYS,
+		get_queue_number_route_t(route) * (32 + 64));
+
+	list = (char*)xcalloc(sizeof(res) + res.bodylen);
+
+	memcpy(list, &res, sizeof(res));
+
+	i = sizeof(res);
+	keylist_rewind(route->keys, &keylist_iterator);
+	while ((keylist_node = keylist_next_node(&keylist_iterator)) != NULL)
+	{
+		key = EG_KEYLIST_NODE_KEY(keylist_node);
+		queues = EG_KEYLIST_NODE_VALUE(keylist_node);
+
+		list_rewind(queues, &list_iterator);
+		while ((list_node = list_next_node(&list_iterator)) != NULL)
+		{
+			queue_t = EG_LIST_NODE_VALUE(list_node);
+
+			memcpy(list + i, key, strlenz(key));
+			i += 32;
+			memcpy(list + i, queue_t->name, strlenz(queue_t->name));
+			i += 64;
+		}
+	}
+
+	add_response(client, list, sizeof(res) + res.bodylen);
+}
+
+static void route_bind_command_handler(EagleClient *client)
+{
+	ProtocolRequestRouteBind *req = (ProtocolRequestRouteBind*)client->request;
+	Route_t *route;
+	Queue_t *queue_t;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_BIND_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer2(req->body.queue, 64)
+		|| !check_input_buffer1(req->body.key, 32)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	route = find_route_t(server->routes, req->body.name);
+	if (!route) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_BIND);
+		return;
+	}
+
+	queue_t = find_queue_t(server->queues, req->body.queue);
+	if (!queue_t) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_BIND);
+		return;
+	}
+
+	bind_route_t(route, queue_t, req->body.key);
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_BIND);
+}
+
+static void route_unbind_command_handler(EagleClient *client)
+{
+	ProtocolRequestRouteUnbind *req = (ProtocolRequestRouteUnbind*)client->request;
+	Route_t *route;
+	Queue_t *queue_t;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_UNBIND_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer2(req->body.queue, 64)
+		|| !check_input_buffer1(req->body.key, 32)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	route = find_route_t(server->routes, req->body.name);
+	if (!route) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_UNBIND);
+		return;
+	}
+
+	queue_t = find_queue_t(server->queues, req->body.queue);
+	if (!queue_t) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_UNBIND);
+		return;
+	}
+
+	if (unbind_route_t(route, queue_t, req->body.key) == EG_STATUS_ERR) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_UNBIND);
+		return;
+	}
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_UNBIND);
+}
+
+static void route_push_command_handler(EagleClient *client)
+{
+	ProtocolRequestRoutePush *req = (ProtocolRequestRoutePush*)client->request;
+	Route_t *route;
+	Object *msg;
+	char *msg_data;
+	int msg_size;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_PUSH_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer1(req->body.key, 32)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	route = find_route_t(server->routes, req->body.name);
+	if (!route) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_PUSH);
+		return;
+	}
+
+	msg_data = client->request + sizeof(*req);
+	msg_size = client->pos - sizeof(*req);
+
+	msg = create_dup_object(msg_data, msg_size);
+	OBJECT_RESET_COUNTER(msg);
+
+	if (push_message_route_t(route, req->body.key, msg) == EG_STATUS_ERR) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_PUSH);
+		return;
+	}
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_PUSH);
+}
+
+static void route_delete_command_handler(EagleClient *client)
+{
+	ProtocolRequestRouteDelete *req = (ProtocolRequestRouteDelete*)client->request;
+	Route_t *route;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_DELETE_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	route = find_route_t(server->routes, req->body.name);
+	if (!route) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_DELETE);
+		return;
+	}
+
+	if (list_delete_value(server->routes, route) == EG_STATUS_ERR) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_DELETE);
+		return;
+	}
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_DELETE);
+}
+
 void queue_client_event_notify(EagleClient *client, Queue_t *queue_t)
 {
 	ProtocolEventQueueNotify *event = (ProtocolEventQueueNotify*)xcalloc(sizeof(*event));
@@ -1091,6 +1446,38 @@ static inline void parse_command(EagleClient *client, ProtocolRequestHeader* req
 			queue_delete_command_handler(client);
 			break;
 
+		case EG_PROTOCOL_CMD_ROUTE_CREATE:
+			route_create_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_ROUTE_EXIST:
+			route_exist_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_ROUTE_LIST:
+			route_list_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_ROUTE_KEYS:
+			route_keys_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_ROUTE_BIND:
+			route_bind_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_ROUTE_UNBIND:
+			route_unbind_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_ROUTE_PUSH:
+			route_push_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_ROUTE_DELETE:
+			route_delete_command_handler(client);
+			break;
+
 		default:
 			add_status_response(client, req->cmd, EG_PROTOCOL_ERROR_COMMAND);
 			break;
@@ -1154,6 +1541,7 @@ process:
 			memcpy(client->request, client->buffer + client->offset, client->pos);
 			client->offset += client->pos;
 			client->nread -= client->pos;
+			return;
 		}
 	} else {
 		if (client->nread == client->bodylen)

@@ -32,6 +32,7 @@
 
 #include "eagle.h"
 #include "list.h"
+#include "keylist.h"
 #include "object.h"
 
 Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags);
@@ -48,8 +49,9 @@ void declare_client_queue_t(Queue_t *queue_t, EagleClient *client);
 void undeclare_client_queue_t(Queue_t *queue_t, EagleClient *client);
 void subscribe_client_queue_t(Queue_t *queue_t, EagleClient *client, uint32_t flags);
 void unsubscribe_client_queue_t(Queue_t *queue_t, EagleClient *client);
+void link_queue_route_t(Queue_t *queue_t, Route_t *route, const char *key);
+void unlink_queue_route_t(Queue_t *queue_t, Route_t *route, const char *key);
 void process_queue_t(Queue_t *queue_t);
-void eject_clients_queue_t(Queue_t *queue_t);
 void free_queue_list_handler(void *ptr);
 
 #endif
