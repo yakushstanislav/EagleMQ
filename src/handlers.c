@@ -1098,6 +1098,11 @@ static void route_keys_command_handler(EagleClient *client)
 		return;
 	}
 
+	if (!check_input_buffer2(req->body.name, 64)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
 	route = find_route_t(server->routes, req->body.name);
 	if (!route) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_KEYS);
