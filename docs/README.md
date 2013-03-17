@@ -164,101 +164,173 @@ Table 1. Description of user permissions
     </tr>
     <tr>
         <td>2</td>
+        <td>ROUTE_PERM</td>
+        <td>1</td>
+        <td>
+            <i>.route_create</i><br/>
+            <i>.route_exist</i><br/>
+            <i>.route_list</i><br/>
+            <i>.route_keys</i><br/>
+            <i>.route_bind</i><br/>
+            <i>.route_unbind</i><br/>
+            <i>.route_push</i><br/>
+            <i>.route_delete</i>
+        </td>
+        <td>The ability to perform all the commands associated with routes</td>
+    </tr>
+    <tr>
+        <td>3</td>
         <td>ADMIN_PERM</td>
         <td>5</td>
         <td>-</td>
         <td>The ability to perform all the commands on the server (including the commands for working with users)</td>
     </tr>
     <tr>
-        <td>3</td>
+        <td>4</td>
         <td>NOT_CHANGE_PERM</td>
         <td>6</td>
         <td>-</td>
         <td>If a user is created with the flag, then it can not be removed</td>
     </tr>
     <tr>
-        <td>4</td>
+        <td>5</td>
         <td>QUEUE_CREATE_PERM</td>
         <td>20</td>
         <td>.queue_create</td>
-        <td>Permission to create queues</td>
+        <td>Permission to create queue</td>
     </tr>
     <tr>
-        <td>5</td>
+        <td>6</td>
         <td>QUEUE_DECLARE_PERM</td>
         <td>21</td>
         <td>.queue_declare</td>
         <td>Permission to declare the queue</td>
     </tr>
     <tr>
-        <td>6</td>
+        <td>7</td>
         <td>QUEUE_EXIST_PERM</td>
         <td>22</td>
         <td>.queue_exist</td>
         <td>Permission to check the existence of the queue</td>
     </tr>
     <tr>
-        <td>7</td>
+        <td>8</td>
         <td>QUEUE_LIST_PERM</td>
         <td>23</td>
         <td>.queue_list</td>
         <td>Permission to get a list of queues</td>
     </tr>
     <tr>
-        <td>8</td>
+        <td>9</td>
         <td>QUEUE_SIZE_PERM</td>
         <td>24</td>
         <td>.queue_size</td>
         <td>Permission to get the size of the queue</td>
     </tr>
     <tr>
-        <td>9</td>
+        <td>10</td>
         <td>QUEUE_PUSH_PERM</td>
         <td>25</td>
         <td>.queue_push</td>
         <td>Permission to push messages to the queue</td>
     </tr>
     <tr>
-        <td>10</td>
+        <td>11</td>
         <td>QUEUE_GET_PERM</td>
         <td>26</td>
         <td>.queue_get</td>
         <td>Permission to get messages from the queue</td>
     </tr>
     <tr>
-        <td>11</td>
+        <td>12</td>
         <td>QUEUE_POP_PERM</td>
         <td>27</td>
         <td>.queue_pop</td>
         <td>Permission to pop messages from the queue</td>
     </tr>
     <tr>
-        <td>12</td>
+        <td>13</td>
         <td>QUEUE_SUBSCRIBE_PERM</td>
         <td>28</td>
         <td>.queue_subscribe</td>
         <td>Permission to subscribe to the queue</td>
     </tr>
     <tr>
-        <td>13</td>
+        <td>14</td>
         <td>QUEUE_UNSUBSCRIBE_PERM</td>
         <td>29</td>
         <td>.queue_unsubscribe</td>
         <td>Permission to unsubscribe to the queue</td>
     </tr>
     <tr>
-        <td>14</td>
+        <td>15</td>
         <td>QUEUE_PURGE_PERM</td>
         <td>30</td>
         <td>.queue_purge</td>
         <td>Permission to delete all messages from the queue</td>
     </tr>
     <tr>
-        <td>15</td>
+        <td>16</td>
         <td>QUEUE_DELETE_PERM</td>
         <td>31</td>
         <td>.queue_delete</td>
         <td>Permission to delete queue</td>
+    </tr>
+    <tr>
+        <td>17</td>
+        <td>ROUTE_CREATE_PERM</td>
+        <td>32</td>
+        <td>.route_create</td>
+        <td>Permission to create route</td>
+    </tr>
+    <tr>
+        <td>18</td>
+        <td>ROUTE_EXIST_PERM</td>
+        <td>33</td>
+        <td>.route_exist</td>
+        <td>Permission to check the existence of the route</td>
+    </tr>
+    <tr>
+        <td>19</td>
+        <td>ROUTE_LIST_PERM</td>
+        <td>34</td>
+        <td>.route_list</td>
+        <td>Permission to get a list of routes</td>
+    </tr>
+    <tr>
+        <td>20</td>
+        <td>ROUTE_KEYS_PERM</td>
+        <td>35</td>
+        <td>.route_keys</td>
+        <td>Permission to get a list of keys route</td>
+    </tr>
+    <tr>
+        <td>21</td>
+        <td>ROUTE_BIND_PERM</td>
+        <td>36</td>
+        <td>.route_bind</td>
+        <td>Permission to bind route with the queue</td>
+    </tr>
+    <tr>
+        <td>22</td>
+        <td>ROUTE_UNBIND_PERM</td>
+        <td>37</td>
+        <td>.route_unbind</td>
+        <td>Permission to unbind route from the queue</td>
+    </tr>
+    <tr>
+        <td>23</td>
+        <td>ROUTE_PUSH_PERM</td>
+        <td>38</td>
+        <td>.route_push</td>
+        <td>Permission to push messages to the route</td>
+    </tr>
+    <tr>
+        <td>24</td>
+        <td>ROUTE_DELETE_PERM</td>
+        <td>39</td>
+        <td>.route_delete</td>
+        <td>Permission to delete route</td>
     </tr>
 </table>
 
@@ -343,7 +415,7 @@ The server provides the following information about each queue:
 * name - queue name
 * max\_msg - maximum number of messages
 * max\_msg\_size - maximum message size
-* flags - flags with which the queue was created
+* flags - flags that created queue
 * size - the number of messages in the queue
 * declared clients - the number of clients which declare queue
 * subscribed clients - the number of clients subscribed to queue
@@ -417,3 +489,99 @@ When you run this command all messages in the queue are deleted.
 All clients who have subscribed to the queue deletes from the list of subscribers.
 
 Queue name *name* can not have a length greater than 64.
+
+Routes
+======
+Routes allow you to distribute incoming messages to the queues.
+For distribution the messages you must to bind queue with the key and when sending specify key.
+
+Commands for working with routes
+===============================
+* .route\_create(name, flags)
+* .route\_exist(name)
+* .route\_list
+* .route\_keys(name)
+* .route\_bind(name, queue, key)
+* .route\_unbind(name, queue, key)
+* .route\_push(name, key, message)
+* .route\_delete(name)
+
+Description of the commands for working with routes
+===================================================
+.route\_create(name, flags)
+---------------------------
+Command *.route\_create* creates a route with name *name* and flags *flags*.
+
+Flags *flags* are a bit sequence. Route supports 3 flags - ROUTE\_AUTODELETE, ROUTE\_ROUND_ROBIN and ROUTE\_DURABLE.
+
+ROUTE\_AUTODELETE indicates that the route will be automatically removed if none queue is not binded with it.
+
+ROUTE\_ROUND\_ROBIN indicates that each message will be sent only one queue binded by key.
+For message distribution used algorithm round-robin.
+
+ROUTE\_DURABLE indicates that the route will be stored in the storage(according to your settings storage).
+
+Route name *name* can not have a length greater than 64.
+
+.route\_exist(name)
+-------------------
+Command *.route_exist* checks for the existence route with the name *name*.
+
+Route name *name* can not have a length greater than 64.
+
+.route\_list
+------------
+Command *.route_list* used to get list of routes.
+
+The server provides the following information for each route:
+
+* name - name of the route
+* flags - flags that created route
+* keys - the number of keys in the route
+
+.route\_keys(name)
+------------------
+Command *.route_keys* gets a list of all keys of route with the name *name*.
+
+The server provides the following information for each key:
+
+* key - the key
+* queue - binded queue
+
+Route name *name* can not have a length greater than 64.
+
+.route\_bind(name, queue, key)
+------------------------------
+Command *.route\_bind* binds route with the name *name* to queue *queue* by a key *key*.
+
+Route name *name* can not have a length greater than 64.
+
+Queue name *name* can not have a length greater than 64.
+
+Key *key* can not have a length greater than 32.
+
+.route\_unbind(name, queue, key)
+--------------------------------
+Command *.route\_unbind* unbinds route with the name *name* from queue *queue* by a key *key*.
+
+Route name *name* can not have a length greater than 64.
+
+Queue name *name* can not have a length greater than 64.
+
+Key *key* can not have a length greater than 32.
+
+.route\_push(name, key, message)
+--------------------------------
+Command *.route\_push* sends *message* to the route with the name *name* by a key *key*.
+
+Route name *name* can not have a length greater than 64.
+
+Key *key* can not have a length greater than 32.
+
+.route\_delete(name)
+--------------------
+Command *.route\_delete* removes the route with name *name*.
+
+When you run this command all connections with the queues are deleted.
+
+Route name *name* can not have a length greater than 64.
