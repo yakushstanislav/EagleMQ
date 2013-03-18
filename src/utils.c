@@ -142,7 +142,7 @@ int check_input_buffer1(char *buffer, size_t size)
 
 	for (ptr = buffer; ptr < (buffer + length); ptr++)
 	{
-		if (!IS_ALPHANUM(*ptr)) {
+		if (!IS_ALPHANUM(*ptr) && !IS_EXTRA(*ptr)) {
 			return 0;
 		}
 	}
