@@ -533,7 +533,7 @@ Route name *name* can not have a length greater than 64.
 ------------
 Command *.route_list* used to get list of routes.
 
-The server provides the following information for each route:
+The server provides the following information about each route:
 
 * name - name of the route
 * flags - flags that created route
@@ -543,7 +543,7 @@ The server provides the following information for each route:
 ------------------
 Command *.route_keys* gets a list of all keys of route with the name *name*.
 
-The server provides the following information for each key:
+The server provides the following information about each key:
 
 * key - the key
 * queue - binded queue
