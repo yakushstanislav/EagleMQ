@@ -210,7 +210,7 @@ static void stat_command_handler(EagleClient *client)
 	stat->body.clients = EG_LIST_LENGTH(server->clients);
 	stat->body.users = EG_LIST_LENGTH(server->users);
 	stat->body.queues = EG_LIST_LENGTH(server->queues);
-	stat->body.resv1 = 0;
+	stat->body.routes = EG_LIST_LENGTH(server->routes);
 	stat->body.resv2 = 0;
 	stat->body.resv3 = 0;
 	stat->body.resv4 = 0;

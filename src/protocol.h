@@ -399,7 +399,7 @@ typedef struct ProtocolResponseStat {
 		uint32_t clients;
 		uint32_t users;
 		uint32_t queues;
-		uint32_t resv1;
+		uint32_t routes;
 		uint32_t resv2;
 		uint32_t resv3;
 		uint32_t resv4;
