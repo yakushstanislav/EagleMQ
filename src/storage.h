@@ -38,9 +38,9 @@
 
 #define EG_STORAGE_EOF 0xFF
 
-int storage_load(char *filename);
-int storage_save(char *filename);
-int storage_save_background(char *filename);
+int storage_load(const char *filename);
+int storage_save(const char *filename);
+int storage_save_background(const char *filename);
 void remove_temp_file(pid_t pid);
 
 #endif

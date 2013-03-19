@@ -614,7 +614,7 @@ static int storage_load_route(FILE *fp)
 	return EG_STATUS_OK;
 }
 
-int storage_load(char *filename)
+int storage_load(const char *filename)
 {
 	FILE *fp;
 	int type;
@@ -669,7 +669,7 @@ error:
 	return EG_STATUS_ERR;
 }
 
-int storage_save(char *filename)
+int storage_save(const char *filename)
 {
 	FILE *fp;
 	char tmpfile[32];
@@ -719,7 +719,7 @@ error:
 	return EG_STATUS_ERR;
 }
 
-int storage_save_background(char *filename)
+int storage_save_background(const char *filename)
 {
 	pid_t child_pid;
 

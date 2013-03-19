@@ -126,10 +126,10 @@ int linux_overcommit_memory_value(void)
 	FILE *fp;
 	char buf[64];
 
-	if ((fp = fopen("/proc/sys/vm/overcommit_memory","r")) == NULL)
+	if ((fp = fopen("/proc/sys/vm/overcommit_memory", "r")) == NULL)
 		return -1;
 
-	if (fgets(buf,64,fp) == NULL)
+	if (fgets(buf, 64, fp) == NULL)
 	{
 		fclose(fp);
 		return -1;
