@@ -58,10 +58,9 @@
 #include "queue_t.h"
 #include "route_t.h"
 #include "storage.h"
+#include "config.h"
 
 EagleServer *server;
-
-char *name, *password;
 
 void create_pid_file(const char *pidfile)
 {
@@ -224,7 +223,7 @@ void init_admin(void)
 {
 	EagleUser *admin;
 
-	admin = create_user(name, password, EG_USER_SUPER_PERM);
+	admin = create_user(server->name, server->password, EG_USER_SUPER_PERM);
 	list_add_value_tail(server->users, admin);
 }
 
@@ -327,12 +326,24 @@ void destroy_server()
 	disable_log();
 }
 
+void init_config(void)
+{
+	if (access(server->config, F_OK) != -1)
+	{
+		if (config_load(server->config) != EG_STATUS_OK)
+		{
+			fatal("Error load config file %s", server->config);
+		}
+	}
+	else
+	{
+		warning("Config file %s don't exist", server->config);
+	}
+}
+
 void init_server_config(void)
 {
 	server = (EagleServer*)xmalloc(sizeof(*server));
-
-	name = EG_DEFAULT_ADMIN_NAME;
-	password = EG_DEFAULT_ADMIN_PASSWORD;
 
 	server->fd = 0;
 	server->sfd = 0;
@@ -342,6 +353,8 @@ void init_server_config(void)
 	server->unix_socket = EG_DEFAULT_UNIX_SOCKET;
 	server->unix_perm = 0;
 	server->child_pid = -1;
+	server->name = EG_DEFAULT_ADMIN_NAME;
+	server->password = EG_DEFAULT_ADMIN_PASSWORD;
 	server->max_clients = EG_DEFAULT_MAX_CLIENTS;
 	server->client_timeout = EG_DEFAULT_CLIENT_TIMEOUT;
 	server->storage_timeout = EG_DEFAULT_SAVE_TIMEOUT;
@@ -356,6 +369,7 @@ void init_server_config(void)
 	server->storage = EG_DEFAULT_STORAGE_PATH;
 	server->pidfile = EG_DEFAULT_PID_PATH;
 	server->logfile = EG_DEFAULT_LOG_PATH;
+	server->config = EG_DEFAULT_CONFIG_PATH;
 	server->shutdown = 0;
 
 	EG_LIST_SET_FREE_METHOD(server->users, free_user_list_handler);
@@ -376,7 +390,7 @@ void usage(void)
 {
 	printf(
 		"EagleMQ %s\n"
-		"Usage: eaglemq [options]\n"
+		"Usage: eaglemq [path to config file] [options]\n"
 		"-h <hostname> - server hostname(default: %s)\n"
 		"-p <port> - server port(default: %d)\n"
 		"-u <unix socket> - server socket\n"
@@ -426,10 +440,10 @@ void parse_args(int argc, char *argv[])
 			server->pidfile = argv[i + 1];
 		} else if (!strcmp(argv[i], "--name") && !last_arg) {
 			if (strlen(argv[i + 1]) >= 32) fatal("Error name length");
-			name = argv[i + 1];
+			server->name = argv[i + 1];
 		} else if (!strcmp(argv[i], "--password") && !last_arg) {
 			if (strlen(argv[i + 1]) >= 32) fatal("Error password length");
-			password = argv[i + 1];
+			server->password = argv[i + 1];
 		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version")) {
 			info("EagleMQ %s", EAGLE_VERSION);
 			exit(0);
@@ -446,6 +460,11 @@ int main(int argc, char *argv[])
 	xmalloc_state_lock_on();
 
 	init_server_config();
+
+	if (argc >= 2)
+		server->config = argv[1];
+
+	init_config();
 	parse_args(argc, argv);
 
 	show_logo();

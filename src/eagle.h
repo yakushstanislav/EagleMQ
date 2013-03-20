@@ -54,6 +54,7 @@
 #define EG_DEFAULT_STORAGE_PATH "eaglemq.dat"
 #define EG_DEFAULT_PID_PATH NULL
 #define EG_DEFAULT_LOG_PATH "eaglemq.log"
+#define EG_DEFAULT_CONFIG_PATH "eaglemq.conf"
 
 #define EG_BUF_SIZE 32768
 
@@ -123,6 +124,8 @@ typedef struct EagleServer {
 	char *unix_socket;
 	mode_t unix_perm;
 	pid_t child_pid;
+	char *name;
+	char *password;
 	size_t max_clients;
 	int client_timeout;
 	int storage_timeout;
@@ -138,6 +141,7 @@ typedef struct EagleServer {
 	char *storage;
 	char *pidfile;
 	char *logfile;
+	char *config;
 	int shutdown;
 } EagleServer;
 
