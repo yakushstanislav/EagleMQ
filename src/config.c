@@ -46,6 +46,9 @@ static int parse_on_off(char *value)
 
 static int parse_key_value(char *key, char *value)
 {
+	int err;
+	long long max_memory;
+
 	if (!strcmp(key, "addr")) {
 		server->addr = xstrdup(value);
 	} else if (!strcmp(key, "port")) {
@@ -66,6 +69,10 @@ static int parse_key_value(char *key, char *value)
 		server->storage = xstrdup(value);
 	} else if (!strcmp(key, "max-clients")) {
 		server->max_clients = atoi(value);
+	} else if (!strcmp(key, "max-memory")) {
+		max_memory = memtoll(value, &err);
+		if (err) return EG_STATUS_ERR;
+		server->max_memory = max_memory;
 	} else if (!strcmp(key, "save-timeout")) {
 		server->storage_timeout = atoi(value);
 	} else if (!strcmp(key, "client-timeout")) {

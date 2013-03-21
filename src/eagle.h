@@ -48,6 +48,7 @@
 #define EG_DEFAULT_ADMIN_NAME "eagle"
 #define EG_DEFAULT_ADMIN_PASSWORD "eagle"
 #define EG_DEFAULT_MAX_CLIENTS 16384
+#define EG_DEFAULT_MAX_MEMORY 0
 #define EG_DEFAULT_CLIENT_TIMEOUT 0
 #define EG_DEFAULT_SAVE_TIMEOUT 0
 #define EG_DEFAULT_DAEMONIZE 0
@@ -61,6 +62,8 @@
 #define EG_MAX_BUF_SIZE 2147483647
 #define EG_MAX_MSG_COUNT 4294967295
 #define EG_MAX_MSG_SIZE 2147483647
+
+#define EG_MEMORY_CHECK_TIMEOUT 60
 
 #define BIT_SET(a, b) ((a) |= (1UL<<(b)))
 #define BIT_CHECK(a, b) ((a) & (1UL<<(b)))
@@ -127,6 +130,7 @@ typedef struct EagleServer {
 	char *name;
 	char *password;
 	size_t max_clients;
+	long long max_memory;
 	int client_timeout;
 	int storage_timeout;
 	char error[NET_ERR_LEN];
@@ -137,6 +141,7 @@ typedef struct EagleServer {
 	time_t now_time;
 	time_t start_time;
 	time_t last_save;
+	time_t last_memcheck;
 	int daemonize;
 	char *storage;
 	char *pidfile;

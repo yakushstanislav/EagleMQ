@@ -147,13 +147,30 @@ void linux_overcommit_memory_warning(void)
 	}
 }
 
+void check_memory(void)
+{
+	if (server->max_memory)
+	{
+		if ((server->now_time - server->last_memcheck) > EG_MEMORY_CHECK_TIMEOUT)
+		{
+			if (xmalloc_used_memory() > server->max_memory)
+			{
+				warning("Used memory: %u, limit: %u",
+					xmalloc_used_memory(), server->max_memory);
+			}
+
+			server->last_memcheck = server->now_time;
+		}
+	}
+}
+
 void storage_timeout(void)
 {
 	pid_t pid;
 	int stat;
 
 	if (server->child_pid != -1)
-	{
+	{	
 		if ((pid = wait3(&stat, WNOHANG, NULL)) != 0)
 		{
 			if (WEXITSTATUS(stat) != EG_STATUS_OK) {
@@ -173,7 +190,7 @@ void storage_timeout(void)
 				warning("Error saving data in %s", server->storage);
 			}
 
-			server->last_save = time(NULL);
+			server->last_save = server->now_time;
 		}
 	}
 }
@@ -186,6 +203,7 @@ int server_updater(EventLoop *loop, long long id, void *data)
 
 	server->now_time = time(NULL);
 
+	check_memory();
 	client_timeout();
 	storage_timeout();
 
@@ -356,6 +374,7 @@ void init_server_config(void)
 	server->name = EG_DEFAULT_ADMIN_NAME;
 	server->password = EG_DEFAULT_ADMIN_PASSWORD;
 	server->max_clients = EG_DEFAULT_MAX_CLIENTS;
+	server->max_memory = EG_DEFAULT_MAX_MEMORY;
 	server->client_timeout = EG_DEFAULT_CLIENT_TIMEOUT;
 	server->storage_timeout = EG_DEFAULT_SAVE_TIMEOUT;
 	server->clients = list_create();
@@ -365,6 +384,7 @@ void init_server_config(void)
 	server->now_time = time(NULL);
 	server->start_time = time(NULL);
 	server->last_save = time(NULL);
+	server->last_memcheck = time(NULL);
 	server->daemonize = EG_DEFAULT_DAEMONIZE;
 	server->storage = EG_DEFAULT_STORAGE_PATH;
 	server->pidfile = EG_DEFAULT_PID_PATH;

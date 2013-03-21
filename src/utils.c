@@ -25,11 +25,15 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "fmacros.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <string.h>
+#include <limits.h>
+#include <ctype.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -122,6 +126,45 @@ void wlog(const char *fmt,...)
 	va_start(args, fmt);
 	output_message(LOG_ONLY_LEVEL, fmt, args);
 	va_end(args);
+}
+
+long long memtoll(const char *value, int *err)
+{
+	char buffer[128];
+	const char *ptr;
+	unsigned int digits;
+	long mul;
+
+	*err = 0;
+
+	ptr = value;
+	while (*ptr && isdigit(*ptr)) {
+		ptr++;
+	}
+
+	if (*ptr == '\0' || !strcasecmp(ptr, "b")) {
+		mul = 1;
+	} else if (!strcasecmp(ptr, "k")) {
+		mul = 1000;
+	} else if (!strcasecmp(ptr, "m")) {
+		mul = 1000 * 1000;
+	} else if (!strcasecmp(ptr, "g")) {
+		mul = 1000L * 1000 * 1000;
+	} else {
+		*err = 1;
+		mul = 1;
+	}
+
+	digits = ptr - value;
+	if (digits >= sizeof(buffer)) {
+		*err = 1;
+		return LLONG_MAX;
+	}
+
+	memcpy(buffer, value, digits);
+	buffer[digits] = '\0';
+
+	return strtoll(buffer, NULL, 10) * mul;
 }
 
 int check_input_buffer1(char *buffer, size_t size)
