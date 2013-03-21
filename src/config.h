@@ -25,4 +25,9 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
 int config_load(const char *filename);
+
+#endif
