@@ -147,6 +147,29 @@ void linux_overcommit_memory_warning(void)
 	}
 }
 
+void sigterm_handler(int sig)
+{
+	EG_NOTUSED(sig);
+
+	warning("Received SIGTERM...");
+
+	server->shutdown = 1;
+}
+
+void setup_signals(void)
+{
+	struct sigaction sig;
+
+	signal(SIGHUP, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
+
+	sigemptyset(&sig.sa_mask);
+	sig.sa_flags = SA_NODEFER | SA_ONSTACK | SA_RESETHAND;
+	sig.sa_handler = sigterm_handler;
+
+	sigaction(SIGTERM, &sig, NULL);
+}
+
 void check_memory(void)
 {
 	if (server->max_memory)
@@ -212,29 +235,6 @@ int server_updater(EventLoop *loop, long long id, void *data)
 	}
 
 	return 100;
-}
-
-void sigterm_handler(int sig)
-{
-	EG_NOTUSED(sig);
-
-	warning("Received SIGTERM...");
-
-	server->shutdown = 1;
-}
-
-void setup_signals(void)
-{
-	struct sigaction sig;
-
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGPIPE, SIG_IGN);
-
-	sigemptyset(&sig.sa_mask);
-	sig.sa_flags = SA_NODEFER | SA_ONSTACK | SA_RESETHAND;
-	sig.sa_handler = sigterm_handler;
-
-	sigaction(SIGTERM, &sig, NULL);
 }
 
 void init_admin(void)
