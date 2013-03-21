@@ -1,6 +1,8 @@
+config.o: config.c eagle.h event.h network.h list.h keylist.h queue.h \
+ user.h config.h xmalloc.h utils.h
 eagle.o: eagle.c fmacros.h eagle.h event.h network.h list.h keylist.h \
  queue.h user.h logo.h version.h xmalloc.h handlers.h object.h queue_t.h \
- utils.h route_t.h storage.h
+ utils.h route_t.h storage.h config.h
 event.o: event.c xmalloc.h event.h event_epoll.c
 event_epoll.o: event_epoll.c
 event_select.o: event_select.c
@@ -27,6 +29,6 @@ storage.o: storage.c fmacros.h eagle.h event.h network.h list.h keylist.h \
  route_t.h lzf.h xmalloc.h utils.h
 user.o: user.c eagle.h event.h network.h list.h keylist.h queue.h user.h \
  xmalloc.h utils.h
-utils.o: utils.c eagle.h event.h network.h list.h keylist.h queue.h \
- user.h utils.h
+utils.o: utils.c fmacros.h eagle.h event.h network.h list.h keylist.h \
+ queue.h user.h utils.h
 xmalloc.o: xmalloc.c xmalloc.h utils.h

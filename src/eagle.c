@@ -193,7 +193,7 @@ void storage_timeout(void)
 	int stat;
 
 	if (server->child_pid != -1)
-	{	
+	{
 		if ((pid = wait3(&stat, WNOHANG, NULL)) != 0)
 		{
 			if (WEXITSTATUS(stat) != EG_STATUS_OK) {
