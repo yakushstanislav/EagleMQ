@@ -758,12 +758,12 @@ static void queue_get_command_handler(EagleClient *client)
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_GET, OBJECT_SIZE(msg));
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_GET, EG_OBJECT_SIZE(msg));
 
-	buffer = (char*)xmalloc(sizeof(res) + OBJECT_SIZE(msg));
+	buffer = (char*)xmalloc(sizeof(res) + EG_OBJECT_SIZE(msg));
 
 	memcpy(buffer, &res, sizeof(res));
-	memcpy(buffer + sizeof(res), OBJECT_DATA(msg), OBJECT_SIZE(msg));
+	memcpy(buffer + sizeof(res), EG_OBJECT_DATA(msg), EG_OBJECT_SIZE(msg));
 
 	add_response(client, buffer, sizeof(res) + res.bodylen);
 }
@@ -804,12 +804,12 @@ static void queue_pop_command_handler(EagleClient *client)
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_POP, OBJECT_SIZE(msg));
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_POP, EG_OBJECT_SIZE(msg));
 
-	buffer = (char*)xmalloc(sizeof(res) + OBJECT_SIZE(msg));
+	buffer = (char*)xmalloc(sizeof(res) + EG_OBJECT_SIZE(msg));
 
 	memcpy(buffer, &res, sizeof(res));
-	memcpy(buffer + sizeof(res), OBJECT_DATA(msg), OBJECT_SIZE(msg));
+	memcpy(buffer + sizeof(res), EG_OBJECT_DATA(msg), EG_OBJECT_SIZE(msg));
 
 	pop_message_queue_t(queue_t);
 
@@ -1255,7 +1255,7 @@ static void route_push_command_handler(EagleClient *client)
 	msg_size = client->pos - sizeof(*req);
 
 	msg = create_dup_object(msg_data, msg_size);
-	OBJECT_RESET_COUNTER(msg);
+	EG_OBJECT_RESET_COUNTER(msg);
 
 	if (push_message_route_t(route, req->body.key, msg) == EG_STATUS_ERR) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_PUSH);
@@ -1316,15 +1316,15 @@ void queue_client_event_message(EagleClient *client, Queue_t *queue_t, Object *m
 	ProtocolEventHeader header;
 	char *buffer;
 
-	set_event_header(&header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 64 + OBJECT_SIZE(msg));
+	set_event_header(&header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 64 + EG_OBJECT_SIZE(msg));
 
-	buffer = (char*)xcalloc(sizeof(header) + 64 + OBJECT_SIZE(msg));
+	buffer = (char*)xcalloc(sizeof(header) + 64 + EG_OBJECT_SIZE(msg));
 
 	memcpy(buffer, &header, sizeof(header));
 	memcpy(buffer + sizeof(header), queue_t->name, strlenz(queue_t->name));
-	memcpy(buffer + sizeof(header) + 64, OBJECT_DATA(msg), OBJECT_SIZE(msg));
+	memcpy(buffer + sizeof(header) + 64, EG_OBJECT_DATA(msg), EG_OBJECT_SIZE(msg));
 
-	add_response(client, buffer, sizeof(header) + 64 + OBJECT_SIZE(msg));
+	add_response(client, buffer, sizeof(header) + 64 + EG_OBJECT_SIZE(msg));
 }
 
 static void add_response(EagleClient *client, void *data, int size)
@@ -1628,12 +1628,12 @@ static void send_response(EventLoop *loop, int fd, void *data, int mask)
 	{
 		object = EG_LIST_NODE_VALUE(EG_LIST_FIRST(client->responses));
 
-		if (OBJECT_SIZE(object) == 0) {
+		if (EG_OBJECT_SIZE(object) == 0) {
 			list_delete_node(client->responses, EG_LIST_FIRST(client->responses));
 			continue;
 		}
 
-		nwritten = write(fd, ((char*)OBJECT_DATA(object)) + client->sentlen, OBJECT_SIZE(object) - client->sentlen);
+		nwritten = write(fd, ((char*)EG_OBJECT_DATA(object)) + client->sentlen, EG_OBJECT_SIZE(object) - client->sentlen);
 		if (nwritten <= 0) {
 			break;
 		}
@@ -1641,7 +1641,7 @@ static void send_response(EventLoop *loop, int fd, void *data, int mask)
 		client->sentlen += nwritten;
 		totwritten += nwritten;
 
-		if (client->sentlen == OBJECT_SIZE(object)) {
+		if (client->sentlen == EG_OBJECT_SIZE(object)) {
 			list_delete_node(client->responses, EG_LIST_FIRST(client->responses));
 			client->sentlen = 0;
 		}

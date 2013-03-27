@@ -30,9 +30,9 @@
 
 #include "eagle.h"
 
-#define OBJECT_SIZE(x) ((x)->size)
-#define OBJECT_DATA(x) ((x)->data)
-#define OBJECT_RESET_COUNTER(x) ((x)->refcount = 0)
+#define EG_OBJECT_SIZE(x) ((x)->size)
+#define EG_OBJECT_DATA(x) ((x)->data)
+#define EG_OBJECT_RESET_COUNTER(x) ((x)->refcount = 0)
 
 typedef struct Object {
 	void *data;

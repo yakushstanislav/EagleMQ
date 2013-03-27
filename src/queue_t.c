@@ -150,7 +150,7 @@ static int process_subscribed_clients(Queue_t *queue_t, Object *msg)
 
 int push_message_queue_t(Queue_t *queue_t, Object *msg)
 {
-	if (OBJECT_SIZE(msg) > queue_t->max_msg_size) {
+	if (EG_OBJECT_SIZE(msg) > queue_t->max_msg_size) {
 		return EG_STATUS_ERR;
 	}
 
