@@ -145,6 +145,28 @@ Queue *queue_purge(Queue *queue)
 	return queue;
 }
 
+void queue_delete_node(Queue *queue, QueueNode *node)
+{
+	if (node->prev) {
+		node->prev->next = node->next;
+	} else {
+		queue->head = node->next;
+	}
+
+	if (node->next) {
+		node->next->prev = node->prev;
+	} else {
+		queue->tail = node->prev;
+	}
+
+	if (queue->free) {
+		queue->free(node->value);
+	}
+
+	xfree(node);
+	queue->len--;
+}
+
 QueueIterator *queue_get_iterator(Queue *queue, int direction)
 {
 	QueueIterator *iter;
