@@ -363,13 +363,6 @@ void destroy_server()
 		unlink(server->unix_socket);
 	}
 
-	list_release(server->clients);
-	list_release(server->users);
-	list_release(server->queues);
-	list_release(server->routes);
-
-	xfree(server);
-
 	disable_log();
 }
 
@@ -425,6 +418,16 @@ void init_server_config(void)
 	EG_LIST_SET_FREE_METHOD(server->users, free_user_list_handler);
 	EG_LIST_SET_FREE_METHOD(server->queues, free_queue_list_handler);
 	EG_LIST_SET_FREE_METHOD(server->routes, free_route_list_handler);
+}
+
+void destroy_server_config(void)
+{
+	list_release(server->clients);
+	list_release(server->users);
+	list_release(server->queues);
+	list_release(server->routes);
+
+	xfree(server);
 }
 
 void show_logo(void)
@@ -533,6 +536,7 @@ int main(int argc, char *argv[])
 	delete_event_loop(server->loop);
 
 	destroy_server();
+	destroy_server_config();
 
 	return 0;
 }
