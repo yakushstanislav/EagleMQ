@@ -28,55 +28,37 @@
 #include <string.h>
 
 #include "eagle.h"
-#include "object.h"
-#include "xmalloc.h"
+#include "message.h"
 #include "list.h"
+#include "xmalloc.h"
 
-Object *create_object(void *ptr, size_t size)
+Message *create_message(Object *data, uint32_t expiration)
 {
-	Object *object = (Object*)xmalloc(sizeof(*object));
+	Message *msg = (Message*)xcalloc(sizeof(*msg));
 
-	object->data = ptr;
-	object->size = size;
-	object->refcount = 1;
+	msg->value = data;
+	msg->expiration = expiration;
 
-	return object;
+	return msg;
 }
 
-Object *create_dup_object(void *ptr, size_t size)
+Message *create_dup_message(void *ptr, size_t size, uint32_t expiration)
 {
-	Object *object = (Object*)xmalloc(sizeof(*object));
+	Message *msg = (Message*)xcalloc(sizeof(*msg));
 
-	object->data = xmalloc(size);
-	object->size = size;
-	object->refcount = 1;
+	msg->value = create_dup_object(ptr, size);
+	msg->expiration = expiration;
 
-	memcpy(object->data, ptr, size);
-
-	return object;
+	return msg;
 }
 
-void release_object(Object *object)
+void release_message(Message *msg)
 {
-	xfree(object->data);
-	xfree(object);
+	decrement_references_count(msg->value);
+	xfree(msg);
 }
 
-void increment_references_count(Object *object)
+void free_message_list_handler(void *ptr)
 {
-	object->refcount++;
-}
-
-void decrement_references_count(Object *object)
-{
-	if (object->refcount <= 1) {
-		release_object(object);
-	} else {
-		object->refcount--;
-	}
-}
-
-void free_object_list_handler(void *ptr)
-{
-	decrement_references_count(ptr);
+	release_message(ptr);
 }

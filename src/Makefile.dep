@@ -2,31 +2,34 @@ config.o: config.c eagle.h event.h network.h list.h keylist.h queue.h \
  user.h config.h xmalloc.h utils.h
 eagle.o: eagle.c fmacros.h eagle.h event.h network.h list.h keylist.h \
  queue.h user.h logo.h version.h xmalloc.h handlers.h object.h queue_t.h \
- utils.h route_t.h storage.h config.h
+ message.h utils.h route_t.h storage.h config.h
 event.o: event.c xmalloc.h event.h event_epoll.c
 event_epoll.o: event_epoll.c
 event_select.o: event_select.c
 handlers.o: handlers.c eagle.h event.h network.h list.h keylist.h queue.h \
- user.h handlers.h object.h queue_t.h version.h protocol.h route_t.h \
- storage.h xmalloc.h utils.h
+ user.h handlers.h object.h queue_t.h message.h version.h protocol.h \
+ route_t.h storage.h xmalloc.h utils.h
 keylist.o: keylist.c eagle.h event.h network.h list.h keylist.h queue.h \
  user.h xmalloc.h
 list.o: list.c eagle.h event.h network.h list.h keylist.h queue.h user.h \
  xmalloc.h
 lzf_c.o: lzf_c.c lzfP.h
 lzf_d.o: lzf_d.c lzfP.h
+message.o: message.c eagle.h event.h network.h list.h keylist.h queue.h \
+ user.h message.h object.h xmalloc.h
 network.o: network.c fmacros.h network.h utils.h
 object.o: object.c eagle.h event.h network.h list.h keylist.h queue.h \
  user.h object.h xmalloc.h
 queue.o: queue.c queue.h xmalloc.h
 queue_t.o: queue_t.c eagle.h event.h network.h list.h keylist.h queue.h \
- user.h queue_t.h object.h route_t.h protocol.h handlers.h xmalloc.h \
- utils.h
+ user.h queue_t.h object.h message.h route_t.h protocol.h handlers.h \
+ xmalloc.h utils.h
 route_t.o: route_t.c eagle.h event.h network.h list.h keylist.h queue.h \
- user.h route_t.h object.h queue_t.h protocol.h xmalloc.h utils.h
+ user.h route_t.h object.h message.h queue_t.h protocol.h xmalloc.h \
+ utils.h
 storage.o: storage.c fmacros.h eagle.h event.h network.h list.h keylist.h \
  queue.h user.h storage.h version.h protocol.h queue_t.h object.h \
- route_t.h lzf.h xmalloc.h utils.h
+ message.h route_t.h lzf.h xmalloc.h utils.h
 user.o: user.c eagle.h event.h network.h list.h keylist.h queue.h user.h \
  xmalloc.h utils.h
 utils.o: utils.c fmacros.h eagle.h event.h network.h list.h keylist.h \

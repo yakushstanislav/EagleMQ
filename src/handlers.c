@@ -39,6 +39,7 @@
 #include "version.h"
 #include "protocol.h"
 #include "object.h"
+#include "message.h"
 #include "event.h"
 #include "network.h"
 #include "list.h"
@@ -683,9 +684,10 @@ static void queue_push_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 	Object *msg;
 	char *queue_name, *msg_data;
-	int msg_size;
+	uint32_t expire;
+	size_t msg_size;
 
-	if (client->pos < (sizeof(*req) + 65)) {
+	if (client->pos < (sizeof(*req) + 69)) {
 		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
 		return;
 	}
@@ -709,12 +711,17 @@ static void queue_push_command_handler(EagleClient *client)
 		return;
 	}
 
-	msg_data = client->request + (sizeof(*req) + 64);
-	msg_size = client->pos - (sizeof(*req) + 64);
+	msg_data = client->request + sizeof(*req) + 64 + sizeof(uint32_t);
+	msg_size = client->pos - (sizeof(*req) + 64 + sizeof(uint32_t));
+	expire = *((uint32_t*)(client->request + sizeof(*req) + 64));
+
+	if (expire) {
+		expire += server->now_timems;
+	}
 
 	msg = create_dup_object(msg_data, msg_size);
 
-	if (push_message_queue_t(queue_t, msg) == EG_STATUS_ERR) {
+	if (push_message_queue_t(queue_t, msg, expire) == EG_STATUS_ERR) {
 		add_status_response(client, req->cmd, EG_PROTOCOL_ERROR_QUEUE_PUSH);
 		return;
 	}
@@ -727,7 +734,7 @@ static void queue_get_command_handler(EagleClient *client)
 	ProtocolRequestQueueGet *req = (ProtocolRequestQueueGet*)client->request;
 	ProtocolResponseHeader res;
 	Queue_t *queue_t;
-	Object *msg;
+	Message *msg;
 	char *buffer;
 
 	if (client->pos < sizeof(*req)) {
@@ -758,12 +765,12 @@ static void queue_get_command_handler(EagleClient *client)
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_GET, EG_OBJECT_SIZE(msg));
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_GET, EG_MESSAGE_SIZE(msg));
 
-	buffer = (char*)xmalloc(sizeof(res) + EG_OBJECT_SIZE(msg));
+	buffer = (char*)xmalloc(sizeof(res) + EG_MESSAGE_SIZE(msg));
 
 	memcpy(buffer, &res, sizeof(res));
-	memcpy(buffer + sizeof(res), EG_OBJECT_DATA(msg), EG_OBJECT_SIZE(msg));
+	memcpy(buffer + sizeof(res), EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
 
 	add_response(client, buffer, sizeof(res) + res.bodylen);
 }
@@ -773,7 +780,7 @@ static void queue_pop_command_handler(EagleClient *client)
 	ProtocolRequestQueuePop *req = (ProtocolRequestQueuePop*)client->request;
 	ProtocolResponseHeader res;
 	Queue_t *queue_t;
-	Object *msg;
+	Message *msg;
 	char *buffer;
 
 	if (client->pos < sizeof(*req)) {
@@ -804,12 +811,12 @@ static void queue_pop_command_handler(EagleClient *client)
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_POP, EG_OBJECT_SIZE(msg));
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_POP, EG_MESSAGE_SIZE(msg));
 
-	buffer = (char*)xmalloc(sizeof(res) + EG_OBJECT_SIZE(msg));
+	buffer = (char*)xmalloc(sizeof(res) + EG_MESSAGE_SIZE(msg));
 
 	memcpy(buffer, &res, sizeof(res));
-	memcpy(buffer + sizeof(res), EG_OBJECT_DATA(msg), EG_OBJECT_SIZE(msg));
+	memcpy(buffer + sizeof(res), EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
 
 	pop_message_queue_t(queue_t);
 
@@ -1227,9 +1234,10 @@ static void route_push_command_handler(EagleClient *client)
 	Route_t *route;
 	Object *msg;
 	char *msg_data;
-	int msg_size;
+	uint32_t expire;
+	size_t msg_size;
 
-	if (client->pos < sizeof(*req)) {
+	if (client->pos < (sizeof(*req) + 5)) {
 		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
 		return;
 	}
@@ -1251,13 +1259,17 @@ static void route_push_command_handler(EagleClient *client)
 		return;
 	}
 
-	msg_data = client->request + sizeof(*req);
-	msg_size = client->pos - sizeof(*req);
+	msg_data = client->request + sizeof(*req) + sizeof(uint32_t);
+	msg_size = client->pos - (sizeof(*req) + sizeof(uint32_t));
+	expire = *((uint32_t*)(client->request + sizeof(*req)));
+
+	if (expire) {
+		expire += server->now_timems;
+	}
 
 	msg = create_dup_object(msg_data, msg_size);
-	EG_OBJECT_RESET_COUNTER(msg);
 
-	if (push_message_route_t(route, req->body.key, msg) == EG_STATUS_ERR) {
+	if (push_message_route_t(route, req->body.key, msg, expire) == EG_STATUS_ERR) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_PUSH);
 		return;
 	}
@@ -1311,20 +1323,20 @@ void queue_client_event_notify(EagleClient *client, Queue_t *queue_t)
 	add_response(client, event, sizeof(*event));
 }
 
-void queue_client_event_message(EagleClient *client, Queue_t *queue_t, Object *msg)
+void queue_client_event_message(EagleClient *client, Queue_t *queue_t, Message *msg)
 {
 	ProtocolEventHeader header;
 	char *buffer;
 
-	set_event_header(&header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 64 + EG_OBJECT_SIZE(msg));
+	set_event_header(&header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 64 + EG_MESSAGE_SIZE(msg));
 
-	buffer = (char*)xcalloc(sizeof(header) + 64 + EG_OBJECT_SIZE(msg));
+	buffer = (char*)xcalloc(sizeof(header) + 64 + EG_MESSAGE_SIZE(msg));
 
 	memcpy(buffer, &header, sizeof(header));
 	memcpy(buffer + sizeof(header), queue_t->name, strlenz(queue_t->name));
-	memcpy(buffer + sizeof(header) + 64, EG_OBJECT_DATA(msg), EG_OBJECT_SIZE(msg));
+	memcpy(buffer + sizeof(header) + 64, EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
 
-	add_response(client, buffer, sizeof(header) + 64 + EG_OBJECT_SIZE(msg));
+	add_response(client, buffer, sizeof(header) + 64 + EG_MESSAGE_SIZE(msg));
 }
 
 static void add_response(EagleClient *client, void *data, int size)

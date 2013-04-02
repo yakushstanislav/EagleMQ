@@ -1,6 +1,6 @@
 EAGLEMQ_BIN=eaglemq
 EAGLEMQ_LDFLAGS=-pthread
-EAGLEMQ_OBJ=eagle.o event.o network.o xmalloc.o utils.o object.o handlers.o keylist.o list.o queue.o user.o queue_t.o route_t.o storage.o config.o lzf_c.o lzf_d.o
+EAGLEMQ_OBJ=eagle.o event.o network.o xmalloc.o utils.o object.o handlers.o keylist.o list.o queue.o user.o message.o queue_t.o route_t.o storage.o config.o lzf_c.o lzf_d.o
 
 CC=gcc
 OPTIMIZATION?=-O2

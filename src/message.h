@@ -25,58 +25,32 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <string.h>
+#ifndef __MESSAGE_H__
+#define __MESSAGE_H__
+
+#include <stdint.h>
 
 #include "eagle.h"
 #include "object.h"
-#include "xmalloc.h"
-#include "list.h"
 
-Object *create_object(void *ptr, size_t size)
-{
-	Object *object = (Object*)xmalloc(sizeof(*object));
+#define EG_MESSAGE_VALUE(m) ((m)->value->data)
+#define EG_MESSAGE_SIZE(m) ((m)->value->size)
 
-	object->data = ptr;
-	object->size = size;
-	object->refcount = 1;
+#define EG_MESSAGE_GET_DATA(m, i) ((m)->data[i])
+#define EG_MESSAGE_SET_DATA(m, i, v) ((m)->data[i] = (v))
 
-	return object;
-}
+#define EG_MESSAGE_GET_EXPIRATION_TIME(m) ((m)->expiration)
+#define EG_MESSAGE_SET_EXPIRATION_TIME(m, v) ((m)->expiration = (v))
 
-Object *create_dup_object(void *ptr, size_t size)
-{
-	Object *object = (Object*)xmalloc(sizeof(*object));
+typedef struct Message {
+	Object *value;
+	uint32_t expiration;
+	void *data[2];
+} Message;
 
-	object->data = xmalloc(size);
-	object->size = size;
-	object->refcount = 1;
+Message *create_message(Object *data, uint32_t expiration);
+Message *create_dup_message(void *ptr, size_t size, uint32_t expiration);
+void release_message(Message *msg);
+void free_message_list_handler(void *ptr);
 
-	memcpy(object->data, ptr, size);
-
-	return object;
-}
-
-void release_object(Object *object)
-{
-	xfree(object->data);
-	xfree(object);
-}
-
-void increment_references_count(Object *object)
-{
-	object->refcount++;
-}
-
-void decrement_references_count(Object *object)
-{
-	if (object->refcount <= 1) {
-		release_object(object);
-	} else {
-		object->refcount--;
-	}
-}
-
-void free_object_list_handler(void *ptr)
-{
-	decrement_references_count(ptr);
-}
+#endif

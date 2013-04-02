@@ -35,6 +35,7 @@
 #include "route_t.h"
 #include "protocol.h"
 #include "object.h"
+#include "message.h"
 #include "handlers.h"
 #include "queue.h"
 #include "list.h"
@@ -76,12 +77,13 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 	}
 
 	queue_t->queue = queue_create();
+	queue_t->expire_messages = list_create();
 	queue_t->declared_clients = list_create();
 	queue_t->subscribed_clients_msg = list_create();
 	queue_t->subscribed_clients_notify = list_create();
 	queue_t->routes = keylist_create();
 
-	EG_QUEUE_SET_FREE_METHOD(queue_t->queue, free_object_list_handler);
+	EG_QUEUE_SET_FREE_METHOD(queue_t->queue, free_message_list_handler);
 	EG_KEYLIST_SET_FREE_METHOD(queue_t->routes, free_route_keylist_handler);
 	EG_KEYLIST_SET_MATCH_METHOD(queue_t->routes, match_route_keylist_handler);
 
@@ -93,6 +95,7 @@ void delete_queue_t(Queue_t *queue_t)
 	eject_clients_queue_t(queue_t);
 	eject_routes_queue_t(queue_t);
 
+	list_release(queue_t->expire_messages);
 	list_release(queue_t->declared_clients);
 	list_release(queue_t->subscribed_clients_msg);
 	list_release(queue_t->subscribed_clients_notify);
@@ -104,7 +107,7 @@ void delete_queue_t(Queue_t *queue_t)
 	xfree(queue_t);
 }
 
-static int process_subscribed_clients(Queue_t *queue_t, Object *msg)
+static int process_subscribed_clients(Queue_t *queue_t, Message *msg)
 {
 	ListNode *node;
 	ListIterator iterator;
@@ -148,14 +151,16 @@ static int process_subscribed_clients(Queue_t *queue_t, Object *msg)
 	return processed;
 }
 
-int push_message_queue_t(Queue_t *queue_t, Object *msg)
+int push_message_queue_t(Queue_t *queue_t, Object *data, uint32_t expiration)
 {
-	if (EG_OBJECT_SIZE(msg) > queue_t->max_msg_size) {
+	Message *msg = create_message(data, expiration);
+
+	if (EG_MESSAGE_SIZE(msg) > queue_t->max_msg_size) {
 		return EG_STATUS_ERR;
 	}
 
 	if (process_subscribed_clients(queue_t, msg)) {
-		decrement_references_count(msg);
+		release_message(msg);
 		return EG_STATUS_OK;
 	}
 
@@ -170,19 +175,30 @@ int push_message_queue_t(Queue_t *queue_t, Object *msg)
 
 	queue_push_value(queue_t->queue, msg);
 
+	if (msg->expiration)
+	{
+		list_add_value_tail(queue_t->expire_messages, msg);
+		EG_MESSAGE_SET_DATA(msg, 0, EG_LIST_LAST(queue_t->expire_messages));
+		EG_MESSAGE_SET_DATA(msg, 1, EG_QUEUE_FIRST(queue_t->queue));
+	}
+
 	return EG_STATUS_OK;
 }
 
-Object *get_message_queue_t(Queue_t *queue_t)
+Message *get_message_queue_t(Queue_t *queue_t)
 {
 	return queue_get_value(queue_t->queue);
 }
 
 void pop_message_queue_t(Queue_t *queue_t)
 {
-	Object *msg = queue_pop_value(queue_t->queue);
+	Message *msg = queue_pop_value(queue_t->queue);
 
-	decrement_references_count(msg);
+	if (msg->expiration) {
+		list_delete_node(queue_t->expire_messages, EG_MESSAGE_GET_DATA(msg, 0));
+	}
+
+	release_message(msg);
 }
 
 Queue_t *find_queue_t(List *list, const char *name)
@@ -314,6 +330,24 @@ void process_queue_t(Queue_t *queue_t)
 	{
 		if (EG_LIST_LENGTH(queue_t->declared_clients) == 0) {
 			list_delete_value(server->queues, queue_t);
+		}
+	}
+}
+
+void process_expired_messages_queue_t(Queue_t *queue_t, uint32_t time)
+{
+	ListNode *node;
+	ListIterator iterator;
+	Message *msg;
+
+	list_rewind(queue_t->expire_messages, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		msg = EG_LIST_NODE_VALUE(node);
+
+		if (EG_MESSAGE_GET_EXPIRATION_TIME(msg) <= time) {
+			list_delete_node(queue_t->expire_messages, EG_MESSAGE_GET_DATA(msg, 0));
+			queue_delete_node(queue_t->queue, EG_MESSAGE_GET_DATA(msg, 1));
 		}
 	}
 }

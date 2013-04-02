@@ -79,7 +79,7 @@ void delete_route_t(Route_t *route)
 	xfree(route);
 }
 
-int push_message_route_t(Route_t *route, const char *key, Object *msg)
+int push_message_route_t(Route_t *route, const char *key, Object *msg, uint32_t expiration)
 {
 	KeylistNode *keylist_node;
 	ListNode *list_node;
@@ -101,7 +101,7 @@ int push_message_route_t(Route_t *route, const char *key, Object *msg)
 
 		queue_t = EG_LIST_NODE_VALUE(EG_LIST_FIRST(list));
 
-		if (push_message_queue_t(queue_t, msg) != EG_STATUS_OK)
+		if (push_message_queue_t(queue_t, msg, expiration) != EG_STATUS_OK)
 			status = EG_STATUS_ERR;
 
 		increment_references_count(msg);
@@ -113,7 +113,7 @@ int push_message_route_t(Route_t *route, const char *key, Object *msg)
 		{
 			queue_t = EG_LIST_NODE_VALUE(list_node);
 
-			if (push_message_queue_t(queue_t, msg) != EG_STATUS_OK)
+			if (push_message_queue_t(queue_t, msg, expiration) != EG_STATUS_OK)
 				status = EG_STATUS_ERR;
 
 			increment_references_count(msg);

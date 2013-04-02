@@ -28,20 +28,21 @@
 #ifndef __OBJECT_H__
 #define __OBJECT_H__
 
+#include <stdint.h>
+
 #include "eagle.h"
 
 #define EG_OBJECT_SIZE(x) ((x)->size)
 #define EG_OBJECT_DATA(x) ((x)->data)
-#define EG_OBJECT_RESET_COUNTER(x) ((x)->refcount = 0)
 
 typedef struct Object {
 	void *data;
-	unsigned int size;
+	size_t size;
 	unsigned int refcount;
 } Object;
 
-Object *create_object(void *ptr, int size);
-Object *create_dup_object(void *ptr, int size);
+Object *create_object(void *ptr, size_t size);
+Object *create_dup_object(void *ptr, size_t size);
 void release_object(Object *object);
 void increment_references_count(Object *object);
 void decrement_references_count(Object *object);

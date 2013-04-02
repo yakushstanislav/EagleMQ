@@ -34,11 +34,12 @@
 #include "list.h"
 #include "keylist.h"
 #include "object.h"
+#include "message.h"
 
 Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_size, uint32_t flags);
 void delete_queue_t(Queue_t *queue_t);
-int push_message_queue_t(Queue_t *queue_t, Object *msg);
-Object *get_message_queue_t(Queue_t *queue_t);
+int push_message_queue_t(Queue_t *queue_t, Object *data, uint32_t expiration);
+Message *get_message_queue_t(Queue_t *queue_t);
 void pop_message_queue_t(Queue_t *queue_t);
 Queue_t *find_queue_t(List *list, const char *name);
 uint32_t get_declared_clients_queue_t(Queue_t *queue_t);
@@ -52,6 +53,7 @@ void unsubscribe_client_queue_t(Queue_t *queue_t, EagleClient *client);
 void link_queue_route_t(Queue_t *queue_t, Route_t *route, const char *key);
 void unlink_queue_route_t(Queue_t *queue_t, Route_t *route, const char *key);
 void process_queue_t(Queue_t *queue_t);
+void process_expired_messages_queue_t(Queue_t *queue_t, uint32_t time);
 void free_queue_list_handler(void *ptr);
 
 #endif

@@ -170,6 +170,19 @@ void setup_signals(void)
 	sigaction(SIGTERM, &sig, NULL);
 }
 
+long long mstime(void)
+{
+	struct timeval tv;
+	long long mst;
+
+	gettimeofday(&tv, NULL);
+
+	mst = tv.tv_sec * 1000;
+	mst += tv.tv_usec / 1000;
+
+	return mst;
+}
+
 void check_memory(void)
 {
 	if (server->max_memory)
@@ -184,6 +197,20 @@ void check_memory(void)
 
 			server->last_memcheck = server->now_time;
 		}
+	}
+}
+
+void check_expired_messages(void)
+{
+	ListNode *node;
+	ListIterator iterator;
+	Queue_t *queue_t;
+
+	list_rewind(server->queues, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		queue_t = EG_LIST_NODE_VALUE(node);
+		process_expired_messages_queue_t(queue_t, server->now_timems);
 	}
 }
 
@@ -225,9 +252,11 @@ int server_updater(EventLoop *loop, long long id, void *data)
 	EG_NOTUSED(data);
 
 	server->now_time = time(NULL);
+	server->now_timems = mstime();
 
 	check_memory();
 	client_timeout();
+	check_expired_messages();
 	storage_timeout();
 
 	if (server->shutdown) {
@@ -382,6 +411,7 @@ void init_server_config(void)
 	server->queues = list_create();
 	server->routes = list_create();
 	server->now_time = time(NULL);
+	server->now_timems = mstime();
 	server->start_time = time(NULL);
 	server->last_save = time(NULL);
 	server->last_memcheck = time(NULL);

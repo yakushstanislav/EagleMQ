@@ -43,6 +43,8 @@
 #include "queue_t.h"
 #include "route_t.h"
 #include "queue.h"
+#include "object.h"
+#include "message.h"
 #include "lzf.h"
 #include "xmalloc.h"
 #include "utils.h"
@@ -301,12 +303,15 @@ static int storage_save_users(FILE *fp)
 	return EG_STATUS_OK;
 }
 
-static int storage_save_queue_message(FILE *fp, Object *msg)
+static int storage_save_queue_message(FILE *fp, Message *msg)
 {
 	if (storage_write_type(fp, EG_STORAGE_TYPE_MESSAGE) == -1)
 		return EG_STATUS_ERR;
 
-	if (storage_write_data(fp, msg->data, msg->size) == -1)
+	if (storage_write_data(fp, &msg->expiration, sizeof(msg->expiration)) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_write_data(fp, EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg)) == -1)
 		return EG_STATUS_ERR;
 
 	return EG_STATUS_OK;
@@ -316,7 +321,7 @@ static int storage_save_queue_messages(FILE *fp, Queue_t *queue_t)
 {
 	QueueIterator *iterator;
 	QueueNode *node;
-	Object *msg;
+	Message *msg;
 
 	iterator = queue_get_iterator(queue_t->queue, EG_START_TAIL);
 
@@ -491,15 +496,19 @@ static int storage_load_user(FILE *fp)
 
 static int storage_load_queue_message(FILE *fp, Queue_t *queue_t)
 {
-	Object *msg;
+	Object *data;
+	uint32_t expiration;
 
 	if (storage_read_type(fp) != EG_STORAGE_TYPE_MESSAGE)
 		return EG_STATUS_ERR;
 
-	if ((msg = storage_read_data_object(fp)) == NULL)
+	if (storage_read_data(fp, &expiration, sizeof(expiration)) == -1)
 		return EG_STATUS_ERR;
 
-	push_message_queue_t(queue_t, msg);
+	if ((data = storage_read_data_object(fp)) == NULL)
+		return EG_STATUS_ERR;
+
+	push_message_queue_t(queue_t, data, expiration);
 
 	return EG_STATUS_OK;
 }

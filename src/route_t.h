@@ -32,10 +32,11 @@
 
 #include "eagle.h"
 #include "object.h"
+#include "message.h"
 
 Route_t *create_route_t(const char *name, uint32_t flags);
 void delete_route_t(Route_t *route);
-int push_message_route_t(Route_t *route, const char *key, Object *msg);
+int push_message_route_t(Route_t *route, const char *key, Object *msg, uint32_t expiration);
 void bind_route_t(Route_t *route, Queue_t *queue_t, const char *key);
 int unbind_route_t(Route_t *route, Queue_t *queue_t, const char *key);
 Route_t *find_route_t(List *list, const char *name);
