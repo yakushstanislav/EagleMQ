@@ -31,7 +31,7 @@ To run EagleMQ with the default configuration type:
 
 You can also specify options on the command line. Example:
 
-    % ./eaglemq -d -u /tmp/eaglemq --log-file /tmp/eaglemq.log --pid-file /tmp/eaglemq.pid
+    % ./eaglemq eaglemq.conf -d -u /tmp/eaglemq --log-file /tmp/eaglemq.log --pid-file /tmp/eaglemq.pid
 
 Memory allocator
 ----------------
