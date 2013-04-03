@@ -42,16 +42,6 @@ Message *create_message(Object *data, uint32_t expiration)
 	return msg;
 }
 
-Message *create_dup_message(void *ptr, size_t size, uint32_t expiration)
-{
-	Message *msg = (Message*)xcalloc(sizeof(*msg));
-
-	msg->value = create_dup_object(ptr, size);
-	msg->expiration = expiration;
-
-	return msg;
-}
-
 void release_message(Message *msg)
 {
 	decrement_references_count(msg->value);

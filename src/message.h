@@ -49,7 +49,6 @@ typedef struct Message {
 } Message;
 
 Message *create_message(Object *data, uint32_t expiration);
-Message *create_dup_message(void *ptr, size_t size, uint32_t expiration);
 void release_message(Message *msg);
 void free_message_list_handler(void *ptr);
 
