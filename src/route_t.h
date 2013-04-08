@@ -40,6 +40,7 @@ int push_message_route_t(Route_t *route, const char *key, Object *msg, uint32_t 
 void bind_route_t(Route_t *route, Queue_t *queue_t, const char *key);
 int unbind_route_t(Route_t *route, Queue_t *queue_t, const char *key);
 Route_t *find_route_t(List *list, const char *name);
+void rename_route_t(Route_t *route, const char *name);
 uint32_t get_queue_number_route_t(Route_t *route);
 void free_route_list_handler(void *ptr);
 

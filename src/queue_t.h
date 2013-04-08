@@ -42,6 +42,7 @@ int push_message_queue_t(Queue_t *queue_t, Object *data, uint32_t expiration);
 Message *get_message_queue_t(Queue_t *queue_t);
 void pop_message_queue_t(Queue_t *queue_t);
 Queue_t *find_queue_t(List *list, const char *name);
+void rename_queue_t(Queue_t *queue_t, const char *name);
 uint32_t get_declared_clients_queue_t(Queue_t *queue_t);
 uint32_t get_subscribed_clients_queue_t(Queue_t *queue_t);
 uint32_t get_size_queue_t(Queue_t *queue_t);

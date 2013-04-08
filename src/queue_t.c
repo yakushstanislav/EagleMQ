@@ -219,6 +219,11 @@ Queue_t *find_queue_t(List *list, const char *name)
 	return NULL;
 }
 
+void rename_queue_t(Queue_t *queue_t, const char *name)
+{
+	memcpy(queue_t->name, name, strlenz(name));
+}
+
 uint32_t get_declared_clients_queue_t(Queue_t *queue_t)
 {
 	return EG_LIST_LENGTH(queue_t->declared_clients);

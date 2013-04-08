@@ -195,6 +195,11 @@ Route_t *find_route_t(List *list, const char *name)
 	return NULL;
 }
 
+void rename_route_t(Route_t *route, const char *name)
+{
+	memcpy(route->name, name, strlenz(name));
+}
+
 uint32_t get_queue_number_route_t(Route_t *route)
 {
 	KeylistIterator iterator;

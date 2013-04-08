@@ -641,6 +641,38 @@ static void queue_list_command_handler(EagleClient *client)
 	add_response(client, list, sizeof(res) + res.bodylen);
 }
 
+static void queue_rename_command_handler(EagleClient *client)
+{
+	ProtocolRequestQueueRename *req = (ProtocolRequestQueueRename*)client->request;
+	Queue_t *queue_t;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_RENAME_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.from, 64) || !check_input_buffer2(req->body.to, 64)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	queue_t = find_queue_t(server->queues, req->body.from);
+	if (!queue_t) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_RENAME);
+		return;
+	}
+
+	rename_queue_t(queue_t, req->body.to);
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_RENAME);
+}
+
 static void queue_size_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueSize *req = (ProtocolRequestQueueSize*)client->request;
@@ -1145,6 +1177,38 @@ static void route_keys_command_handler(EagleClient *client)
 	add_response(client, list, sizeof(res) + res.bodylen);
 }
 
+static void route_rename_command_handler(EagleClient *client)
+{
+	ProtocolRequestRouteRename *req = (ProtocolRequestRouteRename*)client->request;
+	Route_t *route;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_RENAME_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.from, 64) || !check_input_buffer2(req->body.to, 64)) {
+		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		return;
+	}
+
+	route = find_route_t(server->routes, req->body.from);
+	if (!route) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_RENAME);
+		return;
+	}
+
+	rename_route_t(route, req->body.to);
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_RENAME);
+}
+
 static void route_bind_command_handler(EagleClient *client)
 {
 	ProtocolRequestRouteBind *req = (ProtocolRequestRouteBind*)client->request;
@@ -1431,6 +1495,10 @@ static inline void parse_command(EagleClient *client, ProtocolRequestHeader* req
 			queue_list_command_handler(client);
 			break;
 
+		case EG_PROTOCOL_CMD_QUEUE_RENAME:
+			queue_rename_command_handler(client);
+			break;
+
 		case EG_PROTOCOL_CMD_QUEUE_SIZE:
 			queue_size_command_handler(client);
 			break;
@@ -1477,6 +1545,10 @@ static inline void parse_command(EagleClient *client, ProtocolRequestHeader* req
 
 		case EG_PROTOCOL_CMD_ROUTE_KEYS:
 			route_keys_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_ROUTE_RENAME:
+			route_rename_command_handler(client);
 			break;
 
 		case EG_PROTOCOL_CMD_ROUTE_BIND:
