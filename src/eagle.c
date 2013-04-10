@@ -443,67 +443,53 @@ void usage(void)
 {
 	printf(
 		"EagleMQ %s\n"
-		"Usage: eaglemq [path to config file] [options]\n"
-		"-h <hostname> - server hostname(default: %s)\n"
-		"-p <port> - server port(default: %d)\n"
-		"-u <unix socket> - server socket\n"
-		"-d <daemon> - run server as daemon\n"
-		"--log-file <path> - path to the log file(default: %s)\n"
-		"--max-clients <max> - maximum connections on the server(default: %d)\n"
-		"--client-timeout <timeout> - timeout for not active connections(default: %d sec)\n"
-		"--save-timeout <timeout> - timeout for save data to the storage(default: %d sec)\n"
-		"--storage-file <path> - path to the storage\n"
-		"--pid-file <path> - path to the PID file of server\n"
-		"--name <name> - administrator name(default: %s)\n"
-		"--password <password> - administrator password(default: %s)\n"
-		"--v or --version - output version and exit\n"
-		"-h or --help - output this help and exit\n",
-			EAGLE_VERSION, EG_DEFAULT_ADDR, EG_DEFAULT_PORT, EG_DEFAULT_LOG_PATH,
-			EG_DEFAULT_MAX_CLIENTS, EG_DEFAULT_CLIENT_TIMEOUT, EG_DEFAULT_SAVE_TIMEOUT,
-			EG_DEFAULT_ADMIN_NAME, EG_DEFAULT_ADMIN_PASSWORD);
+		"Usage: eaglemq [path to config file] [key:value,...]\n"
+		"--addr - the server address (default: %s)\n"
+		"--port - the server port (default: %d)\n"
+		"--unix-socket - the path to unix socket\n"
+		"--admin-name - the administrator name (default: %s)\n"
+		"--admin-password - the administrator password (default: %s)\n"
+		"--daemonize - run the server as daemon [on|off]\n"
+		"--pid-file - path to the PID file\n"
+		"--log-file - path to the log file (default: %s)\n"
+		"--storage-file - path to the storage file (default: %s)\n"
+		"--max-clients - maximum connections on the server (default: %d)\n"
+		"--max-memory - max memory usage limit (default: %d)\n"
+		"--save-timeout - timeout for save data to the storage (default: %d sec)\n"
+		"--client-timeout - timeout to kill not active clients (default: %d sec)\n",
+			EAGLE_VERSION, EG_DEFAULT_ADDR, EG_DEFAULT_PORT,
+			EG_DEFAULT_ADMIN_NAME, EG_DEFAULT_ADMIN_PASSWORD,
+			EG_DEFAULT_LOG_PATH, EG_DEFAULT_STORAGE_PATH,
+			EG_DEFAULT_MAX_CLIENTS, EG_DEFAULT_MAX_MEMORY,
+			EG_DEFAULT_SAVE_TIMEOUT, EG_DEFAULT_CLIENT_TIMEOUT);
 }
 
 void parse_args(int argc, char *argv[])
 {
-	int i, last_arg;
+	int position = 1;
 
-	for (i = 1; i < argc; i++)
+	if (argc >= 2)
 	{
-		last_arg = i == argc - 1;
-
-		if (!strcmp(argv[i], "-h") && !last_arg) {
-			server->addr = argv[i + 1];
-		} else if (!strcmp(argv[i], "-p") && !last_arg) {
-			server->port = atoi(argv[i + 1]);
-		} else if (!strcmp(argv[i], "-u") && !last_arg) {
-			server->unix_socket = argv[i + 1];
-		} else if (!strcmp(argv[i], "-d")) {
-			server->daemonize = 1;
-		} else if (!strcmp(argv[i], "--log-file") && !last_arg) {
-			server->logfile = argv[i + 1];
-		} else if (!strcmp(argv[i], "--max-clients") && !last_arg) {
-			server->max_clients = atoi(argv[i + 1]);
-		} else if (!strcmp(argv[i], "--client-timeout") && !last_arg) {
-			server->client_timeout = atoi(argv[i + 1]);
-		} else if (!strcmp(argv[i], "--save-timeout") && !last_arg) {
-			server->storage_timeout = atoi(argv[i + 1]);
-		} else if (!strcmp(argv[i], "--storage-file") && !last_arg) {
-			server->storage = argv[i + 1];
-		} else if (!strcmp(argv[i], "--pid-file") && !last_arg) {
-			server->pidfile = argv[i + 1];
-		} else if (!strcmp(argv[i], "--name") && !last_arg) {
-			if (strlen(argv[i + 1]) >= 32) fatal("Error name length");
-			server->name = argv[i + 1];
-		} else if (!strcmp(argv[i], "--password") && !last_arg) {
-			if (strlen(argv[i + 1]) >= 32) fatal("Error password length");
-			server->password = argv[i + 1];
-		} else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version")) {
-			info("EagleMQ %s", EAGLE_VERSION);
-			exit(0);
-		} else if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
+		if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
 			usage();
 			exit(0);
+		} else {
+			server->config = argv[1];
+			position = 2;
+			init_config();
 		}
+	}
+
+	for (; position < argc; position += 2)
+	{
+		if (position == argc - 1)
+			fatal("Error parse command line. Key %s must have value", argv[position]);
+
+		if (strncmp(argv[position], "--", 2))
+			fatal("Error parse command line. Use prefix \'--\' for key");
+
+		if (config_parse_key_value(argv[position] + 2, argv[position + 1]) != EG_STATUS_OK)
+			fatal("Error parse command line");
 	}
 }
 
@@ -514,10 +500,6 @@ int main(int argc, char *argv[])
 
 	init_server_config();
 
-	if (argc >= 2)
-		server->config = argv[1];
-
-	init_config();
 	parse_args(argc, argv);
 
 	show_logo();

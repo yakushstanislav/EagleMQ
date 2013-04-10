@@ -44,7 +44,7 @@ static int parse_on_off(char *value)
 	return result;
 }
 
-static int parse_key_value(char *key, char *value)
+int config_parse_key_value(char *key, char *value)
 {
 	int err;
 	long long max_memory;
@@ -110,7 +110,7 @@ static int parse_config_line(char *line)
 
 	if (key && value)
 	{
-		if (parse_key_value(key, value) != EG_STATUS_OK)
+		if (config_parse_key_value(key, value) != EG_STATUS_OK)
 			return EG_STATUS_ERR;
 	} else {
 		return EG_STATUS_ERR;

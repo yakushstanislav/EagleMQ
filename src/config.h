@@ -28,6 +28,7 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+int config_parse_key_value(char *key, char *value);
 int config_load(const char *filename);
 
 #endif

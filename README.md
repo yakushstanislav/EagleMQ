@@ -26,12 +26,11 @@ Running EagleMQ
 ---------------
 To run EagleMQ with the default configuration type:
 
-    % cd src
-    % ./eaglemq
+    % ./src/eaglemq
 
 You can also specify options on the command line. Example:
 
-    % ./eaglemq eaglemq.conf -d -u /tmp/eaglemq --log-file /tmp/eaglemq.log --pid-file /tmp/eaglemq.pid
+    % ./src/eaglemq eaglemq.conf --daemonize on --unix-socket /tmp/eaglemq --log-file /tmp/eaglemq.log
 
 Memory allocator
 ----------------
