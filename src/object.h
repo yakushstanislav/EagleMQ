@@ -34,6 +34,7 @@
 
 #define EG_OBJECT_SIZE(x) ((x)->size)
 #define EG_OBJECT_DATA(x) ((x)->data)
+#define EG_OBJECT_RESET_REFCOUNT(x) ((x)->refcount = 0)
 
 typedef struct Object {
 	void *data;

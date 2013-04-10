@@ -1332,6 +1332,7 @@ static void route_push_command_handler(EagleClient *client)
 	}
 
 	msg = create_dup_object(msg_data, msg_size);
+	EG_OBJECT_RESET_REFCOUNT(msg);
 
 	if (push_message_route_t(route, req->body.key, msg, expire) == EG_STATUS_ERR) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_PUSH);
