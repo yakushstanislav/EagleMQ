@@ -143,24 +143,24 @@ static void auth_command_handler(EagleClient *client)
 	EagleUser *user;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 32) || !check_input_buffer1(req->body.password, 32)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	user = find_user(server->users, req->body.name, req->body.password);
 	if (!user) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_AUTH);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	client->perm = user->perm;
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_AUTH);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void ping_command_handler(EagleClient *client)
@@ -168,11 +168,11 @@ static void ping_command_handler(EagleClient *client)
 	ProtocolRequestPing *req = (ProtocolRequestPing*)client->request;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
-	add_status_response(client, req->cmd, EG_PROTOCOL_SUCCESS_PING);
+	add_status_response(client, req->cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void stat_command_handler(EagleClient *client)
@@ -182,12 +182,12 @@ static void stat_command_handler(EagleClient *client)
 	struct rusage self_ru, c_ru;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
@@ -196,7 +196,7 @@ static void stat_command_handler(EagleClient *client)
 
 	stat = (ProtocolResponseStat*)xcalloc(sizeof(*stat));
 
-	set_response_header(&stat->header, req->cmd, EG_PROTOCOL_SUCCESS_STAT, sizeof(stat->body));
+	set_response_header(&stat->header, req->cmd, EG_PROTOCOL_STATUS_SUCCESS, sizeof(stat->body));
 
 	stat->body.version.major = EAGLE_VERSION_MAJOR;
 	stat->body.version.minor = EAGLE_VERSION_MINOR;
@@ -224,29 +224,29 @@ static void save_comand_handler(EagleClient *client)
 	ProtocolRequestSave *req = (ProtocolRequestSave*)client->request;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (req->body.async)
 	{
 		if (storage_save_background(server->storage) != EG_STATUS_OK) {
-			add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_SAVE);
+			add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		}
 	}
 	else
 	{
 		if (storage_save(server->storage) != EG_STATUS_OK) {
-			add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_SAVE);
+			add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		}
 	}
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_SAVE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void flush_command_handler(EagleClient *client)
@@ -254,12 +254,12 @@ static void flush_command_handler(EagleClient *client)
 	ProtocolRequestFlush *req = (ProtocolRequestFlush*)client->request;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
@@ -275,7 +275,7 @@ static void flush_command_handler(EagleClient *client)
 		delete_routes();
 	}
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_FLUSH);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void disconnect_command_handler(EagleClient *client)
@@ -283,7 +283,7 @@ static void disconnect_command_handler(EagleClient *client)
 	ProtocolRequestDisconnect *req = (ProtocolRequestDisconnect*)client->request;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
@@ -296,29 +296,29 @@ static void user_create_command_handler(EagleClient *client)
 	EagleUser *user;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 32) || !check_input_buffer1(req->body.password, 32)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	if (find_user(server->users, req->body.name, NULL)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_USER_CREATE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
 	user = create_user(req->body.name, req->body.password, req->body.perm);
 	list_add_value_tail(server->users, user);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_USER_CREATE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void user_list_command_handler(EagleClient *client)
@@ -332,16 +332,16 @@ static void user_list_command_handler(EagleClient *client)
 	int i;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
-	set_response_header(&res, req->cmd, EG_PROTOCOL_SUCCESS_USER_LIST,
+	set_response_header(&res, req->cmd, EG_PROTOCOL_STATUS_SUCCESS,
 		EG_LIST_LENGTH(server->users) * (64 + sizeof(uint64_t)));
 
 	list = (char*)xcalloc(sizeof(res) + res.bodylen);
@@ -368,34 +368,34 @@ static void user_rename_command_handler(EagleClient *client)
 	EagleUser *user;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.from, 32) || !check_input_buffer2(req->body.to, 32)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	user = find_user(server->users, req->body.from, NULL);
 	if (!user || find_user(server->users, req->body.to, NULL)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_USER_RENAME);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	if (BIT_CHECK(user->perm, EG_USER_NOT_CHANGE_PERM)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_USER_RENAME);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
 	rename_user(user, req->body.to);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_USER_RENAME);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void user_set_perm_command_handler(EagleClient *client)
@@ -404,34 +404,34 @@ static void user_set_perm_command_handler(EagleClient *client)
 	EagleUser *user;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 32)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	user = find_user(server->users, req->body.name, NULL);
 	if (!user) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_USER_SET_PERM);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	if (BIT_CHECK(user->perm, EG_USER_NOT_CHANGE_PERM)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_USER_SET_PERM);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
 	set_user_perm(user, req->body.perm);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_USER_SET_PERM);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void user_delete_command_handler(EagleClient *client)
@@ -440,37 +440,37 @@ static void user_delete_command_handler(EagleClient *client)
 	EagleUser *user;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 32)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	user = find_user(server->users, req->body.name, NULL);
 	if (!user) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_USER_DELETE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	if (BIT_CHECK(user->perm, EG_USER_NOT_CHANGE_PERM)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_USER_DELETE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
 	if (list_delete_value(server->users, user) == EG_STATUS_ERR) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_USER_DELETE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_USER_DELETE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void queue_create_command_handler(EagleClient *client)
@@ -479,28 +479,28 @@ static void queue_create_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_CREATE_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	if (find_queue_t(server->queues, req->body.name)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_CREATE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
 	if (req->body.max_msg_size > EG_MAX_MSG_SIZE) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_CREATE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
@@ -509,7 +509,7 @@ static void queue_create_command_handler(EagleClient *client)
 
 	list_add_value_tail(server->queues, queue_t);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_CREATE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void queue_declare_command_handler(EagleClient *client)
@@ -518,35 +518,35 @@ static void queue_declare_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_DECLARE_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	queue_t = find_queue_t(server->queues, req->body.name);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_DECLARE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	if (find_queue_t(client->declared_queues, req->body.name)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_DECLARE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 		return;
 	}
 
 	declare_client_queue_t(queue_t, client);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_DECLARE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void queue_exist_command_handler(EagleClient *client)
@@ -555,24 +555,24 @@ static void queue_exist_command_handler(EagleClient *client)
 	ProtocolResponseQueueExist *res;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_EXIST_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	res = (ProtocolResponseQueueExist*)xcalloc(sizeof(*res));
 
-	set_response_header(&res->header, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_EXIST, sizeof(res->body));
+	set_response_header(&res->header, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, sizeof(res->body));
 
 	if (find_queue_t(server->queues, req->body.name)) {
 		res->body.status = 1;
@@ -595,17 +595,17 @@ static void queue_list_command_handler(EagleClient *client)
 	int i;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_LIST_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
-	set_response_header(&res, req->cmd, EG_PROTOCOL_SUCCESS_QUEUE_LIST,
+	set_response_header(&res, req->cmd, EG_PROTOCOL_STATUS_SUCCESS,
 		EG_LIST_LENGTH(server->queues) * (64 + (sizeof(uint32_t) * 6)));
 
 	list = (char*)xcalloc(sizeof(res) + res.bodylen);
@@ -647,30 +647,30 @@ static void queue_rename_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_RENAME_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.from, 64) || !check_input_buffer2(req->body.to, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	queue_t = find_queue_t(server->queues, req->body.from);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_RENAME);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	rename_queue_t(queue_t, req->body.to);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_RENAME);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void queue_size_command_handler(EagleClient *client)
@@ -680,30 +680,30 @@ static void queue_size_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_SIZE_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	queue_t = find_queue_t(server->queues, req->body.name);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_SIZE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	res = (ProtocolResponseQueueSize*)xmalloc(sizeof(*res));
 
-	set_response_header(&res->header, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_SIZE, sizeof(res->body));
+	set_response_header(&res->header, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, sizeof(res->body));
 
 	res->body.size = get_size_queue_t(queue_t);
 
@@ -720,26 +720,26 @@ static void queue_push_command_handler(EagleClient *client)
 	size_t msg_size;
 
 	if (client->pos < (sizeof(*req) + 69)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_PUSH_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	queue_name = client->request + sizeof(*req);
 
 	if (!check_input_buffer2(queue_name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	queue_t = find_queue_t(client->declared_queues, queue_name);
 	if (!queue_t) {
-		add_status_response(client, req->cmd, EG_PROTOCOL_ERROR_QUEUE_PUSH);
+		add_status_response(client, req->cmd, EG_PROTOCOL_STATUS_ERROR_NOT_DECLARED);
 		return;
 	}
 
@@ -754,11 +754,11 @@ static void queue_push_command_handler(EagleClient *client)
 	msg = create_dup_object(msg_data, msg_size);
 
 	if (push_message_queue_t(queue_t, msg, expire) == EG_STATUS_ERR) {
-		add_status_response(client, req->cmd, EG_PROTOCOL_ERROR_QUEUE_PUSH);
+		add_status_response(client, req->cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
-	add_status_response(client, req->cmd, EG_PROTOCOL_SUCCESS_QUEUE_PUSH);
+	add_status_response(client, req->cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void queue_get_command_handler(EagleClient *client)
@@ -770,34 +770,34 @@ static void queue_get_command_handler(EagleClient *client)
 	char *buffer;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_GET_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	queue_t = find_queue_t(client->declared_queues, req->body.name);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_GET);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_DECLARED);
 		return;
 	}
 
 	msg = get_message_queue_t(queue_t);
 	if (!msg) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_GET);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NO_DATA);
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_GET, EG_MESSAGE_SIZE(msg));
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, EG_MESSAGE_SIZE(msg));
 
 	buffer = (char*)xmalloc(sizeof(res) + EG_MESSAGE_SIZE(msg));
 
@@ -816,34 +816,34 @@ static void queue_pop_command_handler(EagleClient *client)
 	char *buffer;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_POP_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	queue_t = find_queue_t(client->declared_queues, req->body.name);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_POP);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_DECLARED);
 		return;
 	}
 
 	msg = get_message_queue_t(queue_t);
 	if (!msg) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_POP);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NO_DATA);
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_POP, EG_MESSAGE_SIZE(msg));
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, EG_MESSAGE_SIZE(msg));
 
 	buffer = (char*)xmalloc(sizeof(res) + EG_MESSAGE_SIZE(msg));
 
@@ -861,35 +861,35 @@ static void queue_subscribe_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_SUBSCRIBE_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	queue_t = find_queue_t(client->declared_queues, req->body.name);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_SUBSCRIBE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_DECLARED);
 		return;
 	}
 
 	if (find_queue_t(client->subscribed_queues, req->body.name)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_SUBSCRIBE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
 	subscribe_client_queue_t(queue_t, client, req->body.flags);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_SUBSCRIBE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void queue_unsubscribe_command_handler(EagleClient *client)
@@ -898,35 +898,35 @@ static void queue_unsubscribe_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_UNSUBSCRIBE_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	queue_t = find_queue_t(client->declared_queues, req->body.name);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_UNSUBSCRIBE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_DECLARED);
 		return;
 	}
 
 	if (!find_queue_t(client->subscribed_queues, req->body.name)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_UNSUBSCRIBE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
 	unsubscribe_client_queue_t(queue_t, client);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_UNSUBSCRIBE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void queue_purge_command_handler(EagleClient *client)
@@ -935,30 +935,30 @@ static void queue_purge_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_PURGE_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	queue_t = find_queue_t(client->declared_queues, req->body.name);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_PURGE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_DECLARED);
 		return;
 	}
 
 	purge_queue_t(queue_t);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_PURGE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void queue_delete_command_handler(EagleClient *client)
@@ -967,33 +967,33 @@ static void queue_delete_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_DELETE_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	queue_t = find_queue_t(server->queues, req->body.name);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_DELETE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	if (list_delete_value(server->queues, queue_t) == EG_STATUS_ERR) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_QUEUE_DELETE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_QUEUE_DELETE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void route_create_command_handler(EagleClient *client)
@@ -1002,23 +1002,23 @@ static void route_create_command_handler(EagleClient *client)
 	Route_t *route;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_CREATE_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	if (find_route_t(server->routes, req->body.name)) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_CREATE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
@@ -1026,7 +1026,7 @@ static void route_create_command_handler(EagleClient *client)
 
 	list_add_value_tail(server->routes, route);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_CREATE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void route_exist_command_handler(EagleClient *client)
@@ -1035,24 +1035,24 @@ static void route_exist_command_handler(EagleClient *client)
 	ProtocolResponseRouteExist *res;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_EXIST_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	res = (ProtocolResponseRouteExist*)xcalloc(sizeof(*res));
 
-	set_response_header(&res->header, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_EXIST, sizeof(res->body));
+	set_response_header(&res->header, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, sizeof(res->body));
 
 	if (find_route_t(server->routes, req->body.name)) {
 		res->body.status = 1;
@@ -1075,17 +1075,17 @@ static void route_list_command_handler(EagleClient *client)
 	int i;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_LIST_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
-	set_response_header(&res, req->cmd, EG_PROTOCOL_SUCCESS_ROUTE_LIST,
+	set_response_header(&res, req->cmd, EG_PROTOCOL_STATUS_SUCCESS,
 		EG_LIST_LENGTH(server->routes) * (64 + (sizeof(uint32_t) * 2)));
 
 	list = (char*)xcalloc(sizeof(res) + res.bodylen);
@@ -1127,28 +1127,28 @@ static void route_keys_command_handler(EagleClient *client)
 	int i;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_KEYS_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	route = find_route_t(server->routes, req->body.name);
 	if (!route) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_KEYS);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_KEYS,
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS,
 		get_queue_number_route_t(route) * (32 + 64));
 
 	list = (char*)xcalloc(sizeof(res) + res.bodylen);
@@ -1183,30 +1183,30 @@ static void route_rename_command_handler(EagleClient *client)
 	Route_t *route;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_RENAME_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.from, 64) || !check_input_buffer2(req->body.to, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	route = find_route_t(server->routes, req->body.from);
 	if (!route) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_RENAME);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	rename_route_t(route, req->body.to);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_RENAME);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void route_bind_command_handler(EagleClient *client)
@@ -1216,37 +1216,37 @@ static void route_bind_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_BIND_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer2(req->body.queue, 64)
 		|| !check_input_buffer1(req->body.key, 32)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	route = find_route_t(server->routes, req->body.name);
 	if (!route) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_BIND);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	queue_t = find_queue_t(server->queues, req->body.queue);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_BIND);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	bind_route_t(route, queue_t, req->body.key);
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_BIND);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void route_unbind_command_handler(EagleClient *client)
@@ -1256,40 +1256,40 @@ static void route_unbind_command_handler(EagleClient *client)
 	Queue_t *queue_t;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_UNBIND_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer2(req->body.queue, 64)
 		|| !check_input_buffer1(req->body.key, 32)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	route = find_route_t(server->routes, req->body.name);
 	if (!route) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_UNBIND);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	queue_t = find_queue_t(server->queues, req->body.queue);
 	if (!queue_t) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_UNBIND);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	if (unbind_route_t(route, queue_t, req->body.key) == EG_STATUS_ERR) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_UNBIND);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_UNBIND);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void route_push_command_handler(EagleClient *client)
@@ -1302,24 +1302,24 @@ static void route_push_command_handler(EagleClient *client)
 	size_t msg_size;
 
 	if (client->pos < (sizeof(*req) + 5)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_PUSH_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer1(req->body.key, 32)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	route = find_route_t(server->routes, req->body.name);
 	if (!route) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_PUSH);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
@@ -1335,11 +1335,11 @@ static void route_push_command_handler(EagleClient *client)
 	EG_OBJECT_RESET_REFCOUNT(msg);
 
 	if (push_message_route_t(route, req->body.key, msg, expire) == EG_STATUS_ERR) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_PUSH);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_PUSH);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void route_delete_command_handler(EagleClient *client)
@@ -1348,33 +1348,33 @@ static void route_delete_command_handler(EagleClient *client)
 	Route_t *route;
 
 	if (client->pos < sizeof(*req)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 		return;
 	}
 
 	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_ROUTE_PERM)
 		&& !BIT_CHECK(client->perm, EG_USER_ROUTE_DELETE_PERM)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_ACCESS);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
 		return;
 	}
 
 	if (!check_input_buffer2(req->body.name, 64)) {
-		add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
 	route = find_route_t(server->routes, req->body.name);
 	if (!route) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_DELETE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
 		return;
 	}
 
 	if (list_delete_value(server->routes, route) == EG_STATUS_ERR) {
-		add_status_response(client, req->header.cmd, EG_PROTOCOL_ERROR_ROUTE_DELETE);
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
 
-	add_status_response(client, req->header.cmd, EG_PROTOCOL_SUCCESS_ROUTE_DELETE);
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 void queue_client_event_notify(EagleClient *client, Queue_t *queue_t)
@@ -1569,7 +1569,7 @@ static inline void parse_command(EagleClient *client, ProtocolRequestHeader* req
 			break;
 
 		default:
-			add_status_response(client, req->cmd, EG_PROTOCOL_ERROR_COMMAND);
+			add_status_response(client, req->cmd, EG_PROTOCOL_STATUS_ERROR_COMMAND);
 			break;
 	}
 }
@@ -1582,7 +1582,7 @@ process:
 	if (!client->bodylen)
 	{
 		if (client->nread < sizeof(*req)) {
-			add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+			add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 			return;
 		}
 
@@ -1592,7 +1592,7 @@ process:
 		{
 			client->offset = 0;
 			client->bodylen = 0;
-			add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+			add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 			return;
 		}
 
@@ -1600,7 +1600,7 @@ process:
 		{
 			client->offset = 0;
 			client->bodylen = 0;
-			add_status_response(client, 0, EG_PROTOCOL_ERROR_PACKET);
+			add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
 			return;
 		}
 
