@@ -388,13 +388,13 @@ void init_server_config(void)
 	server->fd = 0;
 	server->sfd = 0;
 	server->ufd = 0;
-	server->addr = EG_DEFAULT_ADDR;
+	server->addr = xstrdup(EG_DEFAULT_ADDR);
 	server->port = EG_DEFAULT_PORT;
-	server->unix_socket = EG_DEFAULT_UNIX_SOCKET;
+	server->unix_socket = NULL;
 	server->unix_perm = 0;
 	server->child_pid = -1;
-	server->name = EG_DEFAULT_ADMIN_NAME;
-	server->password = EG_DEFAULT_ADMIN_PASSWORD;
+	server->name = xstrdup(EG_DEFAULT_ADMIN_NAME);
+	server->password = xstrdup(EG_DEFAULT_ADMIN_PASSWORD);
 	server->max_clients = EG_DEFAULT_MAX_CLIENTS;
 	server->max_memory = EG_DEFAULT_MAX_MEMORY;
 	server->client_timeout = EG_DEFAULT_CLIENT_TIMEOUT;
@@ -409,9 +409,9 @@ void init_server_config(void)
 	server->last_save = time(NULL);
 	server->last_memcheck = time(NULL);
 	server->daemonize = EG_DEFAULT_DAEMONIZE;
-	server->storage = EG_DEFAULT_STORAGE_PATH;
-	server->pidfile = EG_DEFAULT_PID_PATH;
-	server->logfile = EG_DEFAULT_LOG_PATH;
+	server->storage =xstrdup(EG_DEFAULT_STORAGE_PATH);
+	server->pidfile = NULL;
+	server->logfile = xstrdup(EG_DEFAULT_LOG_PATH);
 	server->config = EG_DEFAULT_CONFIG_PATH;
 	server->shutdown = 0;
 
@@ -422,6 +422,18 @@ void init_server_config(void)
 
 void destroy_server_config(void)
 {
+	xfree(server->addr);
+	xfree(server->name);
+	xfree(server->password);
+	xfree(server->storage);
+	xfree(server->logfile);
+
+	if (server->unix_socket)
+		xfree(server->unix_socket);
+
+	if (server->pidfile)
+		xfree(server->pidfile);
+
 	list_release(server->clients);
 	list_release(server->users);
 	list_release(server->queues);

@@ -34,6 +34,14 @@
 #include "xmalloc.h"
 #include "utils.h"
 
+static void set_value_string(char **dest, char *value)
+{
+	if (*dest)
+		xfree(*dest);
+
+	*dest = xstrdup(value);
+}
+
 static int parse_on_off(char *value)
 {
 	int result = 0;
@@ -50,23 +58,23 @@ int config_parse_key_value(char *key, char *value)
 	long long max_memory;
 
 	if (!strcmp(key, "addr")) {
-		server->addr = xstrdup(value);
+		set_value_string(&server->addr, value);
 	} else if (!strcmp(key, "port")) {
 		server->port = atoi(value);
 	} else if (!strcmp(key, "unix-socket")) {
-		server->unix_socket = xstrdup(value);
+		set_value_string(&server->unix_socket, value);
 	} else if (!strcmp(key, "admin-name")) {
-		server->name = xstrdup(value);
+		set_value_string(&server->name, value);
 	} else if (!strcmp(key, "admin-password")) {
-		server->password = xstrdup(value);
+		set_value_string(&server->password, value);
 	} else if (!strcmp(key, "daemonize")) {
 		server->daemonize = parse_on_off(value);
 	} else if (!strcmp(key, "pid-file")) {
-		server->pidfile = xstrdup(value);
+		set_value_string(&server->pidfile, value);
 	} else if (!strcmp(key, "log-file")) {
-		server->logfile = xstrdup(value);
+		set_value_string(&server->logfile, value);
 	} else if (!strcmp(key, "storage-file")) {
-		server->storage = xstrdup(value);
+		set_value_string(&server->storage, value);
 	} else if (!strcmp(key, "max-clients")) {
 		server->max_clients = atoi(value);
 	} else if (!strcmp(key, "max-memory")) {

@@ -44,7 +44,6 @@
 
 #define EG_DEFAULT_ADDR	"127.0.0.1"
 #define EG_DEFAULT_PORT 7851
-#define EG_DEFAULT_UNIX_SOCKET NULL
 #define EG_DEFAULT_ADMIN_NAME "eagle"
 #define EG_DEFAULT_ADMIN_PASSWORD "eagle"
 #define EG_DEFAULT_MAX_CLIENTS 16384
@@ -53,7 +52,6 @@
 #define EG_DEFAULT_SAVE_TIMEOUT 0
 #define EG_DEFAULT_DAEMONIZE 0
 #define EG_DEFAULT_STORAGE_PATH "eaglemq.dat"
-#define EG_DEFAULT_PID_PATH NULL
 #define EG_DEFAULT_LOG_PATH "eaglemq.log"
 #define EG_DEFAULT_CONFIG_PATH "eaglemq.conf"
 
