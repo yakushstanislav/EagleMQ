@@ -32,11 +32,13 @@
 #include "list.h"
 #include "xmalloc.h"
 
-Message *create_message(Object *data, uint32_t expiration)
+Message *create_message(Object *data, uint64_t tag, uint32_t expiration)
 {
 	Message *msg = (Message*)xcalloc(sizeof(*msg));
 
 	msg->value = data;
+	msg->tag = tag;
+	msg->confirm = 0;
 	msg->expiration = expiration;
 
 	return msg;

@@ -61,7 +61,8 @@ typedef struct Queue {
 
 Queue *queue_create(void);
 void queue_release(Queue *queue);
-Queue *queue_push_value(Queue *queue, void *value);
+Queue *queue_push_value_head(Queue *queue, void *value);
+Queue *queue_push_value_tail(Queue *queue, void *value);
 void *queue_get_value(Queue *queue);
 void *queue_pop_value(Queue *queue);
 Queue *queue_purge(Queue *queue);

@@ -200,7 +200,7 @@ void check_memory(void)
 	}
 }
 
-void check_expired_messages(void)
+void process_queues_messages(void)
 {
 	ListNode *node;
 	ListIterator iterator;
@@ -211,6 +211,7 @@ void check_expired_messages(void)
 	{
 		queue_t = EG_LIST_NODE_VALUE(node);
 		process_expired_messages_queue_t(queue_t, server->now_timems);
+		process_unconfirmed_messages_queue_t(queue_t, server->now_timems);
 	}
 }
 
@@ -253,10 +254,11 @@ int server_updater(EventLoop *loop, long long id, void *data)
 
 	server->now_time = time(NULL);
 	server->now_timems = mstime();
+	server->msg_counter = 0;
 
 	check_memory();
 	client_timeout();
-	check_expired_messages();
+	process_queues_messages();
 	storage_timeout();
 
 	if (server->shutdown) {
@@ -408,8 +410,9 @@ void init_server_config(void)
 	server->start_time = time(NULL);
 	server->last_save = time(NULL);
 	server->last_memcheck = time(NULL);
+	server->msg_counter = 0;
 	server->daemonize = EG_DEFAULT_DAEMONIZE;
-	server->storage =xstrdup(EG_DEFAULT_STORAGE_PATH);
+	server->storage = xstrdup(EG_DEFAULT_STORAGE_PATH);
 	server->pidfile = NULL;
 	server->logfile = xstrdup(EG_DEFAULT_LOG_PATH);
 	server->config = EG_DEFAULT_CONFIG_PATH;

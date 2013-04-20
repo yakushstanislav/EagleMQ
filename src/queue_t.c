@@ -78,6 +78,7 @@ Queue_t *create_queue_t(const char *name, uint32_t max_msg, uint32_t max_msg_siz
 
 	queue_t->queue = queue_create();
 	queue_t->expire_messages = list_create();
+	queue_t->confirm_messages = list_create();
 	queue_t->declared_clients = list_create();
 	queue_t->subscribed_clients_msg = list_create();
 	queue_t->subscribed_clients_notify = list_create();
@@ -96,6 +97,7 @@ void delete_queue_t(Queue_t *queue_t)
 	eject_routes_queue_t(queue_t);
 
 	list_release(queue_t->expire_messages);
+	list_release(queue_t->confirm_messages);
 	list_release(queue_t->declared_clients);
 	list_release(queue_t->subscribed_clients_msg);
 	list_release(queue_t->subscribed_clients_notify);
@@ -153,7 +155,10 @@ static int process_subscribed_clients(Queue_t *queue_t, Message *msg)
 
 int push_message_queue_t(Queue_t *queue_t, Object *data, uint32_t expiration)
 {
-	Message *msg = create_message(data, expiration);
+	Message *msg;
+	uint64_t tag = make_message_tag(server->msg_counter++, server->now_timems);
+
+	msg = create_message(data, tag, expiration);
 
 	if (EG_MESSAGE_SIZE(msg) > queue_t->max_msg_size) {
 		return EG_STATUS_ERR;
@@ -167,13 +172,13 @@ int push_message_queue_t(Queue_t *queue_t, Object *data, uint32_t expiration)
 	if (EG_QUEUE_LENGTH(queue_t->queue) >= queue_t->max_msg)
 	{
 		if (queue_t->force_push) {
-			pop_message_queue_t(queue_t);
+			pop_message_queue_t(queue_t, 0);
 		} else {
 			return EG_STATUS_ERR;
 		}
 	}
 
-	queue_push_value(queue_t->queue, msg);
+	queue_push_value_head(queue_t->queue, msg);
 
 	if (msg->expiration)
 	{
@@ -190,7 +195,7 @@ Message *get_message_queue_t(Queue_t *queue_t)
 	return queue_get_value(queue_t->queue);
 }
 
-void pop_message_queue_t(Queue_t *queue_t)
+void pop_message_queue_t(Queue_t *queue_t, uint32_t timeout)
 {
 	Message *msg = queue_pop_value(queue_t->queue);
 
@@ -198,7 +203,34 @@ void pop_message_queue_t(Queue_t *queue_t)
 		list_delete_node(queue_t->expire_messages, EG_MESSAGE_GET_DATA(msg, 0));
 	}
 
-	release_message(msg);
+	if (timeout) {
+		EG_MESSAGE_SET_CONFIRM_TIME(msg, server->now_timems + timeout);
+		list_add_value_tail(queue_t->confirm_messages, msg);
+	} else {
+		release_message(msg);
+	}
+}
+
+int confirm_message_queue_t(Queue_t *queue_t, uint64_t tag)
+{
+	ListNode *node;
+	ListIterator iterator;
+	Message *msg;
+
+	list_rewind(queue_t->confirm_messages, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		msg = EG_LIST_NODE_VALUE(node);
+
+		if (EG_MESSAGE_GET_TAG(msg) == tag)
+		{
+			list_delete_node(queue_t->confirm_messages, node);
+			release_message(msg);
+			return EG_STATUS_OK;
+		}
+	}
+
+	return EG_STATUS_ERR;
 }
 
 Queue_t *find_queue_t(List *list, const char *name)
@@ -351,8 +383,35 @@ void process_expired_messages_queue_t(Queue_t *queue_t, uint32_t time)
 		msg = EG_LIST_NODE_VALUE(node);
 
 		if (EG_MESSAGE_GET_EXPIRATION_TIME(msg) <= time) {
-			list_delete_node(queue_t->expire_messages, EG_MESSAGE_GET_DATA(msg, 0));
+			list_delete_node(queue_t->expire_messages, node);
 			queue_delete_node(queue_t->queue, EG_MESSAGE_GET_DATA(msg, 1));
+		}
+	}
+}
+
+void process_unconfirmed_messages_queue_t(Queue_t *queue_t, uint32_t time)
+{
+	ListNode *node;
+	ListIterator iterator;
+	Message *msg;
+
+	list_rewind(queue_t->confirm_messages, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		msg = EG_LIST_NODE_VALUE(node);
+
+		if (EG_MESSAGE_GET_CONFIRM_TIME(msg) <= time)
+		{
+			list_delete_node(queue_t->confirm_messages, node);
+
+			queue_push_value_tail(queue_t->queue, msg);
+
+			if (msg->expiration)
+			{
+				list_add_value_tail(queue_t->expire_messages, msg);
+				EG_MESSAGE_SET_DATA(msg, 0, EG_LIST_LAST(queue_t->expire_messages));
+				EG_MESSAGE_SET_DATA(msg, 1, EG_QUEUE_LAST(queue_t->queue));
+			}
 		}
 	}
 }

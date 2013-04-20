@@ -50,6 +50,8 @@ void info(const char *fmt,...);
 void fatal(const char *fmt,...);
 void wlog(const char *fmt,...);
 
+uint64_t make_message_tag(uint32_t msg_counter, uint32_t time);
+
 long long memtoll(const char *value, int *err);
 
 int check_input_buffer1(char *buffer, size_t size);

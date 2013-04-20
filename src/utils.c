@@ -128,6 +128,17 @@ void wlog(const char *fmt,...)
 	va_end(args);
 }
 
+uint64_t make_message_tag(uint32_t msg_counter, uint32_t time)
+{
+	uint64_t id = 0;
+
+	id |= time;
+	id = id << 32;
+	id |= msg_counter;
+
+	return id;
+}
+
 long long memtoll(const char *value, int *err)
 {
 	char buffer[128];

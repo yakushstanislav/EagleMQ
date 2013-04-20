@@ -65,7 +65,7 @@ void queue_release(Queue *queue)
     xfree(queue);
 }
 
-Queue *queue_push_value(Queue *queue, void *value)
+Queue *queue_push_value_head(Queue *queue, void *value)
 {
 	QueueNode *node;
 
@@ -81,6 +81,29 @@ Queue *queue_push_value(Queue *queue, void *value)
 		node->next = queue->head;
 		queue->head->prev = node;
 		queue->head = node;
+	}
+
+	queue->len++;
+
+	return queue;
+}
+
+Queue *queue_push_value_tail(Queue *queue, void *value)
+{
+	QueueNode *node;
+
+	node = (QueueNode*)xmalloc(sizeof(*node));
+
+	node->value = value;
+
+	if (queue->len == 0) {
+		queue->head = queue->tail = node;
+		node->prev = node->next = NULL;
+	} else {
+		node->prev = queue->tail;
+		node->next = NULL;
+		queue->tail->next = node;
+		queue->tail = node;
 	}
 
 	queue->len++;

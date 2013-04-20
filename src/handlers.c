@@ -499,7 +499,7 @@ static void queue_create_command_handler(EagleClient *client)
 		return;
 	}
 
-	if (req->body.max_msg_size > EG_MAX_MSG_SIZE) {
+	if (!req->body.max_msg || req->body.max_msg_size > EG_MAX_MSG_SIZE) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
@@ -797,12 +797,13 @@ static void queue_get_command_handler(EagleClient *client)
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, EG_MESSAGE_SIZE(msg));
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, EG_MESSAGE_SIZE(msg) + sizeof(uint64_t));
 
-	buffer = (char*)xmalloc(sizeof(res) + EG_MESSAGE_SIZE(msg));
+	buffer = (char*)xmalloc(sizeof(res) + res.bodylen);
 
 	memcpy(buffer, &res, sizeof(res));
-	memcpy(buffer + sizeof(res), EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
+	memcpy(buffer + sizeof(res), &msg->tag, sizeof(uint64_t));
+	memcpy(buffer + sizeof(res) + sizeof(uint64_t), EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
 
 	add_response(client, buffer, sizeof(res) + res.bodylen);
 }
@@ -843,16 +844,52 @@ static void queue_pop_command_handler(EagleClient *client)
 		return;
 	}
 
-	set_response_header(&res, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, EG_MESSAGE_SIZE(msg));
+	set_response_header(&res, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, EG_MESSAGE_SIZE(msg) + sizeof(uint64_t));
 
-	buffer = (char*)xmalloc(sizeof(res) + EG_MESSAGE_SIZE(msg));
+	buffer = (char*)xmalloc(sizeof(res) + res.bodylen);
 
 	memcpy(buffer, &res, sizeof(res));
-	memcpy(buffer + sizeof(res), EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
+	memcpy(buffer + sizeof(res), &msg->tag, sizeof(uint64_t));
+	memcpy(buffer + sizeof(res) + sizeof(uint64_t), EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
 
-	pop_message_queue_t(queue_t);
+	pop_message_queue_t(queue_t, req->body.timeout);
 
 	add_response(client, buffer, sizeof(res) + res.bodylen);
+}
+
+static void queue_confirm_command_handler(EagleClient *client)
+{
+	ProtocolRequestQueueConfirm *req = (ProtocolRequestQueueConfirm*)client->request;
+	Queue_t *queue_t;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_QUEUE_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_QUEUE_CONFIRM_PERM)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
+	queue_t = find_queue_t(client->declared_queues, req->body.name);
+	if (!queue_t) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_DECLARED);
+		return;
+	}
+
+	if (confirm_message_queue_t(queue_t, req->body.tag) != EG_STATUS_OK) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NO_DATA);
+		return;
+	}
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
 static void queue_subscribe_command_handler(EagleClient *client)
@@ -1514,6 +1551,10 @@ static inline void parse_command(EagleClient *client, ProtocolRequestHeader* req
 
 		case EG_PROTOCOL_CMD_QUEUE_POP:
 			queue_pop_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_QUEUE_CONFIRM:
+			queue_confirm_command_handler(client);
 			break;
 
 		case EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE:

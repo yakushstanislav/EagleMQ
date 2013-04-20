@@ -39,16 +39,24 @@
 #define EG_MESSAGE_GET_DATA(m, i) ((m)->data[i])
 #define EG_MESSAGE_SET_DATA(m, i, v) ((m)->data[i] = (v))
 
+#define EG_MESSAGE_GET_TAG(m) ((m)->tag)
+#define EG_MESSAGE_SET_TAG(m, v) ((m)->tag = (v))
+
+#define EG_MESSAGE_GET_CONFIRM_TIME(m) ((m)->confirm)
+#define EG_MESSAGE_SET_CONFIRM_TIME(m, v) ((m)->confirm = (v))
+
 #define EG_MESSAGE_GET_EXPIRATION_TIME(m) ((m)->expiration)
 #define EG_MESSAGE_SET_EXPIRATION_TIME(m, v) ((m)->expiration = (v))
 
 typedef struct Message {
 	Object *value;
+	uint64_t tag;
+	uint32_t confirm;
 	uint32_t expiration;
 	void *data[2];
 } Message;
 
-Message *create_message(Object *data, uint32_t expiration);
+Message *create_message(Object *data, uint64_t tag, uint32_t expiration);
 void release_message(Message *msg);
 void free_message_list_handler(void *ptr);
 

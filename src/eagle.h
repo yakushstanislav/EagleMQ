@@ -78,6 +78,7 @@ typedef struct Queue_t {
 	int round_robin;
 	Queue *queue;
 	List *expire_messages;
+	List *confirm_messages;
 	List *declared_clients;
 	List *subscribed_clients_msg;
 	List *subscribed_clients_notify;
@@ -142,6 +143,7 @@ typedef struct EagleServer {
 	time_t start_time;
 	time_t last_save;
 	time_t last_memcheck;
+	int msg_counter;
 	int daemonize;
 	char *storage;
 	char *pidfile;

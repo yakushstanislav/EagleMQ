@@ -67,7 +67,7 @@ typedef enum ProtocolCommand {
 	EG_PROTOCOL_CMD_USER_SET_PERM = 0x21,
 	EG_PROTOCOL_CMD_USER_DELETE = 0x22,
 
-	/* queue commands (35..47) */
+	/* queue commands (35..48) */
 	EG_PROTOCOL_CMD_QUEUE_CREATE = 0x23,
 	EG_PROTOCOL_CMD_QUEUE_DECLARE = 0x24,
 	EG_PROTOCOL_CMD_QUEUE_EXIST = 0x25,
@@ -77,21 +77,22 @@ typedef enum ProtocolCommand {
 	EG_PROTOCOL_CMD_QUEUE_PUSH = 0x29,
 	EG_PROTOCOL_CMD_QUEUE_GET = 0x2A,
 	EG_PROTOCOL_CMD_QUEUE_POP = 0x2B,
-	EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE = 0x2C,
-	EG_PROTOCOL_CMD_QUEUE_UNSUBSCRIBE = 0x2D,
-	EG_PROTOCOL_CMD_QUEUE_PURGE = 0x2E,
-	EG_PROTOCOL_CMD_QUEUE_DELETE = 0x2F,
+	EG_PROTOCOL_CMD_QUEUE_CONFIRM = 0x2C,
+	EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE = 0x2D,
+	EG_PROTOCOL_CMD_QUEUE_UNSUBSCRIBE = 0x2E,
+	EG_PROTOCOL_CMD_QUEUE_PURGE = 0x2F,
+	EG_PROTOCOL_CMD_QUEUE_DELETE = 0x30,
 
-	/* route commands (48..56) */
-	EG_PROTOCOL_CMD_ROUTE_CREATE = 0x30,
-	EG_PROTOCOL_CMD_ROUTE_EXIST = 0x31,
-	EG_PROTOCOL_CMD_ROUTE_LIST = 0x32,
-	EG_PROTOCOL_CMD_ROUTE_KEYS = 0x33,
-	EG_PROTOCOL_CMD_ROUTE_RENAME = 0x34,
-	EG_PROTOCOL_CMD_ROUTE_BIND = 0x35,
-	EG_PROTOCOL_CMD_ROUTE_UNBIND = 0x36,
-	EG_PROTOCOL_CMD_ROUTE_PUSH = 0x37,
-	EG_PROTOCOL_CMD_ROUTE_DELETE = 0x38
+	/* route commands (49..57) */
+	EG_PROTOCOL_CMD_ROUTE_CREATE = 0x31,
+	EG_PROTOCOL_CMD_ROUTE_EXIST = 0x32,
+	EG_PROTOCOL_CMD_ROUTE_LIST = 0x33,
+	EG_PROTOCOL_CMD_ROUTE_KEYS = 0x34,
+	EG_PROTOCOL_CMD_ROUTE_RENAME = 0x35,
+	EG_PROTOCOL_CMD_ROUTE_BIND = 0x36,
+	EG_PROTOCOL_CMD_ROUTE_UNBIND = 0x37,
+	EG_PROTOCOL_CMD_ROUTE_PUSH = 0x38,
+	EG_PROTOCOL_CMD_ROUTE_DELETE = 0x39
 } ProtocolCommand;
 
 typedef enum ProtocolResponseStatus {
@@ -248,8 +249,17 @@ typedef struct ProtocolRequestQueuePop {
 	ProtocolRequestHeader header;
 	struct {
 		char name[64];
+		uint32_t timeout;
 	} body;
 } ProtocolRequestQueuePop;
+
+typedef struct ProtocolRequestQueueConfirm {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		uint64_t tag;
+	} body;
+} ProtocolRequestQueueConfirm;
 
 typedef struct ProtocolRequestQueueSubscribe {
 	ProtocolRequestHeader header;
