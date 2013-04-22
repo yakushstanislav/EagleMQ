@@ -404,13 +404,21 @@ void process_unconfirmed_messages_queue_t(Queue_t *queue_t, uint32_t time)
 		{
 			list_delete_node(queue_t->confirm_messages, node);
 
-			queue_push_value_tail(queue_t->queue, msg);
-
 			if (msg->expiration)
 			{
+				if (EG_MESSAGE_GET_EXPIRATION_TIME(msg) <= time) {
+					continue;
+				}
+
+				queue_push_value_tail(queue_t->queue, msg);
+
 				list_add_value_tail(queue_t->expire_messages, msg);
 				EG_MESSAGE_SET_DATA(msg, 0, EG_LIST_LAST(queue_t->expire_messages));
 				EG_MESSAGE_SET_DATA(msg, 1, EG_QUEUE_LAST(queue_t->queue));
+			}
+			else
+			{
+				queue_push_value_tail(queue_t->queue, msg);
 			}
 		}
 	}
