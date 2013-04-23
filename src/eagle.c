@@ -188,15 +188,21 @@ void check_memory(void)
 {
 	if (server->max_memory)
 	{
-		if ((server->now_time - server->last_memcheck) > EG_MEMORY_CHECK_TIMEOUT)
+		if (xmalloc_used_memory() > server->max_memory)
 		{
-			if (xmalloc_used_memory() > server->max_memory)
+			if ((server->now_time - server->last_memcheck) > EG_MEMORY_CHECK_TIMEOUT)
 			{
 				warning("Used memory: %u, limit: %u",
 					xmalloc_used_memory(), server->max_memory);
+
+				server->last_memcheck = server->now_time;
 			}
 
-			server->last_memcheck = server->now_time;
+			server->nomemory = 1;
+		}
+		else
+		{
+			server->nomemory = 0;
 		}
 	}
 }
@@ -411,6 +417,7 @@ void init_server_config(void)
 	server->start_time = time(NULL);
 	server->last_save = time(NULL);
 	server->last_memcheck = time(NULL);
+	server->nomemory = 0;
 	server->msg_counter = 0;
 	server->daemonize = EG_DEFAULT_DAEMONIZE;
 	server->storage = xstrdup(EG_DEFAULT_STORAGE_PATH);

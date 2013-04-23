@@ -61,7 +61,7 @@
 #define EG_MAX_MSG_COUNT 4294967295
 #define EG_MAX_MSG_SIZE 2147483647
 
-#define EG_MEMORY_CHECK_TIMEOUT 60
+#define EG_MEMORY_CHECK_TIMEOUT 10
 
 #define BIT_SET(a, b) ((a) |= (1UL<<(b)))
 #define BIT_CHECK(a, b) ((a) & (1UL<<(b)))
@@ -143,6 +143,7 @@ typedef struct EagleServer {
 	time_t start_time;
 	time_t last_save;
 	time_t last_memcheck;
+	int nomemory;
 	int msg_counter;
 	int daemonize;
 	char *storage;
