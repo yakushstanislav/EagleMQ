@@ -156,6 +156,7 @@ Table 1. Description of user permissions
             <i>.queue_push</i><br/>
             <i>.queue_get</i><br/>
             <i>.queue_pop</i><br/>
+            <i>.queue_confirm<i><br/>
             <i>.queue_subscribe</i><br/>
             <i>.queue_unsubscribe</i><br/>
             <i>.queue_purge</i><br/>
@@ -259,92 +260,99 @@ Table 1. Description of user permissions
     </tr>
     <tr>
         <td>14</td>
-        <td>QUEUE_SUBSCRIBE_PERM</td>
+        <td>QUEUE_CONFIRM_PERM</td>
         <td>29</td>
+        <td>.queue_confirm</td>
+        <td>Permission for confirmation message from the queue</td>
+    </tr>
+    <tr>
+        <td>15</td>
+        <td>QUEUE_SUBSCRIBE_PERM</td>
+        <td>30</td>
         <td>.queue_subscribe</td>
         <td>Permission to subscribe to the queue</td>
     </tr>
     <tr>
-        <td>15</td>
+        <td>16</td>
         <td>QUEUE_UNSUBSCRIBE_PERM</td>
-        <td>30</td>
+        <td>31</td>
         <td>.queue_unsubscribe</td>
         <td>Permission to unsubscribe to the queue</td>
     </tr>
     <tr>
-        <td>16</td>
+        <td>17</td>
         <td>QUEUE_PURGE_PERM</td>
-        <td>31</td>
+        <td>32</td>
         <td>.queue_purge</td>
         <td>Permission to delete all messages from the queue</td>
     </tr>
     <tr>
-        <td>17</td>
+        <td>18</td>
         <td>QUEUE_DELETE_PERM</td>
-        <td>32</td>
+        <td>33</td>
         <td>.queue_delete</td>
         <td>Permission to delete queue</td>
     </tr>
     <tr>
-        <td>18</td>
+        <td>19</td>
         <td>ROUTE_CREATE_PERM</td>
-        <td>33</td>
+        <td>34</td>
         <td>.route_create</td>
         <td>Permission to create route</td>
     </tr>
     <tr>
-        <td>19</td>
+        <td>20</td>
         <td>ROUTE_EXIST_PERM</td>
-        <td>34</td>
+        <td>35</td>
         <td>.route_exist</td>
         <td>Permission to check the existence of the route</td>
     </tr>
     <tr>
-        <td>20</td>
+        <td>21</td>
         <td>ROUTE_LIST_PERM</td>
-        <td>35</td>
+        <td>36</td>
         <td>.route_list</td>
         <td>Permission to get a list of routes</td>
     </tr>
     <tr>
-        <td>21</td>
+        <td>22</td>
         <td>ROUTE_KEYS_PERM</td>
-        <td>36</td>
+        <td>37</td>
         <td>.route_keys</td>
         <td>Permission to get a list of keys route</td>
     </tr>
     <tr>
-        <td>22</td>
+        <td>23</td>
         <td>ROUTE_RENAME_PERM</td>
-        <td>37</td>
+        <td>38</td>
         <td>.route_rename</td>
         <td>Permission to rename the route</td>
     </tr>
     <tr>
-        <td>23</td>
+        <td>24</td>
         <td>ROUTE_BIND_PERM</td>
-        <td>38</td>
+        <td>39</td>
         <td>.route_bind</td>
         <td>Permission to bind route with the queue</td>
     </tr>
     <tr>
-        <td>24</td>
+        <td>25</td>
         <td>ROUTE_UNBIND_PERM</td>
-        <td>39</td>
+        <td>40</td>
         <td>.route_unbind</td>
         <td>Permission to unbind route from the queue</td>
     </tr>
     <tr>
-        <td>25</td>
+        <td>26</td>
         <td>ROUTE_PUSH_PERM</td>
-        <td>40</td>
+        <td>41</td>
         <td>.route_push</td>
         <td>Permission to push messages to the route</td>
     </tr>
     <tr>
-        <td>26</td>
+        <td>27</td>
         <td>ROUTE_DELETE_PERM</td>
-        <td>41</td>
+        <td>42</td>
         <td>.route_delete</td>
         <td>Permission to delete route</td>
     </tr>
@@ -367,6 +375,7 @@ Commands for working with queues
 * .queue\_push
 * .queue\_get
 * .queue\_pop
+* .queue\_confirm
 * .queue\_subscribe
 * .queue\_unsubscribe
 * .queue\_purge
@@ -464,9 +473,19 @@ This command does not change the queue.
 
 Queue name *name* can not have a length greater than 64.
 
-.queue\_pop(name)
+.queue\_pop(name, timeout)
 ----------------------------
 Command *.queue\_pop* takes the most old message that was sent to the queue with the name *name*.
+
+*timeout* indicates confirm delivery timeout in milliseconds. If the message is not confirmed for the specified time, the message will be returned to the queue as the oldest.
+
+If *timeout* is 0, message delivery confirmation is not needed.
+
+Queue name *name* can not have a length greater than 64.
+
+.queue\_confirm(name, tag)
+--------------------------------
+Command *.queue\_confirm* confirms the message delivery.
 
 Queue name *name* can not have a length greater than 64.
 
