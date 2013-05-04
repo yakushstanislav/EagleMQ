@@ -45,6 +45,7 @@ The server provides the following statistics:
 * Clients - number of connected clients
 * Users - the number of users
 * Queues - number of queues
+* Routes - number of routes
 
 .save(async)
 ------------
@@ -61,11 +62,13 @@ If *async* is 1 - use asynchronous data saving.
 Command *.flush* is used to force deletion the data from the server.
 
 Flags *flags* are a bit sequence.
-Flags *flags* may take two values - FLUSH\_USER or FLUSH\_QUEUE.
+Flags *flags* may take 3 values - FLUSH\_USER, FLUSH\_QUEUE, FLUSH\_ROUTE.
 
 Flag FLUSH\_USER indicates that deletes all users (except the main administrator).
 
 Flag FLUSH\_QUEUE indicates that deletes all queues.
+
+Flag FLUSH\_ROUTE indicates that deletes all routes.
 
 Recommended to use this command only when you need to delete all the data from the server.
 
