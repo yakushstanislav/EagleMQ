@@ -32,9 +32,13 @@
 #include "event.h"
 #include "object.h"
 #include "queue_t.h"
+#include "channel_t.h"
 
 void queue_client_event_notify(EagleClient *client, Queue_t *queue_t);
 void queue_client_event_message(EagleClient *client, Queue_t *queue_t, Message *msg);
+void channel_client_event_message(EagleClient *client, Channel_t *channel, const char *topic, Object *msg);
+void channel_client_event_pattern_message(EagleClient *client, Channel_t *channel,
+	const char *topic, const char *pattern, Object *msg);
 void process_request(EagleClient *client);
 void read_request(EventLoop *loop, int fd, void *data, int mask);
 void client_timeout(void);

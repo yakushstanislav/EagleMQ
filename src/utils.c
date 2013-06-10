@@ -4,14 +4,14 @@
 
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of the EagleMQ nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
+	* Redistributions of source code must retain the above copyright
+	  notice, this list of conditions and the following disclaimer.
+	* Redistributions in binary form must reproduce the above copyright
+	  notice, this list of conditions and the following disclaimer in the
+	  documentation and/or other materials provided with the distribution.
+	* Neither the name of the EagleMQ nor the
+	  names of its contributors may be used to endorse or promote products
+	  derived from this software without specific prior written permission.
 
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -128,6 +128,168 @@ void wlog(const char *fmt,...)
 	va_end(args);
 }
 
+/* Taken from Redis */
+int pattern_match_length(const char *string, int slength, const char *pattern, int plength, int nocase)
+{
+	while(plength)
+	{
+		switch(pattern[0])
+		{
+			case '*':
+				while (pattern[1] == '*') {
+					pattern++;
+					plength--;
+				}
+
+				if (plength == 1)
+					return 1;
+
+				while(slength)
+				{
+					if (pattern_match_length(pattern + 1, plength - 1, string, slength, nocase))
+						return 1;
+
+					string++;
+					slength--;
+				}
+
+				return 0;
+				break;
+
+			case '?':
+				if (slength == 0)
+					return 0;
+
+				string++;
+				slength--;
+
+				break;
+
+			case '[':
+			{
+				int not, match;
+
+				pattern++;
+				plength--;
+				not = pattern[0] == '^';
+
+				if (not) {
+					pattern++;
+					plength--;
+				}
+
+				match = 0;
+
+				while(1) {
+					if (pattern[0] == '\\')
+					{
+						pattern++;
+						plength--;
+
+						if (pattern[0] == string[0])
+							match = 1;
+					} else if (pattern[0] == ']') {
+						break;
+					} else if (plength == 0) {
+						pattern--;
+						plength++;
+						break;
+					} else if (pattern[1] == '-' && plength >= 3) {
+						int start = pattern[0];
+						int end = pattern[2];
+						int c = string[0];
+
+						if (start > end)
+						{
+							int t = start;
+							start = end;
+							end = t;
+						}
+
+						if (nocase) {
+							start = tolower(start);
+							end = tolower(end);
+							c = tolower(c);
+						}
+
+						pattern += 2;
+						plength -= 2;
+
+						if (c >= start && c <= end)
+							match = 1;
+					}
+					else
+					{
+						if (!nocase) {
+							if (pattern[0] == string[0])
+								match = 1;
+						} else {
+							if (tolower((int)pattern[0]) == tolower((int)string[0]))
+								match = 1;
+						}
+				}
+
+				pattern++;
+				plength--;
+			}
+
+			if (not)
+				match = !match;
+
+			if (!match)
+				return 0;
+
+			string++;
+			slength--;
+
+			break;
+			}
+
+		case '\\':
+			if (plength >= 2) {
+				pattern++;
+				plength--;
+			}
+
+		default:
+			if (!nocase) {
+				if (pattern[0] != string[0])
+					return 0;
+			} else {
+				if (tolower((int)pattern[0]) != tolower((int)string[0]))
+					return 0;
+			}
+
+			string++;
+			slength--;
+
+			break;
+		}
+
+		pattern++;
+		plength--;
+
+		if (slength == 0)
+		{
+			while(*pattern == '*') {
+				pattern++;
+				plength--;
+			}
+			break;
+		}
+	}
+
+	if (plength == 0 && slength == 0)
+		return 1;
+
+	return 0;
+}
+
+int pattern_match(const char *string, const char *pattern, int nocase)
+{
+	return pattern_match_length(string, strlen(string), pattern, strlen(pattern), nocase);
+}
+
 uint64_t make_message_tag(uint32_t msg_counter, uint32_t time)
 {
 	uint64_t id = 0;
@@ -196,7 +358,7 @@ int check_input_buffer1(char *buffer, size_t size)
 
 	for (ptr = buffer; ptr < (buffer + length); ptr++)
 	{
-		if (!IS_ALPHANUM(*ptr) && !IS_EXTRA(*ptr)) {
+		if (!IS_ALPHANUM(*ptr) && !IS_EXTRA1(*ptr)) {
 			return 0;
 		}
 	}
@@ -231,17 +393,43 @@ int check_input_buffer2(char *buffer, size_t size)
 
 	for (ptr = buffer + 1; ptr < (buffer + length - 1); ptr++)
 	{
-		if (IS_EXTRA(*ptr) && extra) {
+		if (IS_EXTRA1(*ptr) && extra) {
 			return 0;
 		}
 
-		if (!IS_ALPHANUM(*ptr) && !IS_EXTRA(*ptr)) {
+		if (!IS_ALPHANUM(*ptr) && !IS_EXTRA1(*ptr)) {
 			return 0;
 		}
 
 		extra = 0;
-		if (IS_EXTRA(*ptr)) {
+		if (IS_EXTRA1(*ptr)) {
 			extra = 1;
+		}
+	}
+
+	return length;
+}
+
+int check_input_buffer3(char *buffer, size_t size)
+{
+	char *ptr = buffer, *end_ptr = buffer + size;
+	int length = 0;
+
+	while (ptr < end_ptr) {
+		if (*++ptr == '\0') {
+			length = ptr - buffer;
+			break;
+		}
+	}
+
+	if (!length) {
+		return 0;
+	}
+
+	for (ptr = buffer; ptr < (buffer + length); ptr++)
+	{
+		if (!IS_ALPHANUM(*ptr) && !IS_EXTRA3(*ptr)) {
+			return 0;
 		}
 	}
 

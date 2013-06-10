@@ -58,6 +58,7 @@
 #include "user.h"
 #include "queue_t.h"
 #include "route_t.h"
+#include "channel_t.h"
 #include "storage.h"
 #include "config.h"
 
@@ -412,6 +413,7 @@ void init_server_config(void)
 	server->users = list_create();
 	server->queues = list_create();
 	server->routes = list_create();
+	server->channels = list_create();
 	server->now_time = time(NULL);
 	server->now_timems = mstime();
 	server->start_time = time(NULL);
@@ -429,6 +431,7 @@ void init_server_config(void)
 	EG_LIST_SET_FREE_METHOD(server->users, free_user_list_handler);
 	EG_LIST_SET_FREE_METHOD(server->queues, free_queue_list_handler);
 	EG_LIST_SET_FREE_METHOD(server->routes, free_route_list_handler);
+	EG_LIST_SET_FREE_METHOD(server->channels, free_channel_list_handler);
 }
 
 void destroy_server_config(void)
@@ -449,6 +452,7 @@ void destroy_server_config(void)
 	list_release(server->users);
 	list_release(server->queues);
 	list_release(server->routes);
+	list_release(server->channels);
 
 	xfree(server);
 }

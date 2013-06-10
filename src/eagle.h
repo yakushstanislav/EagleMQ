@@ -95,6 +95,17 @@ typedef struct Route_t {
 	Keylist *keys;
 } Route_t;
 
+/* ------- Channel ------- */
+
+typedef struct Channel_t {
+	char name[64];
+	uint32_t flags;
+	int auto_delete;
+	int round_robin;
+	Keylist *topics;
+	Keylist *patterns;
+} Channel_t;
+
 /* ------- Client context ------- */
 
 typedef struct EagleClient {
@@ -111,6 +122,8 @@ typedef struct EagleClient {
 	List *responses;
 	List *declared_queues;
 	List *subscribed_queues;
+	Keylist *subscribed_topics;
+	Keylist *subscribed_patterns;
 	size_t sentlen;
 	time_t last_action;
 } EagleClient;
@@ -138,6 +151,7 @@ typedef struct EagleServer {
 	List *users;
 	List *queues;
 	List *routes;
+	List *channels;
 	time_t now_time;
 	time_t now_timems;
 	time_t start_time;

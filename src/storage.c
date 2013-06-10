@@ -42,6 +42,7 @@
 #include "user.h"
 #include "queue_t.h"
 #include "route_t.h"
+#include "channel_t.h"
 #include "queue.h"
 #include "object.h"
 #include "message.h"
@@ -476,6 +477,41 @@ static int storage_save_routes(FILE *fp)
 	return EG_STATUS_OK;
 }
 
+static int storage_save_channel(FILE *fp, Channel_t *channel)
+{
+	if (storage_write_type(fp, EG_STORAGE_TYPE_CHANNEL) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_write_data(fp, channel->name, strlenz(channel->name)) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_write_data(fp, &channel->flags, sizeof(channel->flags)) == -1)
+		return EG_STATUS_ERR;
+
+	return EG_STATUS_OK;
+}
+
+static int storage_save_channels(FILE *fp)
+{
+	ListIterator iterator;
+	ListNode *node;
+	Channel_t *channel;
+
+	list_rewind(server->channels, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		channel = EG_LIST_NODE_VALUE(node);
+
+		if (!BIT_CHECK(channel->flags, EG_CHANNEL_DURABLE_FLAG))
+			continue;
+
+		if (storage_save_channel(fp, channel) != EG_STATUS_OK)
+			return EG_STATUS_ERR;
+	}
+
+	return EG_STATUS_OK;
+}
+
 static int storage_load_user(FILE *fp)
 {
 	EagleUser user;
@@ -623,6 +659,24 @@ static int storage_load_route(FILE *fp)
 	return EG_STATUS_OK;
 }
 
+static int storage_load_channel(FILE *fp)
+{
+	Channel_t *channel;
+	Channel_t data;
+
+	if (storage_read_data(fp, &data.name, sizeof(data.name)) == -1)
+		return EG_STATUS_ERR;
+
+	if (storage_read_data(fp, &data.flags, sizeof(data.flags)) == -1)
+		return EG_STATUS_ERR;
+
+	channel = create_channel_t(data.name, data.flags);
+
+	list_add_value_tail(server->channels, channel);
+
+	return EG_STATUS_OK;
+}
+
 int storage_load(const char *filename)
 {
 	FILE *fp;
@@ -655,6 +709,10 @@ int storage_load(const char *filename)
 
 			case EG_STORAGE_TYPE_ROUTE:
 				if (storage_load_route(fp) != EG_STATUS_OK) goto error;
+				break;
+
+			case EG_STORAGE_TYPE_CHANNEL:
+				if (storage_load_channel(fp) != EG_STATUS_OK) goto error;
 				break;
 
 			case EG_STORAGE_EOF:
@@ -701,6 +759,9 @@ int storage_save(const char *filename)
 		goto error;
 
 	if (storage_save_routes(fp) != EG_STATUS_OK)
+		goto error;
+
+	if (storage_save_channels(fp) != EG_STATUS_OK)
 		goto error;
 
 	if (storage_write_type(fp, EG_STORAGE_EOF) == -1)

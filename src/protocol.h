@@ -33,6 +33,7 @@
 #define EG_FLUSH_USER_FLAG 0
 #define EG_FLUSH_QUEUE_FLAG 1
 #define EG_FLUSH_ROUTE_FLAG 2
+#define EG_FLUSH_CHANNEL_FLAG 3
 
 #define EG_QUEUE_AUTODELETE_FLAG 0
 #define EG_QUEUE_FORCE_PUSH_FLAG 1
@@ -44,6 +45,10 @@
 #define EG_ROUTE_AUTODELETE_FLAG 0
 #define EG_ROUTE_ROUND_ROBIN_FLAG 1
 #define EG_ROUTE_DURABLE_FLAG 2
+
+#define EG_CHANNEL_AUTODELETE_FLAG 0
+#define EG_CHANNEL_ROUND_ROBIN_FLAG 1
+#define EG_CHANNEL_DURABLE_FLAG 2
 
 typedef enum ProtocolBinaryMagic {
 	EG_PROTOCOL_REQ = 0x70,
@@ -92,7 +97,19 @@ typedef enum ProtocolCommand {
 	EG_PROTOCOL_CMD_ROUTE_BIND = 0x36,
 	EG_PROTOCOL_CMD_ROUTE_UNBIND = 0x37,
 	EG_PROTOCOL_CMD_ROUTE_PUSH = 0x38,
-	EG_PROTOCOL_CMD_ROUTE_DELETE = 0x39
+	EG_PROTOCOL_CMD_ROUTE_DELETE = 0x39,
+
+	/* channel commands (58..67) */
+	EG_PROTOCOL_CMD_CHANNEL_CREATE = 0x3A,
+	EG_PROTOCOL_CMD_CHANNEL_EXIST = 0x3B,
+	EG_PROTOCOL_CMD_CHANNEL_LIST = 0x3C,
+	EG_PROTOCOL_CMD_CHANNEL_RENAME = 0x3D,
+	EG_PROTOCOL_CMD_CHANNEL_PUBLISH = 0x3E,
+	EG_PROTOCOL_CMD_CHANNEL_SUBSCRIBE = 0x3F,
+	EG_PROTOCOL_CMD_CHANNEL_PSUBSCRIBE = 0x40,
+	EG_PROTOCOL_CMD_CHANNEL_UNSUBSCRIBE = 0x41,
+	EG_PROTOCOL_CMD_CHANNEL_PUNSUBSCRIBE = 0x42,
+	EG_PROTOCOL_CMD_CHANNEL_DELETE = 0x43
 } ProtocolCommand;
 
 typedef enum ProtocolResponseStatus {
@@ -355,6 +372,78 @@ typedef struct ProtocolRequestRouteDelete {
 	} body;
 } ProtocolRequestRouteDelete;
 
+typedef struct ProtocolRequestChannelCreate {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		uint32_t flags;
+	} body;
+} ProtocolRequestChannelCreate;
+
+typedef struct ProtocolRequestChannelExist {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+	} body;
+} ProtocolRequestChannelExist;
+
+typedef struct ProtocolRequestHeader ProtocolRequestChannelList;
+
+typedef struct ProtocolRequestChannelRename {
+	ProtocolRequestHeader header;
+	struct {
+		char from[64];
+		char to[64];
+	} body;
+} ProtocolRequestChannelRename;
+
+typedef struct ProtocolRequestChannelPublish {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		char topic[32];
+	} body;
+} ProtocolRequestChannelPublish;
+
+typedef struct ProtocolRequestChannelSubscribe {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		char topic[32];
+	} body;
+} ProtocolRequestChannelSubscribe;
+
+typedef struct ProtocolRequestChannelPatternSubscribe {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		char pattern[32];
+	} body;
+} ProtocolRequestChannelPatternSubscribe;
+
+typedef struct ProtocolRequestChannelUnsubscribe {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		char topic[32];
+	} body;
+} ProtocolRequestChannelUnsubscribe;
+
+typedef struct ProtocolRequestChannelPatternUnsubscribe {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+		char pattern[32];
+	} body;
+} ProtocolRequestChannelPatternUnsubscribe;
+
+typedef struct ProtocolRequestChannelDelete {
+	ProtocolRequestHeader header;
+	struct {
+		char name[64];
+	} body;
+} ProtocolRequestChannelDelete;
+
 typedef struct ProtocolResponseStat {
 	ProtocolResponseHeader header;
 	struct {
@@ -373,7 +462,7 @@ typedef struct ProtocolResponseStat {
 		uint32_t users;
 		uint32_t queues;
 		uint32_t routes;
-		uint32_t resv2;
+		uint32_t channels;
 		uint32_t resv3;
 		uint32_t resv4;
 	} body;
@@ -399,6 +488,13 @@ typedef struct ProtocolResponseRouteExist {
 		uint32_t status;
 	} body;
 } ProtocolResponseRouteExist;
+
+typedef struct ProtocolResponseChannelExist {
+	ProtocolResponseHeader header;
+	struct {
+		uint32_t status;
+	} body;
+} ProtocolResponseChannelExist;
 
 typedef struct ProtocolEventQueueNotify {
 	ProtocolEventHeader header;

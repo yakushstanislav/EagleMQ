@@ -46,6 +46,7 @@
 #include "user.h"
 #include "queue_t.h"
 #include "route_t.h"
+#include "channel_t.h"
 #include "storage.h"
 #include "xmalloc.h"
 #include "utils.h"
@@ -94,6 +95,44 @@ static void eject_queue_client(EagleClient *client)
 	}
 }
 
+static void eject_channel_client(EagleClient *client)
+{
+	ListIterator list_iterator;
+	ListNode *list_node;
+	KeylistIterator keylist_iterator;
+	KeylistNode *keylist_node;
+	Channel_t *channel;
+	List *list;
+
+	keylist_rewind(client->subscribed_topics, &keylist_iterator);
+	while ((keylist_node = keylist_next_node(&keylist_iterator)) != NULL)
+	{
+		channel = EG_KEYLIST_NODE_KEY(keylist_node);
+		list = EG_KEYLIST_NODE_VALUE(keylist_node);
+
+		list_rewind(list, &list_iterator);
+		while ((list_node = list_next_node(&list_iterator)) != NULL)
+		{
+			keylist_node = EG_LIST_NODE_VALUE(list_node);
+			unsubscribe_channel_t(channel, client, EG_KEYLIST_NODE_KEY(keylist_node));
+		}
+	}
+
+	keylist_rewind(client->subscribed_patterns, &keylist_iterator);
+	while ((keylist_node = keylist_next_node(&keylist_iterator)) != NULL)
+	{
+		channel = EG_KEYLIST_NODE_KEY(keylist_node);
+		list = EG_KEYLIST_NODE_VALUE(keylist_node);
+
+		list_rewind(list, &list_iterator);
+		while ((list_node = list_next_node(&list_iterator)) != NULL)
+		{
+			keylist_node = EG_LIST_NODE_VALUE(list_node);
+			punsubscribe_channel_t(channel, client, EG_KEYLIST_NODE_KEY(keylist_node));
+		}
+	}
+}
+
 static void delete_users(void)
 {
 	ListIterator iterator;
@@ -134,6 +173,18 @@ static void delete_routes(void)
 	while ((node = list_next_node(&iterator)) != NULL)
 	{
 		list_delete_node(server->routes, node);
+	}
+}
+
+static void delete_channels(void)
+{
+	ListIterator iterator;
+	ListNode *node;
+
+	list_rewind(server->channels, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		list_delete_node(server->channels, node);
 	}
 }
 
@@ -212,7 +263,7 @@ static void stat_command_handler(EagleClient *client)
 	stat->body.users = EG_LIST_LENGTH(server->users);
 	stat->body.queues = EG_LIST_LENGTH(server->queues);
 	stat->body.routes = EG_LIST_LENGTH(server->routes);
-	stat->body.resv2 = 0;
+	stat->body.channels = EG_LIST_LENGTH(server->channels);
 	stat->body.resv3 = 0;
 	stat->body.resv4 = 0;
 
@@ -273,6 +324,10 @@ static void flush_command_handler(EagleClient *client)
 
 	if (BIT_CHECK(req->body.flags, EG_FLUSH_ROUTE_FLAG)) {
 		delete_routes();
+	}
+
+	if (BIT_CHECK(req->body.flags, EG_FLUSH_CHANNEL_FLAG)) {
+		delete_channels();
 	}
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
@@ -1381,7 +1436,7 @@ static void route_push_command_handler(EagleClient *client)
 	msg = create_dup_object(msg_data, msg_size);
 	EG_OBJECT_RESET_REFCOUNT(msg);
 
-	if (push_message_route_t(route, req->body.key, msg, expire) == EG_STATUS_ERR) {
+	if (push_message_route_t(route, req->body.key, msg, expire) != EG_STATUS_OK) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
 		return;
 	}
@@ -1424,6 +1479,361 @@ static void route_delete_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
+static void channel_create_command_handler(EagleClient *client)
+{
+	ProtocolRequestChannelCreate *req = (ProtocolRequestChannelCreate*)client->request;
+	Channel_t *channel;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_CHANNEL_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_CHANNEL_CREATE_PERM)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
+	if (find_channel_t(server->channels, req->body.name)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
+		return;
+	}
+
+	channel = create_channel_t(req->body.name, req->body.flags);
+
+	list_add_value_tail(server->channels, channel);
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
+}
+
+static void channel_exist_command_handler(EagleClient *client)
+{
+	ProtocolRequestChannelExist *req = (ProtocolRequestChannelExist*)client->request;
+	ProtocolResponseChannelExist *res;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_CHANNEL_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_CHANNEL_EXIST_PERM)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
+	res = (ProtocolResponseChannelExist*)xcalloc(sizeof(*res));
+
+	set_response_header(&res->header, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, sizeof(res->body));
+
+	if (find_channel_t(server->channels, req->body.name)) {
+		res->body.status = 1;
+	} else {
+		res->body.status = 0;
+	}
+
+	add_response(client, res, sizeof(*res));
+}
+
+static void channel_list_command_handler(EagleClient *client)
+{
+	ProtocolRequestChannelList *req = (ProtocolRequestChannelList*)client->request;
+	ProtocolResponseHeader res;
+	ListIterator iterator;
+	ListNode *node;
+	Channel_t *channel;
+	char *list;
+	uint32_t topics;
+	uint32_t patterns;
+	int i;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_CHANNEL_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_CHANNEL_LIST_PERM)) {
+		add_status_response(client, req->cmd, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	set_response_header(&res, req->cmd, EG_PROTOCOL_STATUS_SUCCESS,
+		EG_LIST_LENGTH(server->channels) * (64 + (sizeof(uint32_t) * 3)));
+
+	list = (char*)xcalloc(sizeof(res) + res.bodylen);
+
+	memcpy(list, &res, sizeof(res));
+
+	i = sizeof(res);
+	list_rewind(server->channels, &iterator);
+	while ((node = list_next_node(&iterator)) != NULL)
+	{
+		channel = EG_LIST_NODE_VALUE(node);
+
+		topics = EG_KEYLIST_LENGTH(channel->topics);
+		patterns = EG_KEYLIST_LENGTH(channel->patterns);
+
+		memcpy(list + i, channel->name, strlenz(channel->name));
+		i += 64;
+		memcpy(list + i, &channel->flags, sizeof(uint32_t));
+		i += sizeof(uint32_t);
+		memcpy(list + i, &topics, sizeof(uint32_t));
+		i += sizeof(uint32_t);
+		memcpy(list + i, &patterns, sizeof(uint32_t));
+		i += sizeof(uint32_t);
+	}
+
+	add_response(client, list, sizeof(res) + res.bodylen);
+}
+
+static void channel_rename_command_handler(EagleClient *client)
+{
+	ProtocolRequestChannelRename *req = (ProtocolRequestChannelRename*)client->request;
+	Channel_t *channel;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_CHANNEL_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_CHANNEL_RENAME_PERM)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.from, 64) || !check_input_buffer2(req->body.to, 64)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
+	channel = find_channel_t(server->channels, req->body.from);
+	if (!channel) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
+		return;
+	}
+
+	rename_channel_t(channel, req->body.to);
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
+}
+
+static void channel_publish_command_handler(EagleClient *client)
+{
+	ProtocolRequestChannelPublish *req = (ProtocolRequestChannelPublish*)client->request;
+	Channel_t *channel;
+	Object *msg;
+
+	if (client->pos < (sizeof(*req) + 1)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_CHANNEL_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_CHANNEL_PUBLISH_PERM)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer1(req->body.topic, 32)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
+	channel = find_channel_t(server->channels, req->body.name);
+	if (!channel) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
+		return;
+	}
+
+	msg = create_dup_object(client->request + sizeof(*req), client->pos - sizeof(*req));
+
+	publish_message_channel_t(channel, req->body.topic, msg);
+
+	release_object(msg);
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
+}
+
+static void channel_subscribe_command_handler(EagleClient *client)
+{
+	ProtocolRequestChannelSubscribe *req = (ProtocolRequestChannelSubscribe*)client->request;
+	Channel_t *channel;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_CHANNEL_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_CHANNEL_SUBSCRIBE_PERM)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer1(req->body.topic, 32)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
+	channel = find_channel_t(server->channels, req->body.name);
+	if (!channel) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
+		return;
+	}
+
+	subscribe_channel_t(channel, client, req->body.topic);
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
+}
+
+static void channel_psubscribe_command_handler(EagleClient *client)
+{
+	ProtocolRequestChannelPatternSubscribe *req = (ProtocolRequestChannelPatternSubscribe*)client->request;
+	Channel_t *channel;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_CHANNEL_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_CHANNEL_PSUBSCRIBE_PERM)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer3(req->body.pattern, 32)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
+	channel = find_channel_t(server->channels, req->body.name);
+	if (!channel) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
+		return;
+	}
+
+	psubscribe_channel_t(channel, client, req->body.pattern);
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
+}
+
+static void channel_unsubscribe_command_handler(EagleClient *client)
+{
+	ProtocolRequestChannelUnsubscribe *req = (ProtocolRequestChannelUnsubscribe*)client->request;
+	Channel_t *channel;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_CHANNEL_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_CHANNEL_UNSUBSCRIBE_PERM)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer1(req->body.topic, 32)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
+	channel = find_channel_t(server->channels, req->body.name);
+	if (!channel) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
+		return;
+	}
+
+	if (unsubscribe_channel_t(channel, client, req->body.topic) != EG_STATUS_OK) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
+	}
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
+}
+
+static void channel_punsubscribe_command_handler(EagleClient *client)
+{
+	ProtocolRequestChannelPatternUnsubscribe *req = (ProtocolRequestChannelPatternUnsubscribe*)client->request;
+	Channel_t *channel;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_CHANNEL_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_CHANNEL_PUNSUBSCRIBE_PERM)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64) || !check_input_buffer3(req->body.pattern, 32)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
+	channel = find_channel_t(server->channels, req->body.name);
+	if (!channel) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
+		return;
+	}
+
+	if (punsubscribe_channel_t(channel, client, req->body.pattern) != EG_STATUS_OK) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
+	}
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
+}
+
+static void channel_delete_command_handler(EagleClient *client)
+{
+	ProtocolRequestChannelDelete *req = (ProtocolRequestChannelDelete*)client->request;
+	Channel_t *channel;
+
+	if (client->pos < sizeof(*req)) {
+		add_status_response(client, 0, EG_PROTOCOL_STATUS_ERROR_PACKET);
+		return;
+	}
+
+	if (!BIT_CHECK(client->perm, EG_USER_ADMIN_PERM) && !BIT_CHECK(client->perm, EG_USER_CHANNEL_PERM)
+		&& !BIT_CHECK(client->perm, EG_USER_CHANNEL_DELETE_PERM)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_ACCESS);
+		return;
+	}
+
+	if (!check_input_buffer2(req->body.name, 64)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
+	channel = find_channel_t(server->channels, req->body.name);
+	if (!channel) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
+		return;
+	}
+
+	if (list_delete_value(server->channels, channel) == EG_STATUS_ERR) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR);
+		return;
+	}
+
+	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
+}
+
 void queue_client_event_notify(EagleClient *client, Queue_t *queue_t)
 {
 	ProtocolEventQueueNotify *event = (ProtocolEventQueueNotify*)xcalloc(sizeof(*event));
@@ -1449,6 +1859,42 @@ void queue_client_event_message(EagleClient *client, Queue_t *queue_t, Message *
 	memcpy(buffer + sizeof(header) + 64, EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
 
 	add_response(client, buffer, sizeof(header) + 64 + EG_MESSAGE_SIZE(msg));
+}
+
+void channel_client_event_message(EagleClient *client, Channel_t *channel, const char *topic, Object *msg)
+{
+	ProtocolEventHeader header;
+	char *buffer;
+
+	set_event_header(&header, EG_PROTOCOL_CMD_CHANNEL_SUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 96 + EG_OBJECT_SIZE(msg));
+
+	buffer = (char*)xcalloc(sizeof(header) + 96 + EG_OBJECT_SIZE(msg));
+
+	memcpy(buffer, &header, sizeof(header));
+	memcpy(buffer + sizeof(header), channel->name, strlenz(channel->name));
+	memcpy(buffer + sizeof(header) + 64, topic, strlenz(topic));
+	memcpy(buffer + sizeof(header) + 96, EG_OBJECT_DATA(msg), EG_OBJECT_SIZE(msg));
+
+	add_response(client, buffer, sizeof(header) + 96 + EG_OBJECT_SIZE(msg));
+}
+
+void channel_client_event_pattern_message(EagleClient *client, Channel_t *channel,
+	const char *topic, const char *pattern, Object *msg)
+{
+	ProtocolEventHeader header;
+	char *buffer;
+
+	set_event_header(&header, EG_PROTOCOL_CMD_CHANNEL_PSUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 128 + EG_OBJECT_SIZE(msg));
+
+	buffer = (char*)xcalloc(sizeof(header) + 128 + EG_OBJECT_SIZE(msg));
+
+	memcpy(buffer, &header, sizeof(header));
+	memcpy(buffer + sizeof(header), channel->name, strlenz(channel->name));
+	memcpy(buffer + sizeof(header) + 64, topic, strlenz(topic));
+	memcpy(buffer + sizeof(header) + 96, pattern, strlenz(pattern));
+	memcpy(buffer + sizeof(header) + 128, EG_OBJECT_DATA(msg), EG_OBJECT_SIZE(msg));
+
+	add_response(client, buffer, sizeof(header) + 128 + EG_OBJECT_SIZE(msg));
 }
 
 static void add_response(EagleClient *client, void *data, int size)
@@ -1617,6 +2063,46 @@ static inline void parse_command(EagleClient *client, ProtocolRequestHeader* req
 
 		case EG_PROTOCOL_CMD_ROUTE_DELETE:
 			route_delete_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_CHANNEL_CREATE:
+			channel_create_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_CHANNEL_EXIST:
+			channel_exist_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_CHANNEL_LIST:
+			channel_list_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_CHANNEL_RENAME:
+			channel_rename_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_CHANNEL_PUBLISH:
+			channel_publish_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_CHANNEL_SUBSCRIBE:
+			channel_subscribe_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_CHANNEL_PSUBSCRIBE:
+			channel_psubscribe_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_CHANNEL_UNSUBSCRIBE:
+			channel_unsubscribe_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_CHANNEL_PUNSUBSCRIBE:
+			channel_punsubscribe_command_handler(client);
+			break;
+
+		case EG_PROTOCOL_CMD_CHANNEL_DELETE:
+			channel_delete_command_handler(client);
 			break;
 
 		default:
@@ -1861,6 +2347,8 @@ EagleClient *create_client(int fd)
 	client->responses = list_create();
 	client->declared_queues = list_create();
 	client->subscribed_queues = list_create();
+	client->subscribed_topics = keylist_create();
+	client->subscribed_patterns = keylist_create();
 	client->sentlen = 0;
 	client->last_action = time(NULL);
 
@@ -1877,10 +2365,13 @@ void free_client(EagleClient *client)
 	xfree(client->buffer);
 
 	eject_queue_client(client);
+	eject_channel_client(client);
 
 	list_release(client->responses);
 	list_release(client->declared_queues);
 	list_release(client->subscribed_queues);
+	keylist_release(client->subscribed_topics);
+	keylist_release(client->subscribed_patterns);
 
 	delete_file_event(server->loop, client->fd, EG_EVENT_READABLE);
 	delete_file_event(server->loop, client->fd, EG_EVENT_WRITABLE);

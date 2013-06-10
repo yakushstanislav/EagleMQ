@@ -25,42 +25,21 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __UTILS_H__
-#define __UTILS_H__
+#ifndef __CHANNEL_H__
+#define __CHANNEL_H__
 
-#include <stdarg.h>
-#include <stdint.h>
+#include "eagle.h"
+#include "object.h"
 
-#define MESSAGE_BUFFER_SIZE 256
-
-#define TO_LOWER(c) (unsigned char)(c | 0x20)
-#define IS_ALPHA(c) (TO_LOWER(c) >= 'a' && TO_LOWER(c) <= 'z')
-#define IS_NUM(c) ((c) >= '0' && (c) <= '9')
-#define IS_ALPHANUM(c) (IS_ALPHA(c) || IS_NUM(c))
-#define IS_EXTRA1(c) ((c) == '_' || (c) == '-' || (c) == '.')
-#define IS_EXTRA2(c) ((c) == '*' || (c) == '?' || (c) == '[' || (c) == ']' || (c) == '\\')
-#define IS_EXTRA3(c) (IS_EXTRA1(c) || IS_EXTRA2(c))
-
-#define strlenz(s) (strlen(s) + 1)
-
-typedef enum { INFO_LEVEL, WARNING_LEVEL, FATAL_LEVEL, LOG_ONLY_LEVEL } message_level;
-
-void enable_log(const char *logfile);
-void disable_log();
-void warning(const char *fmt,...);
-void info(const char *fmt,...);
-void fatal(const char *fmt,...);
-void wlog(const char *fmt,...);
-
-int pattern_match_length(const char *string, int slength, const char *pattern, int plength, int nocase);
-int pattern_match(const char *string, const char *pattern, int nocase);
-
-uint64_t make_message_tag(uint32_t msg_counter, uint32_t time);
-
-long long memtoll(const char *value, int *err);
-
-int check_input_buffer1(char *buffer, size_t size);
-int check_input_buffer2(char *buffer, size_t size);
-int check_input_buffer3(char *buffer, size_t size);
+Channel_t *create_channel_t(const char *name, uint32_t flags);
+void delete_channel_t(Channel_t *channel);
+void publish_message_channel_t(Channel_t *channel, const char *topic, Object *msg);
+Channel_t *find_channel_t(List *list, const char *name);
+void rename_channel_t(Channel_t *channel, const char *name);
+void subscribe_channel_t(Channel_t *channel, EagleClient *client, const char *topic);
+void psubscribe_channel_t(Channel_t *channel, EagleClient *client, const char *pattern);
+int unsubscribe_channel_t(Channel_t *channel, EagleClient *client, const char *topic);
+int punsubscribe_channel_t(Channel_t *channel, EagleClient *client, const char *pattern);
+void free_channel_list_handler(void *ptr);
 
 #endif
