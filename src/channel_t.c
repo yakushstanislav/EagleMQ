@@ -328,6 +328,8 @@ static void eject_clients_channel_t(Channel_t *channel)
 	keylist_rewind(channel->topics, &keylist_iterator);
 	while ((keylist_node = keylist_next_node(&keylist_iterator)) != NULL)
 	{
+		list = EG_KEYLIST_NODE_VALUE(keylist_node);
+
 		list_rewind(list, &list_iterator);
 		while ((list_node = list_next_node(&list_iterator)) != NULL)
 		{
