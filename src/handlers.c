@@ -723,6 +723,11 @@ static void queue_rename_command_handler(EagleClient *client)
 		return;
 	}
 
+	if (find_queue_t(server->queues, req->body.to)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
 	rename_queue_t(queue_t, req->body.to);
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
@@ -1301,6 +1306,11 @@ static void route_rename_command_handler(EagleClient *client)
 		return;
 	}
 
+	if (find_route_t(server->routes, req->body.to)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
+		return;
+	}
+
 	rename_route_t(route, req->body.to);
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
@@ -1622,6 +1632,11 @@ static void channel_rename_command_handler(EagleClient *client)
 	channel = find_channel_t(server->channels, req->body.from);
 	if (!channel) {
 		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_NOT_FOUND);
+		return;
+	}
+
+	if (find_channel_t(server->channels, req->body.to)) {
+		add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_ERROR_VALUE);
 		return;
 	}
 
