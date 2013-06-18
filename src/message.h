@@ -33,6 +33,7 @@
 #include "eagle.h"
 #include "object.h"
 
+#define EG_MESSAGE_OBJECT(m) ((m)->value)
 #define EG_MESSAGE_VALUE(m) ((m)->value->data)
 #define EG_MESSAGE_SIZE(m) ((m)->value->size)
 

@@ -53,6 +53,7 @@
 
 static int set_write_event(EagleClient *client);
 static void add_response(EagleClient *client, void *data, int size);
+static void add_object_response(EagleClient *client, Object *object);
 static void add_status_response(EagleClient *client, int cmd, int status);
 static void accept_common_handler(int fd);
 
@@ -864,13 +865,13 @@ static void queue_get_command_handler(EagleClient *client)
 
 	set_response_header(&res, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, EG_MESSAGE_SIZE(msg) + sizeof(uint64_t));
 
-	buffer = (char*)xmalloc(sizeof(res) + res.bodylen);
+	buffer = (char*)xmalloc(sizeof(res) + sizeof(uint64_t));
 
 	memcpy(buffer, &res, sizeof(res));
 	memcpy(buffer + sizeof(res), &msg->tag, sizeof(uint64_t));
-	memcpy(buffer + sizeof(res) + sizeof(uint64_t), EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
 
-	add_response(client, buffer, sizeof(res) + res.bodylen);
+	add_response(client, buffer, sizeof(res) + sizeof(uint64_t));
+	add_object_response(client, EG_MESSAGE_OBJECT(msg));
 }
 
 static void queue_pop_command_handler(EagleClient *client)
@@ -911,15 +912,15 @@ static void queue_pop_command_handler(EagleClient *client)
 
 	set_response_header(&res, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS, EG_MESSAGE_SIZE(msg) + sizeof(uint64_t));
 
-	buffer = (char*)xmalloc(sizeof(res) + res.bodylen);
+	buffer = (char*)xmalloc(sizeof(res) + sizeof(uint64_t));
 
 	memcpy(buffer, &res, sizeof(res));
 	memcpy(buffer + sizeof(res), &msg->tag, sizeof(uint64_t));
-	memcpy(buffer + sizeof(res) + sizeof(uint64_t), EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
+
+	add_response(client, buffer, sizeof(res) + sizeof(uint64_t));
+	add_object_response(client, EG_MESSAGE_OBJECT(msg));
 
 	pop_message_queue_t(queue_t, req->body.timeout);
-
-	add_response(client, buffer, sizeof(res) + res.bodylen);
 }
 
 static void queue_confirm_command_handler(EagleClient *client)
@@ -1677,7 +1678,7 @@ static void channel_publish_command_handler(EagleClient *client)
 
 	publish_message_channel_t(channel, req->body.topic, msg);
 
-	release_object(msg);
+	decrement_references_count(msg);
 
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
@@ -1867,13 +1868,13 @@ void queue_client_event_message(EagleClient *client, Queue_t *queue_t, Message *
 
 	set_event_header(&header, EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 64 + EG_MESSAGE_SIZE(msg));
 
-	buffer = (char*)xcalloc(sizeof(header) + 64 + EG_MESSAGE_SIZE(msg));
+	buffer = (char*)xcalloc(sizeof(header) + 64);
 
 	memcpy(buffer, &header, sizeof(header));
 	memcpy(buffer + sizeof(header), queue_t->name, strlenz(queue_t->name));
-	memcpy(buffer + sizeof(header) + 64, EG_MESSAGE_VALUE(msg), EG_MESSAGE_SIZE(msg));
 
-	add_response(client, buffer, sizeof(header) + 64 + EG_MESSAGE_SIZE(msg));
+	add_response(client, buffer, sizeof(header) + 64);
+	add_object_response(client, EG_MESSAGE_OBJECT(msg));
 }
 
 void channel_client_event_message(EagleClient *client, Channel_t *channel, const char *topic, Object *msg)
@@ -1883,14 +1884,14 @@ void channel_client_event_message(EagleClient *client, Channel_t *channel, const
 
 	set_event_header(&header, EG_PROTOCOL_CMD_CHANNEL_SUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 96 + EG_OBJECT_SIZE(msg));
 
-	buffer = (char*)xcalloc(sizeof(header) + 96 + EG_OBJECT_SIZE(msg));
+	buffer = (char*)xcalloc(sizeof(header) + 96);
 
 	memcpy(buffer, &header, sizeof(header));
 	memcpy(buffer + sizeof(header), channel->name, strlenz(channel->name));
 	memcpy(buffer + sizeof(header) + 64, topic, strlenz(topic));
-	memcpy(buffer + sizeof(header) + 96, EG_OBJECT_DATA(msg), EG_OBJECT_SIZE(msg));
 
-	add_response(client, buffer, sizeof(header) + 96 + EG_OBJECT_SIZE(msg));
+	add_response(client, buffer, sizeof(header) + 96);
+	add_object_response(client, msg);
 }
 
 void channel_client_event_pattern_message(EagleClient *client, Channel_t *channel,
@@ -1901,15 +1902,15 @@ void channel_client_event_pattern_message(EagleClient *client, Channel_t *channe
 
 	set_event_header(&header, EG_PROTOCOL_CMD_CHANNEL_PSUBSCRIBE, EG_PROTOCOL_EVENT_MESSAGE, 128 + EG_OBJECT_SIZE(msg));
 
-	buffer = (char*)xcalloc(sizeof(header) + 128 + EG_OBJECT_SIZE(msg));
+	buffer = (char*)xcalloc(sizeof(header) + 128);
 
 	memcpy(buffer, &header, sizeof(header));
 	memcpy(buffer + sizeof(header), channel->name, strlenz(channel->name));
 	memcpy(buffer + sizeof(header) + 64, topic, strlenz(topic));
 	memcpy(buffer + sizeof(header) + 96, pattern, strlenz(pattern));
-	memcpy(buffer + sizeof(header) + 128, EG_OBJECT_DATA(msg), EG_OBJECT_SIZE(msg));
 
-	add_response(client, buffer, sizeof(header) + 128 + EG_OBJECT_SIZE(msg));
+	add_response(client, buffer, sizeof(header) + 128);
+	add_object_response(client, msg);
 }
 
 static void add_response(EagleClient *client, void *data, int size)
@@ -1918,6 +1919,18 @@ static void add_response(EagleClient *client, void *data, int size)
 
 	if (set_write_event(client) != EG_STATUS_OK) {
 		release_object(object);
+		return;
+	}
+
+	list_add_value_tail(client->responses, object);
+}
+
+static void add_object_response(EagleClient *client, Object *object)
+{
+	increment_references_count(object);
+
+	if (set_write_event(client) != EG_STATUS_OK) {
+		decrement_references_count(object);
 		return;
 	}
 
