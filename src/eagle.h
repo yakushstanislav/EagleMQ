@@ -169,4 +169,61 @@ typedef struct EagleServer {
 
 extern EagleServer *server;
 
+/* ------- Command ------- */
+
+typedef void commandHandler(EagleClient *client);
+
+extern commandHandler *commands[];
+
+/* ------- Command handlers ------- */
+
+void auth_command_handler(EagleClient *client);
+void ping_command_handler(EagleClient *client);
+void stat_command_handler(EagleClient *client);
+void save_command_handler(EagleClient *client);
+void flush_command_handler(EagleClient *client);
+void disconnect_command_handler(EagleClient *client);
+
+void user_create_command_handler(EagleClient *client);
+void user_list_command_handler(EagleClient *client);
+void user_rename_command_handler(EagleClient *client);
+void user_set_perm_command_handler(EagleClient *client);
+void user_delete_command_handler(EagleClient *client);
+
+void queue_create_command_handler(EagleClient *client);
+void queue_declare_command_handler(EagleClient *client);
+void queue_exist_command_handler(EagleClient *client);
+void queue_list_command_handler(EagleClient *client);
+void queue_rename_command_handler(EagleClient *client);
+void queue_size_command_handler(EagleClient *client);
+void queue_push_command_handler(EagleClient *client);
+void queue_get_command_handler(EagleClient *client);
+void queue_pop_command_handler(EagleClient *client);
+void queue_confirm_command_handler(EagleClient *client);
+void queue_subscribe_command_handler(EagleClient *client);
+void queue_unsubscribe_command_handler(EagleClient *client);
+void queue_purge_command_handler(EagleClient *client);
+void queue_delete_command_handler(EagleClient *client);
+
+void route_create_command_handler(EagleClient *client);
+void route_exist_command_handler(EagleClient *client);
+void route_list_command_handler(EagleClient *client);
+void route_keys_command_handler(EagleClient *client);
+void route_rename_command_handler(EagleClient *client);
+void route_bind_command_handler(EagleClient *client);
+void route_unbind_command_handler(EagleClient *client);
+void route_push_command_handler(EagleClient *client);
+void route_delete_command_handler(EagleClient *client);
+
+void channel_create_command_handler(EagleClient *client);
+void channel_exist_command_handler(EagleClient *client);
+void channel_list_command_handler(EagleClient *client);
+void channel_rename_command_handler(EagleClient *client);
+void channel_publish_command_handler(EagleClient *client);
+void channel_subscribe_command_handler(EagleClient *client);
+void channel_psubscribe_command_handler(EagleClient *client);
+void channel_unsubscribe_command_handler(EagleClient *client);
+void channel_punsubscribe_command_handler(EagleClient *client);
+void channel_delete_command_handler(EagleClient *client);
+
 #endif

@@ -189,7 +189,7 @@ static void delete_channels(void)
 	}
 }
 
-static void auth_command_handler(EagleClient *client)
+void auth_command_handler(EagleClient *client)
 {
 	ProtocolRequestAuth *req = (ProtocolRequestAuth*)client->request;
 	EagleUser *user;
@@ -215,7 +215,7 @@ static void auth_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void ping_command_handler(EagleClient *client)
+void ping_command_handler(EagleClient *client)
 {
 	ProtocolRequestPing *req = (ProtocolRequestPing*)client->request;
 
@@ -227,7 +227,7 @@ static void ping_command_handler(EagleClient *client)
 	add_status_response(client, req->cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void stat_command_handler(EagleClient *client)
+void stat_command_handler(EagleClient *client)
 {
 	ProtocolRequestStat *req = (ProtocolRequestStat*)client->request;
 	ProtocolResponseStat *stat;
@@ -271,7 +271,7 @@ static void stat_command_handler(EagleClient *client)
 	add_response(client, stat, sizeof(*stat));
 }
 
-static void save_comand_handler(EagleClient *client)
+void save_command_handler(EagleClient *client)
 {
 	ProtocolRequestSave *req = (ProtocolRequestSave*)client->request;
 
@@ -301,7 +301,7 @@ static void save_comand_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void flush_command_handler(EagleClient *client)
+void flush_command_handler(EagleClient *client)
 {
 	ProtocolRequestFlush *req = (ProtocolRequestFlush*)client->request;
 
@@ -334,7 +334,7 @@ static void flush_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void disconnect_command_handler(EagleClient *client)
+void disconnect_command_handler(EagleClient *client)
 {
 	ProtocolRequestDisconnect *req = (ProtocolRequestDisconnect*)client->request;
 
@@ -346,7 +346,7 @@ static void disconnect_command_handler(EagleClient *client)
 	free_client(client);
 }
 
-static void user_create_command_handler(EagleClient *client)
+void user_create_command_handler(EagleClient *client)
 {
 	ProtocolRequestUserCreate *req = (ProtocolRequestUserCreate*)client->request;
 	EagleUser *user;
@@ -377,7 +377,7 @@ static void user_create_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void user_list_command_handler(EagleClient *client)
+void user_list_command_handler(EagleClient *client)
 {
 	ProtocolRequestUserList *req = (ProtocolRequestUserList*)client->request;
 	ProtocolResponseHeader res;
@@ -418,7 +418,7 @@ static void user_list_command_handler(EagleClient *client)
 	add_response(client, list, sizeof(res) + res.bodylen);
 }
 
-static void user_rename_command_handler(EagleClient *client)
+void user_rename_command_handler(EagleClient *client)
 {
 	ProtocolRequestUserRename *req = (ProtocolRequestUserRename*)client->request;
 	EagleUser *user;
@@ -454,7 +454,7 @@ static void user_rename_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void user_set_perm_command_handler(EagleClient *client)
+void user_set_perm_command_handler(EagleClient *client)
 {
 	ProtocolRequestUserSetPerm *req = (ProtocolRequestUserSetPerm*)client->request;
 	EagleUser *user;
@@ -490,7 +490,7 @@ static void user_set_perm_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void user_delete_command_handler(EagleClient *client)
+void user_delete_command_handler(EagleClient *client)
 {
 	ProtocolRequestUserDelete *req = (ProtocolRequestUserDelete*)client->request;
 	EagleUser *user;
@@ -529,7 +529,7 @@ static void user_delete_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void queue_create_command_handler(EagleClient *client)
+void queue_create_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueCreate *req = (ProtocolRequestQueueCreate*)client->request;
 	Queue_t *queue_t;
@@ -568,7 +568,7 @@ static void queue_create_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void queue_declare_command_handler(EagleClient *client)
+void queue_declare_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueDeclare *req = (ProtocolRequestQueueDeclare*)client->request;
 	Queue_t *queue_t;
@@ -605,7 +605,7 @@ static void queue_declare_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void queue_exist_command_handler(EagleClient *client)
+void queue_exist_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueExist *req = (ProtocolRequestQueueExist*)client->request;
 	ProtocolResponseQueueExist *res;
@@ -639,7 +639,7 @@ static void queue_exist_command_handler(EagleClient *client)
 	add_response(client, res, sizeof(*res));
 }
 
-static void queue_list_command_handler(EagleClient *client)
+void queue_list_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueList *req = (ProtocolRequestQueueList*)client->request;
 	ProtocolResponseHeader res;
@@ -697,7 +697,7 @@ static void queue_list_command_handler(EagleClient *client)
 	add_response(client, list, sizeof(res) + res.bodylen);
 }
 
-static void queue_rename_command_handler(EagleClient *client)
+void queue_rename_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueRename *req = (ProtocolRequestQueueRename*)client->request;
 	Queue_t *queue_t;
@@ -734,7 +734,7 @@ static void queue_rename_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void queue_size_command_handler(EagleClient *client)
+void queue_size_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueSize *req = (ProtocolRequestQueueSize*)client->request;
 	ProtocolResponseQueueSize *res;
@@ -771,7 +771,7 @@ static void queue_size_command_handler(EagleClient *client)
 	add_response(client, res, sizeof(*res));
 }
 
-static void queue_push_command_handler(EagleClient *client)
+void queue_push_command_handler(EagleClient *client)
 {
 	ProtocolRequestHeader *req = (ProtocolRequestHeader*)client->request;
 	Queue_t *queue_t;
@@ -827,7 +827,7 @@ static void queue_push_command_handler(EagleClient *client)
 	add_status_response(client, req->cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void queue_get_command_handler(EagleClient *client)
+void queue_get_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueGet *req = (ProtocolRequestQueueGet*)client->request;
 	ProtocolResponseHeader res;
@@ -874,7 +874,7 @@ static void queue_get_command_handler(EagleClient *client)
 	add_object_response(client, EG_MESSAGE_OBJECT(msg));
 }
 
-static void queue_pop_command_handler(EagleClient *client)
+void queue_pop_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueuePop *req = (ProtocolRequestQueuePop*)client->request;
 	ProtocolResponseHeader res;
@@ -923,7 +923,7 @@ static void queue_pop_command_handler(EagleClient *client)
 	pop_message_queue_t(queue_t, req->body.timeout);
 }
 
-static void queue_confirm_command_handler(EagleClient *client)
+void queue_confirm_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueConfirm *req = (ProtocolRequestQueueConfirm*)client->request;
 	Queue_t *queue_t;
@@ -958,7 +958,7 @@ static void queue_confirm_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void queue_subscribe_command_handler(EagleClient *client)
+void queue_subscribe_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueSubscribe *req = (ProtocolRequestQueueSubscribe*)client->request;
 	Queue_t *queue_t;
@@ -995,7 +995,7 @@ static void queue_subscribe_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void queue_unsubscribe_command_handler(EagleClient *client)
+void queue_unsubscribe_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueUnsubscribe *req = (ProtocolRequestQueueUnsubscribe*)client->request;
 	Queue_t *queue_t;
@@ -1032,7 +1032,7 @@ static void queue_unsubscribe_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void queue_purge_command_handler(EagleClient *client)
+void queue_purge_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueuePurge *req = (ProtocolRequestQueuePurge*)client->request;
 	Queue_t *queue_t;
@@ -1064,7 +1064,7 @@ static void queue_purge_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void queue_delete_command_handler(EagleClient *client)
+void queue_delete_command_handler(EagleClient *client)
 {
 	ProtocolRequestQueueDelete *req = (ProtocolRequestQueueDelete*)client->request;
 	Queue_t *queue_t;
@@ -1099,7 +1099,7 @@ static void queue_delete_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void route_create_command_handler(EagleClient *client)
+void route_create_command_handler(EagleClient *client)
 {
 	ProtocolRequestRouteCreate *req = (ProtocolRequestRouteCreate*)client->request;
 	Route_t *route;
@@ -1132,7 +1132,7 @@ static void route_create_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void route_exist_command_handler(EagleClient *client)
+void route_exist_command_handler(EagleClient *client)
 {
 	ProtocolRequestRouteExist *req = (ProtocolRequestRouteExist*)client->request;
 	ProtocolResponseRouteExist *res;
@@ -1166,7 +1166,7 @@ static void route_exist_command_handler(EagleClient *client)
 	add_response(client, res, sizeof(*res));
 }
 
-static void route_list_command_handler(EagleClient *client)
+void route_list_command_handler(EagleClient *client)
 {
 	ProtocolRequestRouteList *req = (ProtocolRequestRouteList*)client->request;
 	ProtocolResponseHeader res;
@@ -1214,7 +1214,7 @@ static void route_list_command_handler(EagleClient *client)
 	add_response(client, list, sizeof(res) + res.bodylen);
 }
 
-static void route_keys_command_handler(EagleClient *client)
+void route_keys_command_handler(EagleClient *client)
 {
 	ProtocolRequestRouteKeys *req = (ProtocolRequestRouteKeys*)client->request;
 	ProtocolResponseHeader res;
@@ -1280,7 +1280,7 @@ static void route_keys_command_handler(EagleClient *client)
 	add_response(client, list, sizeof(res) + res.bodylen);
 }
 
-static void route_rename_command_handler(EagleClient *client)
+void route_rename_command_handler(EagleClient *client)
 {
 	ProtocolRequestRouteRename *req = (ProtocolRequestRouteRename*)client->request;
 	Route_t *route;
@@ -1317,7 +1317,7 @@ static void route_rename_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void route_bind_command_handler(EagleClient *client)
+void route_bind_command_handler(EagleClient *client)
 {
 	ProtocolRequestRouteBind *req = (ProtocolRequestRouteBind*)client->request;
 	Route_t *route;
@@ -1357,7 +1357,7 @@ static void route_bind_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void route_unbind_command_handler(EagleClient *client)
+void route_unbind_command_handler(EagleClient *client)
 {
 	ProtocolRequestRouteUnbind *req = (ProtocolRequestRouteUnbind*)client->request;
 	Route_t *route;
@@ -1400,7 +1400,7 @@ static void route_unbind_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void route_push_command_handler(EagleClient *client)
+void route_push_command_handler(EagleClient *client)
 {
 	ProtocolRequestRoutePush *req = (ProtocolRequestRoutePush*)client->request;
 	Route_t *route;
@@ -1455,7 +1455,7 @@ static void route_push_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void route_delete_command_handler(EagleClient *client)
+void route_delete_command_handler(EagleClient *client)
 {
 	ProtocolRequestRouteDelete *req = (ProtocolRequestRouteDelete*)client->request;
 	Route_t *route;
@@ -1490,7 +1490,7 @@ static void route_delete_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void channel_create_command_handler(EagleClient *client)
+void channel_create_command_handler(EagleClient *client)
 {
 	ProtocolRequestChannelCreate *req = (ProtocolRequestChannelCreate*)client->request;
 	Channel_t *channel;
@@ -1523,7 +1523,7 @@ static void channel_create_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void channel_exist_command_handler(EagleClient *client)
+void channel_exist_command_handler(EagleClient *client)
 {
 	ProtocolRequestChannelExist *req = (ProtocolRequestChannelExist*)client->request;
 	ProtocolResponseChannelExist *res;
@@ -1557,7 +1557,7 @@ static void channel_exist_command_handler(EagleClient *client)
 	add_response(client, res, sizeof(*res));
 }
 
-static void channel_list_command_handler(EagleClient *client)
+void channel_list_command_handler(EagleClient *client)
 {
 	ProtocolRequestChannelList *req = (ProtocolRequestChannelList*)client->request;
 	ProtocolResponseHeader res;
@@ -1609,7 +1609,7 @@ static void channel_list_command_handler(EagleClient *client)
 	add_response(client, list, sizeof(res) + res.bodylen);
 }
 
-static void channel_rename_command_handler(EagleClient *client)
+void channel_rename_command_handler(EagleClient *client)
 {
 	ProtocolRequestChannelRename *req = (ProtocolRequestChannelRename*)client->request;
 	Channel_t *channel;
@@ -1646,7 +1646,7 @@ static void channel_rename_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void channel_publish_command_handler(EagleClient *client)
+void channel_publish_command_handler(EagleClient *client)
 {
 	ProtocolRequestChannelPublish *req = (ProtocolRequestChannelPublish*)client->request;
 	Channel_t *channel;
@@ -1683,7 +1683,7 @@ static void channel_publish_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void channel_subscribe_command_handler(EagleClient *client)
+void channel_subscribe_command_handler(EagleClient *client)
 {
 	ProtocolRequestChannelSubscribe *req = (ProtocolRequestChannelSubscribe*)client->request;
 	Channel_t *channel;
@@ -1715,7 +1715,7 @@ static void channel_subscribe_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void channel_psubscribe_command_handler(EagleClient *client)
+void channel_psubscribe_command_handler(EagleClient *client)
 {
 	ProtocolRequestChannelPatternSubscribe *req = (ProtocolRequestChannelPatternSubscribe*)client->request;
 	Channel_t *channel;
@@ -1747,7 +1747,7 @@ static void channel_psubscribe_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void channel_unsubscribe_command_handler(EagleClient *client)
+void channel_unsubscribe_command_handler(EagleClient *client)
 {
 	ProtocolRequestChannelUnsubscribe *req = (ProtocolRequestChannelUnsubscribe*)client->request;
 	Channel_t *channel;
@@ -1781,7 +1781,7 @@ static void channel_unsubscribe_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void channel_punsubscribe_command_handler(EagleClient *client)
+void channel_punsubscribe_command_handler(EagleClient *client)
 {
 	ProtocolRequestChannelPatternUnsubscribe *req = (ProtocolRequestChannelPatternUnsubscribe*)client->request;
 	Channel_t *channel;
@@ -1815,7 +1815,7 @@ static void channel_punsubscribe_command_handler(EagleClient *client)
 	add_status_response(client, req->header.cmd, EG_PROTOCOL_STATUS_SUCCESS);
 }
 
-static void channel_delete_command_handler(EagleClient *client)
+void channel_delete_command_handler(EagleClient *client)
 {
 	ProtocolRequestChannelDelete *req = (ProtocolRequestChannelDelete*)client->request;
 	Channel_t *channel;
@@ -1953,189 +1953,13 @@ static void add_status_response(EagleClient *client, int cmd, int status)
 
 static inline void parse_command(EagleClient *client, ProtocolRequestHeader* req)
 {
-	client->noack = req->noack;
+	commandHandler *handler = commands[req->cmd];
 
-	switch (req->cmd)
-	{
-		case EG_PROTOCOL_CMD_AUTH:
-			auth_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_PING:
-			ping_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_STAT:
-			stat_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_SAVE:
-			save_comand_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_FLUSH:
-			flush_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_DISCONNECT:
-			disconnect_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_USER_CREATE:
-			user_create_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_USER_LIST:
-			user_list_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_USER_RENAME:
-			user_rename_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_USER_SET_PERM:
-			user_set_perm_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_USER_DELETE:
-			user_delete_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_CREATE:
-			queue_create_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_DECLARE:
-			queue_declare_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_EXIST:
-			queue_exist_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_LIST:
-			queue_list_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_RENAME:
-			queue_rename_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_SIZE:
-			queue_size_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_PUSH:
-			queue_push_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_GET:
-			queue_get_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_POP:
-			queue_pop_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_CONFIRM:
-			queue_confirm_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE:
-			queue_subscribe_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_UNSUBSCRIBE:
-			queue_unsubscribe_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_PURGE:
-			queue_purge_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_QUEUE_DELETE:
-			queue_delete_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_ROUTE_CREATE:
-			route_create_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_ROUTE_EXIST:
-			route_exist_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_ROUTE_LIST:
-			route_list_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_ROUTE_KEYS:
-			route_keys_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_ROUTE_RENAME:
-			route_rename_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_ROUTE_BIND:
-			route_bind_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_ROUTE_UNBIND:
-			route_unbind_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_ROUTE_PUSH:
-			route_push_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_ROUTE_DELETE:
-			route_delete_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_CHANNEL_CREATE:
-			channel_create_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_CHANNEL_EXIST:
-			channel_exist_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_CHANNEL_LIST:
-			channel_list_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_CHANNEL_RENAME:
-			channel_rename_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_CHANNEL_PUBLISH:
-			channel_publish_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_CHANNEL_SUBSCRIBE:
-			channel_subscribe_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_CHANNEL_PSUBSCRIBE:
-			channel_psubscribe_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_CHANNEL_UNSUBSCRIBE:
-			channel_unsubscribe_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_CHANNEL_PUNSUBSCRIBE:
-			channel_punsubscribe_command_handler(client);
-			break;
-
-		case EG_PROTOCOL_CMD_CHANNEL_DELETE:
-			channel_delete_command_handler(client);
-			break;
-
-		default:
-			add_status_response(client, req->cmd, EG_PROTOCOL_STATUS_ERROR_COMMAND);
-			break;
+	if (handler) {
+		client->noack = req->noack;
+		handler(client);
+	} else {
+		add_status_response(client, req->cmd, EG_PROTOCOL_STATUS_ERROR_COMMAND);
 	}
 }
 

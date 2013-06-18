@@ -50,6 +50,7 @@
 #include "logo.h"
 #include "version.h"
 #include "xmalloc.h"
+#include "protocol.h"
 #include "handlers.h"
 #include "utils.h"
 #include "event.h"
@@ -63,6 +64,8 @@
 #include "config.h"
 
 EagleServer *server;
+
+commandHandler *commands[256];
 
 void create_pid_file(const char *pidfile)
 {
@@ -183,6 +186,60 @@ long long mstime(void)
 	mst += tv.tv_usec / 1000;
 
 	return mst;
+}
+
+void init_commands()
+{
+	memset(commands, 0, sizeof(commands));
+
+	commands[EG_PROTOCOL_CMD_AUTH] = auth_command_handler;
+	commands[EG_PROTOCOL_CMD_PING] = ping_command_handler;
+	commands[EG_PROTOCOL_CMD_STAT] = stat_command_handler;
+	commands[EG_PROTOCOL_CMD_SAVE] = save_command_handler;
+	commands[EG_PROTOCOL_CMD_FLUSH] = flush_command_handler;
+	commands[EG_PROTOCOL_CMD_DISCONNECT] = disconnect_command_handler;
+
+	commands[EG_PROTOCOL_CMD_USER_CREATE] = user_create_command_handler;
+	commands[EG_PROTOCOL_CMD_USER_LIST] = user_list_command_handler;
+	commands[EG_PROTOCOL_CMD_USER_RENAME] = user_rename_command_handler;
+	commands[EG_PROTOCOL_CMD_USER_SET_PERM] = user_set_perm_command_handler;
+	commands[EG_PROTOCOL_CMD_USER_DELETE] = user_delete_command_handler;
+
+	commands[EG_PROTOCOL_CMD_QUEUE_CREATE] = queue_create_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_DECLARE] = queue_declare_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_EXIST] = queue_exist_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_LIST] = queue_list_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_RENAME] = queue_rename_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_SIZE] = queue_size_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_PUSH] = queue_push_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_GET] = queue_get_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_POP] = queue_pop_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_CONFIRM] = queue_confirm_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_SUBSCRIBE] = queue_subscribe_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_UNSUBSCRIBE] = queue_unsubscribe_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_PURGE] = queue_purge_command_handler;
+	commands[EG_PROTOCOL_CMD_QUEUE_DELETE] = queue_delete_command_handler;
+
+	commands[EG_PROTOCOL_CMD_ROUTE_CREATE] = route_create_command_handler;
+	commands[EG_PROTOCOL_CMD_ROUTE_EXIST] = route_exist_command_handler;
+	commands[EG_PROTOCOL_CMD_ROUTE_LIST] = route_list_command_handler;
+	commands[EG_PROTOCOL_CMD_ROUTE_KEYS] = route_keys_command_handler;
+	commands[EG_PROTOCOL_CMD_ROUTE_RENAME] = route_rename_command_handler;
+	commands[EG_PROTOCOL_CMD_ROUTE_BIND] = route_bind_command_handler;
+	commands[EG_PROTOCOL_CMD_ROUTE_UNBIND] = route_unbind_command_handler;
+	commands[EG_PROTOCOL_CMD_ROUTE_PUSH] = route_push_command_handler;
+	commands[EG_PROTOCOL_CMD_ROUTE_DELETE] = route_delete_command_handler;
+
+	commands[EG_PROTOCOL_CMD_CHANNEL_CREATE] = channel_create_command_handler;
+	commands[EG_PROTOCOL_CMD_CHANNEL_EXIST] = channel_exist_command_handler;
+	commands[EG_PROTOCOL_CMD_CHANNEL_LIST] = channel_list_command_handler;
+	commands[EG_PROTOCOL_CMD_CHANNEL_RENAME] = channel_rename_command_handler;
+	commands[EG_PROTOCOL_CMD_CHANNEL_PUBLISH] = channel_publish_command_handler;
+	commands[EG_PROTOCOL_CMD_CHANNEL_SUBSCRIBE] = channel_subscribe_command_handler;
+	commands[EG_PROTOCOL_CMD_CHANNEL_PSUBSCRIBE] = channel_psubscribe_command_handler;
+	commands[EG_PROTOCOL_CMD_CHANNEL_UNSUBSCRIBE] = channel_unsubscribe_command_handler;
+	commands[EG_PROTOCOL_CMD_CHANNEL_PUNSUBSCRIBE] = channel_punsubscribe_command_handler;
+	commands[EG_PROTOCOL_CMD_CHANNEL_DELETE] = channel_delete_command_handler;
 }
 
 void check_memory(void)
@@ -525,6 +582,7 @@ int main(int argc, char *argv[])
 	setup_signals();
 	xmalloc_state_lock_on();
 
+	init_commands();
 	init_server_config();
 
 	parse_args(argc, argv);
