@@ -140,7 +140,7 @@ Username *name* can not have a length greater than 32.
 
 Table 1. Description of user permissions
 -------------------------------------------------------------
-<table border="1">
+<table>
     <tr>
         <td><b>№</b></td>
         <td><b>Name</b></td>
