@@ -2020,7 +2020,6 @@ process:
 			memcpy(client->request, client->buffer + client->offset, client->pos);
 			client->offset += client->pos;
 			client->nread -= client->pos;
-			return;
 		}
 	} else {
 		if (client->nread == client->bodylen)
