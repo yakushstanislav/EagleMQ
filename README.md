@@ -44,8 +44,8 @@ To compile against libc malloc, use:
 
 To compile against tcmalloc, use:
 
-    % make MALLOC=jemalloc
+    % make MALLOC=tcmalloc
 
 To compile against jemalloc, use:
 
-    % make MALLOC=tcmalloc
+    % make MALLOC=jemalloc
